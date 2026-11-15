@@ -1,5 +1,15 @@
 # Değişiklik Günlüğü (Changelog)
 
+## [2.8.1] - 2026-11-15
+### Eklenenler & Değiştirilenler
+- **Otomatik `ilce-konseri` Slug Formatı:** Yeni konser eklerken ilçe/şehir girildiğinde link uzantısı otomatik olarak `ilce-konseri` biçiminde oluşturulur.
+- **Canlı Sayfa / Yazı Varlık Kontrolü:** Girilen veya otomatik oluşan uzantı sitenizde yayımlanmış bir sayfa/yazı ile eşleşiyorsa kutu yeşil, eşleşmiyorsa kırmızı çerçeve ve bilgi etiketiyle gösterilir.
+
+## [2.7.0] - 2026-11-15
+### Eklenenler & Değiştirilenler
+- **Mevcut Yazılardan Slug Filtreleme ve Seçme:** Link uzantısı kutusuna sitenizdeki yayımlanmış yazı ve sayfaları başlık/slug üzerinden filtreleyip seçme özelliği (`datalist`) eklendi.
+- **Temiz Kurulum:** Eski statik `konserler.json` dosyası kaldırıldı; eklenti tamamen veritabanı tabanlı çalışacak şekilde sadeleştirildi.
+
 ## [2.6.0] - 2026-11-15
 ### Eklenenler
 - **GitHub Dokümantasyonu & Lisans (`README.md`, `LICENSE`):** Kurulum, kullanım, özellikler ve dosya yapısını açıklayan `README.md` ile GNU GPLv3 (`GPL-3.0-or-later`) lisans bilgileri eklendi.
@@ -22,7 +32,7 @@
 
 ## [2.2.0] - 2026-11-15
 ### Eklenenler
-- **Otomatik Slug Önerisi:** Yeni konser eklerken tarih ve şehir/ilçe bilgisine göre canlı olarak `YYYY-AA-GG-ilce` formatında link uzantısı önerisi eklendi.
+- **Otomatik Slug Önerisi:** Yeni konser eklerken canlı link uzantısı önerisi eklendi.
 
 ## [2.1.0] - 2026-11-15
 ### Değiştirilenler

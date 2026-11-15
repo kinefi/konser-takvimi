@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Şubadap Konser Takvimi
- * Description: Veritabanı tabanlı, geçmiş konserleri otomatik arşivleyen, JSON/CSV dışa aktarma, otomatik slug önerisi ve düğme görünüm ayarları sunan kısa kod eklentisi.
- * Version: 2.6.0
+ * Description: Veritabanı tabanlı, geçmiş konserleri otomatik arşivleyen, otomatik ilce-konseri slug önerisi ve canlı sayfa varlık kontrolü sunan WordPress eklentisi.
+ * Version: 2.8.1
  * Author: Şubadap Çocuk
  * License: GPL-3.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'SUBADAP_KONSER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SUBADAP_KONSER_URL', plugin_dir_url( __FILE__ ) );
-define( 'SUBADAP_KONSER_VER', '2.6.0' );
+define( 'SUBADAP_KONSER_VER', '2.8.1' );
 define( 'SUBADAP_KONSER_OPT', 'subadap_konserler_list' );
 define( 'SUBADAP_STYLE_OPT', 'subadap_konserler_styles' );
 
@@ -83,26 +83,12 @@ function subadap_get_style_settings() {
 	return $merged;
 }
 
-// İlk aktivasyonda veya veritabanı boşsa konserler.json verisini aktar
-register_activation_hook( __FILE__, 'subadap_migrate_json_to_db' );
-function subadap_migrate_json_to_db() {
+register_activation_hook( __FILE__, 'subadap_init_db_option' );
+function subadap_init_db_option() {
 	$existing = get_option( SUBADAP_KONSER_OPT );
-
-	if ( is_array( $existing ) && ! empty( $existing ) ) {
-		return;
+	if ( ! is_array( $existing ) ) {
+		update_option( SUBADAP_KONSER_OPT, array(), false );
 	}
-
-	$json_path = SUBADAP_KONSER_DIR . 'konserler.json';
-	$initial   = array();
-
-	if ( file_exists( $json_path ) ) {
-		$decoded = json_decode( file_get_contents( $json_path ), true );
-		if ( is_array( $decoded ) ) {
-			$initial = $decoded;
-		}
-	}
-
-	update_option( SUBADAP_KONSER_OPT, $initial, false );
 }
 
 if ( is_admin() ) {
@@ -119,14 +105,14 @@ function subadap_register_frontend_assets() {
 	);
 
 	wp_register_style(
-		'subadap-konserler-css',
+		'subadap-konseriler-css',
 		SUBADAP_KONSER_URL . 'assets/css/konserler.css',
 		array( 'subadap-quicksand-font' ),
 		SUBADAP_KONSER_VER
 	);
 
 	wp_register_script(
-		'subadap-konserler-js',
+		'subadap-konseriler-js',
 		SUBADAP_KONSER_URL . 'assets/js/konserler.js',
 		array(),
 		SUBADAP_KONSER_VER,
@@ -154,7 +140,7 @@ function subadap_konser_grid_shortcode() {
 		}
 	}
 
-	wp_enqueue_style( 'subadap-konserler-css' );
+	wp_enqueue_style( 'subadap-konseriler-css' );
 
 	$custom_css = sprintf(
 		"#subadapConcertGridContainer {
@@ -187,10 +173,10 @@ function subadap_konser_grid_shortcode() {
 		);
 	}
 
-	wp_add_inline_style( 'subadap-konserler-css', $custom_css );
-	wp_enqueue_script( 'subadap-konserler-js' );
+	wp_add_inline_style( 'subadap-konseriler-css', $custom_css );
+	wp_enqueue_script( 'subadap-konseriler-js' );
 	wp_localize_script(
-		'subadap-konserler-js',
+		'subadap-konseriler-js',
 		'subadapKonserData',
 		array(
 			'events'   => $upcoming_events,

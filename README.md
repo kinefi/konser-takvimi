@@ -5,18 +5,18 @@
 ## Özellikler
 
 - **Kısa Kod Desteği (`[subadap_konserler]`):** Herhangi bir sayfaya veya yazıya eklendiğinde yalnızca tarihi ve saati henüz geçmemiş konserleri (İstanbul saat dilimine göre) kronolojik olarak listeler.
+- **Otomatik `ilce-konseri` Uzantısı ve Canlı Sayfa Kontrolü:** İlçe/şehir yazıldığında URL uzantısını otomatik `ilce-konseri` olarak oluşturur; ilgili uzantıda yayımlanmış sayfa veya yazı varsa yeşil, yoksa kırmızı uyarıyla anlık bildirir.
+- **Mevcut Yazı ve Sayfalardan Seçim:** Link uzantısı alanında sitenizdeki yayımlanmış yazı ve sayfalar arasında başlık veya URL uzantısına göre anlık arama/filtreleme yapabilirsiniz.
 - **Otomatik Arşivleme:** Tarihi geçen konserler otomatik olarak yönetim panelindeki açılır-kapanır **Arşivlenen Konserler** bölümüne taşınır, salt okunur hale getirilir ve siteden gizlenir.
-- **Akıllı Link Uzantısı (Slug) Önerisi:** Yeni konser eklerken tarih ve şehir/ilçe bilgisine göre `YYYY-AA-GG-ilce` formatında Türkçe karakterlerden arındırılmış slug önerisi üretir.
 - **JSON ve CSV Dışa Aktarma (Export):** Aktif, arşivlenmiş veya tüm konser kayıtlarını tek tıkla `.json` ya da Excel uyumlu (UTF-8 BOM) `.csv` dosyası olarak yedekleme imkânı sunar.
 - **Canlı Düğme Biçimi & Renk Özelleştirme:** Düğmelerin köşe yuvarlaklığını, yüksekliğini, genişliğini, aralık boşluğunu ve 12'li renk paleti döngüsünü canlı önizleme ile düzenleyebilirsiniz.
 - **Güvenli Kaldırma (Uninstall):** Varsayılan olarak eklenti silinse bile veritabanındaki konser kayıtları korunur; isteğe bağlı olarak ayarlardan tam temizlik aktif edilebilir.
 
 ## Kurulum
 
-1. Bu depoyu `.zip` olarak indirin (veya `subadap-konserler` klasörünü sıkıştırın).
+1. Bu depoyu `.zip` olarak indirin (veya `subadap-konseriler` klasörünü sıkıştırın).
 2. WordPress yönetim panelinde **Eklentiler > Yeni Eklenti Ekle > Eklenti Yükle** yolunu izleyin.
 3. `.zip` dosyasını seçip yükleyin ve eklentiyi etkinleştirin.
-4. Eklenti ilk kez etkinleştirildiğinde veritabanı boşsa `konserler.json` içindeki örnek kayıtları otomatik olarak içe aktarır.
 
 ## Kullanım
 
@@ -27,10 +27,9 @@
 ## Dosya Yapısı
 
 ```text
-subadap-konserler/
-├── subadap-konserler.php      # Ana eklenti dosyası, kısa kod ve CSS değişken çıktısı
+subadap-konseriler/
+├── subadap-konseriler.php      # Ana eklenti dosyası, kısa kod ve CSS değişken çıktısı
 ├── uninstall.php              # İsteğe bağlı veritabanı temizleme betiği
-├── konserler.json             # İlk kurulum başlangıç verisi
 ├── LICENSE                    # GNU GPLv3 lisans metni
 ├── README.md                  # Proje dokümantasyonu
 ├── CHANGELOG.md               # Sürüm geçmişi
@@ -40,7 +39,7 @@ subadap-konserler/
     ├── css/
     │   └── konserler.css      # Ön yüz rozet ve ızgara stilleri
     └── js/
-        ├── admin.js           # Otomatik slug, arşiv sayfalama ve canlı stil önizlemesi
+        ├── admin.js           # Otomatik slug, sayfa varlık kontrolü ve canlı stil önizlemesi
         └── konserler.js       # Ön yüz filtreleme ve DOM oluşturma
 ```
 

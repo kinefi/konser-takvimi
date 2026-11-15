@@ -1,6 +1,44 @@
 document.addEventListener('DOMContentLoaded', function () {
 	var tableBody = document.querySelector('#subadap-concerts-table tbody');
 	var addBtn = document.getElementById('add-concert-row');
+	var postsDatalist = document.getElementById('subadap-existing-posts-list');
+
+	// Datalist içindeki mevcut yayımlanmış yazı ve sayfa slug'larını haritaya al
+	var existingSlugsMap = {};
+	if (postsDatalist) {
+		Array.from(postsDatalist.options).forEach(function (opt) {
+			if (opt.value) {
+				existingSlugsMap[opt.value.trim().toLowerCase()] = opt.textContent.trim();
+			}
+		});
+	}
+
+	function checkSlugExistence(row) {
+		var slugInput = row.querySelector('input[name="concert_slug[]"]');
+		var statusSpan = row.querySelector('.subadap-slug-status');
+		if (!slugInput || !statusSpan) {
+			return;
+		}
+
+		var val = slugInput.value.trim().toLowerCase();
+		slugInput.classList.remove('is-valid-page', 'is-missing-page');
+		statusSpan.classList.remove('is-valid-page', 'is-missing-page');
+
+		if (!val) {
+			statusSpan.textContent = '';
+			return;
+		}
+
+		if (Object.prototype.hasOwnProperty.call(existingSlugsMap, val)) {
+			slugInput.classList.add('is-valid-page');
+			statusSpan.classList.add('is-valid-page');
+			statusSpan.textContent = '✓ Mevcut: ' + existingSlugsMap[val];
+		} else {
+			slugInput.classList.add('is-missing-page');
+			statusSpan.classList.add('is-missing-page');
+			statusSpan.textContent = '✕ Bu uzantıda sayfa/yazı bulunamadı';
+		}
+	}
 
 	if (tableBody && addBtn) {
 		function slugifyTurkish(text) {
@@ -28,27 +66,24 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 
 		function updateRowSlug(row) {
-			var dateInput = row.querySelector('input[name="concert_date[]"]');
 			var cityInput = row.querySelector('input[name="concert_city[]"]');
 			var slugInput = row.querySelector('input[name="concert_slug[]"]');
 
-			if (!dateInput || !cityInput || !slugInput) {
+			if (!cityInput || !slugInput) {
 				return;
 			}
 
 			if (slugInput.dataset.auto === '1') {
-				var dateVal = dateInput.value.trim();
 				var citySlug = slugifyTurkish(cityInput.value);
-
-				if (dateVal && citySlug) {
-					slugInput.value = dateVal + '-' + citySlug;
-				} else if (citySlug) {
-					slugInput.value = citySlug;
-				} else {
-					slugInput.value = '';
-				}
+				slugInput.value = citySlug ? citySlug + '-konseri' : '';
+				checkSlugExistence(row);
 			}
 		}
+
+		// Sayfa yüklendiğinde mevcut satırların sayfa varlık durumunu kontrol et
+		Array.from(tableBody.querySelectorAll('tr')).forEach(function (row) {
+			checkSlugExistence(row);
+		});
 
 		tableBody.addEventListener('input', function (e) {
 			var target = e.target;
@@ -59,10 +94,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
 			if (target.name === 'concert_slug[]') {
 				target.dataset.auto = target.value.trim() === '' ? '1' : '0';
+				checkSlugExistence(row);
 				return;
 			}
 
-			if (target.name === 'concert_date[]' || target.name === 'concert_city[]') {
+			if (target.name === 'concert_city[]') {
 				updateRowSlug(row);
 			}
 		});
@@ -70,11 +106,14 @@ document.addEventListener('DOMContentLoaded', function () {
 		addBtn.addEventListener('click', function () {
 			var row = document.createElement('tr');
 			row.innerHTML =
-				'<td><input type="date" name="concert_date[]" required style="width: 100%;"></td>' +
-				'<td><input type="time" name="concert_time[]" value="15:00" required style="width: 100%;"></td>' +
-				'<td><input type="text" name="concert_city[]" placeholder="Örn: Bursa" required style="width: 100%;"></td>' +
-				'<td><input type="text" name="concert_slug[]" data-auto="1" placeholder="Otomatik: YYYY-AA-GG-ilce" style="width: 100%;"></td>' +
-				'<td><button type="button" class="button remove-row" style="color: #b32d2e;">Sil</button></td>';
+				'<td style="vertical-align: top;"><input type="date" name="concert_date[]" required style="width: 100%;"></td>' +
+				'<td style="vertical-align: top;"><input type="time" name="concert_time[]" value="15:00" required style="width: 100%;"></td>' +
+				'<td style="vertical-align: top;"><input type="text" name="concert_city[]" placeholder="Örn: Urla" required style="width: 100%;"></td>' +
+				'<td style="vertical-align: top;">' +
+					'<input type="text" class="subadap-slug-input" name="concert_slug[]" list="subadap-existing-posts-list" data-auto="1" placeholder="ilce-konseri veya ara..." autocomplete="off">' +
+					'<span class="subadap-slug-status"></span>' +
+				'</td>' +
+				'<td style="vertical-align: top;"><button type="button" class="button remove-row" style="color: #b32d2e;">Sil</button></td>';
 			tableBody.appendChild(row);
 		});
 

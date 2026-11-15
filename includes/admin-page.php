@@ -9,7 +9,7 @@ function subadap_register_concert_menu() {
 		'Konser Takvimi',
 		'Konser Takvimi',
 		'manage_options',
-		'subadap-konserler',
+		'subadap-konseriler',
 		'subadap_konser_admin_page',
 		'dashicons-calendar-alt',
 		25
@@ -18,7 +18,7 @@ function subadap_register_concert_menu() {
 
 add_action( 'admin_enqueue_scripts', 'subadap_enqueue_admin_assets' );
 function subadap_enqueue_admin_assets( $hook ) {
-	if ( 'toplevel_page_subadap-konserler' !== $hook ) {
+	if ( 'toplevel_page_subadap-konseriler' !== $hook ) {
 		return;
 	}
 	wp_enqueue_script(
@@ -76,7 +76,7 @@ function subadap_handle_concert_export() {
 	}
 
 	$date_stamp = gmdate( 'Y-m-d', $now_ts + 10800 );
-	$filename   = "subadap-konserler-{$scope}-{$date_stamp}.{$format}";
+	$filename   = "subadap-konseriler-{$scope}-{$date_stamp}.{$format}";
 
 	nocache_headers();
 
@@ -169,7 +169,7 @@ function subadap_konser_admin_page() {
 			}
 
 			if ( empty( $slug ) ) {
-				$slug = sanitize_title( $date . '-' . $city );
+				$slug = sanitize_title( $city . '-konseri' );
 			}
 
 			$active_events[] = array(
@@ -250,36 +250,93 @@ function subadap_konser_admin_page() {
 	$archive_count = count( $archived_list );
 	$active_count  = count( $upcoming_list );
 	$styles        = subadap_get_style_settings();
+
+	// Mevcut yayımlanmış yazı ve sayfaların slug ve başlıklarını çek
+	$existing_posts = get_posts(
+		array(
+			'post_type'      => array( 'post', 'page' ),
+			'post_status'    => 'publish',
+			'posts_per_page' => 500,
+			'orderby'        => 'date',
+			'order'          => 'DESC',
+		)
+	);
 	?>
 	<div class="wrap">
 		<h1>Şubadap Konser Takvimi</h1>
 		<p>Sayfada göstermek için <code>[subadap_konserler]</code> kısa kodunu kullanabilirsiniz.</p>
 		<?php echo $message; ?>
 
+		<style>
+			.subadap-slug-input {
+				width: 100%;
+				transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+			}
+			.subadap-slug-input.is-valid-page {
+				border: 1.5px solid #16a34a !important;
+				background-color: #f0fdf4 !important;
+				box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.15);
+			}
+			.subadap-slug-input.is-missing-page {
+				border: 1.5px solid #dc2626 !important;
+				background-color: #fef2f2 !important;
+				box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.15);
+			}
+			.subadap-slug-status {
+				display: block;
+				font-size: 11px;
+				margin-top: 3px;
+				line-height: 1.3;
+				font-weight: 600;
+			}
+			.subadap-slug-status.is-valid-page {
+				color: #15803d;
+			}
+			.subadap-slug-status.is-missing-page {
+				color: #b91c1c;
+			}
+		</style>
+
 		<!-- Sekme Menüsü -->
 		<nav class="nav-tab-wrapper" style="margin-top: 15px; max-width: 950px;">
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=subadap-konserler&tab=concerts' ) ); ?>" class="nav-tab <?php echo 'concerts' === $active_tab ? 'nav-tab-active' : ''; ?>">
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=subadap-konseriler&tab=concerts' ) ); ?>" class="nav-tab <?php echo 'concerts' === $active_tab ? 'nav-tab-active' : ''; ?>">
 				Konser Listesi & Arşiv
 			</a>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=subadap-konserler&tab=styles' ) ); ?>" class="nav-tab <?php echo 'styles' === $active_tab ? 'nav-tab-active' : ''; ?>">
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=subadap-konseriler&tab=styles' ) ); ?>" class="nav-tab <?php echo 'styles' === $active_tab ? 'nav-tab-active' : ''; ?>">
 				Düğme Biçimleri, Renkler & Ayarlar
 			</a>
 		</nav>
 
 		<?php if ( 'concerts' === $active_tab ) : ?>
 
+			<!-- Mevcut WordPress Yazı ve Sayfaları İçin Filtrelenebilir Seçim Listesi -->
+			<datalist id="subadap-existing-posts-list">
+				<?php foreach ( $existing_posts as $wp_post ) : ?>
+					<?php
+					if ( ! empty( $wp_post->post_name ) ) :
+						$type_label = ( 'page' === $wp_post->post_type ) ? 'Sayfa' : 'Yazı';
+						?>
+						<option value="<?php echo esc_attr( $wp_post->post_name ); ?>">
+							<?php echo esc_html( '[' . $type_label . '] ' . $wp_post->post_title ); ?>
+						</option>
+					<?php endif; ?>
+				<?php endforeach; ?>
+			</datalist>
+
 			<h2 style="margin-top: 25px;">Yaklaşan Konserler (Düzenlenebilir)</h2>
+			<p class="description">İlçe/şehir yazıldığında link uzantısı otomatik olarak <code>ilce-konseri</code> biçiminde oluşturulur. İlgili uzantıda yayımlanmış bir sayfa veya yazı varsa kutu <span style="color:#15803d;font-weight:600;">yeşil</span>, yoksa <span style="color:#b91c1c;font-weight:600;">kırmızı</span> görünür.</p>
+
 			<form method="post" action="">
 				<?php wp_nonce_field( 'subadap_conser_nonce_action', 'subadap_conser_nonce' ); ?>
 
 				<table class="widefat fixed striped" id="subadap-concerts-table" style="max-width: 950px; margin-top: 10px;">
 					<thead>
 						<tr>
-							<th style="width: 160px;">Tarih</th>
-							<th style="width: 110px;">Saat</th>
-							<th>Şehir / İlçe Adı</th>
-							<th>Link Uzantısı (Otomatik: YYYY-AA-GG-ilce)</th>
-							<th style="width: 80px;">İşlem</th>
+							<th style="width: 150px;">Tarih</th>
+							<th style="width: 100px;">Saat</th>
+							<th style="width: 200px;">Şehir / İlçe Adı</th>
+							<th>Link Uzantısı (Otomatik: ilce-konseri / Mevcut Yazı-Sayfa)</th>
+							<th style="width: 75px;">İşlem</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -290,11 +347,14 @@ function subadap_konser_admin_page() {
 							$t_val    = isset( $dt_parts[1] ) ? substr( $dt_parts[1], 0, 5 ) : '15:00';
 							?>
 						<tr>
-							<td><input type="date" name="concert_date[]" value="<?php echo esc_attr( $d_val ); ?>" required style="width: 100%;"></td>
-							<td><input type="time" name="concert_time[]" value="<?php echo esc_attr( $t_val ); ?>" required style="width: 100%;"></td>
-							<td><input type="text" name="concert_city[]" value="<?php echo esc_attr( $event['city'] ); ?>" placeholder="Örn: İzmir" required style="width: 100%;"></td>
-							<td><input type="text" name="concert_slug[]" value="<?php echo esc_attr( $event['slug'] ); ?>" data-auto="0" placeholder="2026-11-29-bursa" style="width: 100%;"></td>
-							<td><button type="button" class="button remove-row" style="color: #b32d2e;">Sil</button></td>
+							<td style="vertical-align: top;"><input type="date" name="concert_date[]" value="<?php echo esc_attr( $d_val ); ?>" required style="width: 100%;"></td>
+							<td style="vertical-align: top;"><input type="time" name="concert_time[]" value="<?php echo esc_attr( $t_val ); ?>" required style="width: 100%;"></td>
+							<td style="vertical-align: top;"><input type="text" name="concert_city[]" value="<?php echo esc_attr( $event['city'] ); ?>" placeholder="Örn: Urla" required style="width: 100%;"></td>
+							<td style="vertical-align: top;">
+								<input type="text" class="subadap-slug-input" name="concert_slug[]" list="subadap-existing-posts-list" value="<?php echo esc_attr( $event['slug'] ); ?>" data-auto="0" placeholder="ilce-konseri veya ara..." autocomplete="off">
+								<span class="subadap-slug-status"></span>
+							</td>
+							<td style="vertical-align: top;"><button type="button" class="button remove-row" style="color: #b32d2e;">Sil</button></td>
 						</tr>
 						<?php endforeach; ?>
 					</tbody>
