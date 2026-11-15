@@ -1,0 +1,129 @@
+#subadapConcertGridContainer {
+	--subadap-radius: 20px;
+	--subadap-height: 90px;
+	--subadap-gap: 20px;
+	--subadap-min-w: 250px;
+	--subadap-date-text: #111827;
+	--subadap-city-text: #0f172a;
+	font-family: 'Quicksand', system-ui, -apple-system, sans-serif;
+}
+
+#subadapConcertGridContainer .subadap-concert-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(var(--subadap-min-w), 1fr));
+	gap: var(--subadap-gap);
+	max-width: 1400px;
+	margin: 0 auto;
+	padding: 10px;
+}
+
+#subadapConcertGridContainer .concert-badge {
+	display: flex;
+	text-decoration: none;
+	color: #000;
+	border-radius: var(--subadap-radius);
+	overflow: hidden;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+	transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+	height: var(--subadap-height);
+	cursor: pointer;
+	position: relative;
+}
+
+#subadapConcertGridContainer .concert-badge:hover {
+	transform: translateY(-5px) scale(1.02);
+	box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+}
+
+#subadapConcertGridContainer .concert-badge .date-part {
+	width: 44%;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	padding: 6px 4px;
+	color: var(--subadap-date-text);
+	text-align: center;
+	line-height: 1.15;
+}
+
+#subadapConcertGridContainer .concert-badge .date-part .day-month {
+	font-size: 1.15rem;
+	font-weight: 700;
+	line-height: 1.05;
+}
+
+#subadapConcertGridContainer .concert-badge .date-part .day-name {
+	font-size: 1.08rem;
+	font-weight: 600;
+	margin-top: 2px;
+	opacity: 0.9;
+}
+
+#subadapConcertGridContainer .concert-badge .date-part .time {
+	font-size: 1.0rem;
+	font-weight: 700;
+	margin-top: 3px;
+	opacity: 0.85;
+}
+
+#subadapConcertGridContainer .concert-badge .city-part {
+	width: 56%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 10px;
+	text-align: center;
+}
+
+#subadapConcertGridContainer .concert-badge .city-part .city-name {
+	font-size: 1.55rem;
+	font-weight: 700;
+	color: var(--subadap-city-text);
+	word-break: break-word;
+	letter-spacing: 0.5px;
+}
+
+#subadapConcertGridContainer .empty-concerts {
+	grid-column: 1 / -1;
+	text-align: center;
+	padding: 3rem 1rem;
+	background: #fff;
+	border-radius: 1rem;
+	border: 1px solid #f3f4f6;
+	color: #6b7280;
+	font-weight: 600;
+}
+
+/* Varsayılan Renk Paletleri (Yönetim panelinden ezilebilir) */
+#subadapConcertGridContainer .style-1 .date-part { background-color: #e94c86; }
+#subadapConcertGridContainer .style-1 .city-part { background-color: #fce1ec; }
+#subadapConcertGridContainer .style-2 .date-part { background-color: #ffbc00; }
+#subadapConcertGridContainer .style-2 .city-part { background-color: #fff4d1; }
+#subadapConcertGridContainer .style-3 .date-part { background-color: #00bcd4; }
+#subadapConcertGridContainer .style-3 .city-part { background-color: #d1f2f7; }
+#subadapConcertGridContainer .style-4 .date-part { background-color: #b3c24b; }
+#subadapConcertGridContainer .style-4 .city-part { background-color: #f4f8db; }
+#subadapConcertGridContainer .style-5 .date-part { background-color: #995c44; }
+#subadapConcertGridContainer .style-5 .city-part { background-color: #f2e4df; }
+#subadapConcertGridContainer .style-6 .date-part { background-color: #eade52; }
+#subadapConcertGridContainer .style-6 .city-part { background-color: #fefcdb; }
+#subadapConcertGridContainer .style-7 .date-part { background-color: #9a71c6; }
+#subadapConcertGridContainer .style-7 .city-part { background-color: #ede5f3; }
+#subadapConcertGridContainer .style-8 .date-part { background-color: #70a488; }
+#subadapConcertGridContainer .style-8 .city-part { background-color: #d9efe3; }
+#subadapConcertGridContainer .style-9 .date-part { background-color: #f15623; }
+#subadapConcertGridContainer .style-9 .city-part { background-color: #fde8e3; }
+#subadapConcertGridContainer .style-10 .date-part { background-color: #2f83c8; }
+#subadapConcertGridContainer .style-10 .city-part { background-color: #d2e7e7; }
+#subadapConcertGridContainer .style-11 .date-part { background-color: #7bb67c; }
+#subadapConcertGridContainer .style-11 .city-part { background-color: #d8efd9; }
+#subadapConcertGridContainer .style-12 .date-part { background-color: #efabd4; }
+#subadapConcertGridContainer .style-12 .city-part { background-color: #ffeef8; }
+
+@media (max-width: 540px) {
+	#subadapConcertGridContainer .subadap-concert-grid {
+		grid-template-columns: 1fr;
+		gap: 14px;
+	}
+}

@@ -1,0 +1,16 @@
+<?php
+/**
+ * WordPress eklenti kaldırma (Uninstall) dosyası.
+ * Yalnızca yönetim panelinde "Eklenti silindiğinde veritabanı kayıtlarını da temizle" seçeneği işaretliyse verileri siler.
+ */
+
+if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
+	exit;
+}
+
+$styles = get_option( 'subadap_konserler_styles', array() );
+
+if ( is_array( $styles ) && ! empty( $styles['delete_on_uninst'] ) ) {
+	delete_option( 'subadap_konserler_list' );
+	delete_option( 'subadap_konserler_styles' );
+}
