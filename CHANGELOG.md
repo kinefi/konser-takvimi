@@ -1,5 +1,10 @@
 # Değişiklik Günlüğü (Changelog)
 
+## [3.1.0] - 2026-11-16
+### Eklenenler & Değiştirilenler
+- **Ayarlanabilir Yönlendirme Hedefi:** **Düğme Biçimleri, Renkler & Ayarlar** sekmesine `[konser_ilce_yonlendir]` kısa kodunun varsayılan yönlendirme adresini (varsayılan `/konserler`) belirleme alanı eklendi.
+- **URL ve İlçe Adı Bilgilendirmesi:** Ayarlar sekmesine ve dokümantasyona, otomatik eşleşme için ilçe adının sayfa URL uzantısında yer alması gerektiğine dair açıklayıcı not eklendi.
+
 ## [3.0.0] - 2026-11-16
 ### Eklenenler & Değiştirilenler
 - **Çift Seans Desteği (`12.00 ve 14.00`):** Yönetim paneline isteğe bağlı **2. Seans** alanı eklendi. İkinci seans girildiğinde düğmede saat `12.00 ve 14.00` biçiminde tek satırda gösterilir ve 2. seans saati geçene kadar konser aktif kalır.

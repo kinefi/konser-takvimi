@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Konser Takvimi
  * Description: Veritabanı tabanlı, çift seans destekli, geçmiş konserleri otomatik arşivleyen ve ilçe sayfası yönlendirme kısa kodu sunan WordPress eklentisi.
- * Version: 3.0.0
+ * Version: 3.1.0
  * Author: Şubadap Çocuk
  * License: GPL-3.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'KT_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'KT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'KT_PLUGIN_VER', '3.0.0' );
+define( 'KT_PLUGIN_VER', '3.1.0' );
 define( 'KT_EVENTS_OPT', 'subadap_konserler_list' );
 define( 'KT_STYLES_OPT', 'subadap_konserler_styles' );
 
@@ -68,6 +68,7 @@ function kt_get_default_style_settings() {
 		'max_items'        => 16,
 		'date_text'        => '#111827',
 		'city_text'        => '#0f172a',
+		'redirect_target'  => '/konserler',
 		'delete_on_uninst' => 0,
 		'palettes'         => array(
 			array( 'date' => '#e94c86', 'city' => '#fce1ec' ),
@@ -96,6 +97,10 @@ function kt_get_style_settings() {
 
 	$merged             = wp_parse_args( $saved, $defaults );
 	$merged['palettes'] = array();
+
+	if ( empty( $merged['redirect_target'] ) ) {
+		$merged['redirect_target'] = '/konserler';
+	}
 
 	for ( $i = 0; $i < 12; $i++ ) {
 		$d_col = isset( $saved['palettes'][ $i ]['date'] ) ? sanitize_hex_color( $saved['palettes'][ $i ]['date'] ) : '';
@@ -189,8 +194,23 @@ function kt_has_upcoming_concert_for_target( $target ) {
 }
 
 /**
+ * Yönlendirme hedef URL'sini çözümler (kısa kod parametresi -> ayarlar -> /konserler).
+ */
+function kt_resolve_redirect_url( $custom_target = '' ) {
+	$styles         = kt_get_style_settings();
+	$default_target = ! empty( $styles['redirect_target'] ) ? $styles['redirect_target'] : '/konserler';
+	$redirect_path  = ! empty( $custom_target ) ? $custom_target : $default_target;
+
+	if ( 0 === strpos( $redirect_path, 'http://' ) || 0 === strpos( $redirect_path, 'https://' ) ) {
+		return esc_url_raw( $redirect_path );
+	}
+
+	return home_url( '/' . ltrim( $redirect_path, '/' ) );
+}
+
+/**
  * [konser_ilce_yonlendir] kısa kodunu sayfa HTML'i gönderilmeden önce yakalar
- * ve yaklaşan konser yoksa /konserler sayfasına yönlendirir.
+ * ve yaklaşan konser yoksa belirlenen sayfaya yönlendirir.
  */
 add_action( 'template_redirect', 'kt_handle_district_redirect_shortcode' );
 function kt_handle_district_redirect_shortcode() {
@@ -219,7 +239,7 @@ function kt_handle_district_redirect_shortcode() {
 			$atts = shortcode_atts(
 				array(
 					'ilce'  => '',
-					'hedef' => '/konserler',
+					'hedef' => '',
 				),
 				$atts,
 				'konser_ilce_yonlendir'
@@ -228,11 +248,7 @@ function kt_handle_district_redirect_shortcode() {
 			$lookup_key = ! empty( $atts['ilce'] ) ? $atts['ilce'] : $post->post_name;
 
 			if ( ! kt_has_upcoming_concert_for_target( $lookup_key ) ) {
-				$redirect_path = ! empty( $atts['hedef'] ) ? $atts['hedef'] : '/konserler';
-				$redirect_url  = ( 0 === strpos( $redirect_path, 'http' ) )
-					? esc_url_raw( $redirect_path )
-					: home_url( '/' . ltrim( $redirect_path, '/' ) );
-
+				$redirect_url = kt_resolve_redirect_url( $atts['hedef'] );
 				wp_safe_redirect( $redirect_url, 302 );
 				exit;
 			}
@@ -245,32 +261,28 @@ function kt_district_redirect_shortcode_output( $atts ) {
 	$atts = shortcode_atts(
 		array(
 			'ilce'  => '',
-			'hedef' => '/konserler',
+			'hedef' => '',
 		),
 		$atts,
 		'konser_ilce_yonlendir'
 	);
 
 	global $post;
-	$lookup_key = ! empty( $atts['ilce'] ) ? $atts['ilce'] : ( $post ? $post->post_name : '' );
-	$has_event  = kt_has_upcoming_concert_for_target( $lookup_key );
+	$lookup_key   = ! empty( $atts['ilce'] ) ? $atts['ilce'] : ( $post ? $post->post_name : '' );
+	$has_event    = kt_has_upcoming_concert_for_target( $lookup_key );
+	$redirect_url = kt_resolve_redirect_url( $atts['hedef'] );
 
 	// Yöneticiye sayfa içinde bilgilendirme rozeti göster
 	if ( current_user_can( 'edit_pages' ) ) {
 		if ( $has_event ) {
-			return '<div style="padding:10px 14px;margin:10px 0;background:#f0fdf4;border:1px solid #86efac;border-radius:6px;color:#166534;font-size:13px;"><strong>Konser Takvimi Bilgi:</strong> Bu ilçe için yaklaşan konser aktif olduğundan ziyaretçiler bu sayfada kalacaktır.</div>';
+			return '<div style="padding:10px 14px;margin:10px 0;background:#f0fdf4;border:1px solid #86efac;border-radius:6px;color:#166534;font-size:13px;"><strong>Konser Takvimi Bilgi:</strong> Bu ilçe (<code>' . esc_html( $lookup_key ) . '</code>) için yaklaşan konser aktif olduğundan ziyaretçiler bu sayfada kalacaktır.</div>';
 		}
-		return '<div style="padding:10px 14px;margin:10px 0;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;color:#991b1b;font-size:13px;"><strong>Konser Takvimi Bilgi:</strong> Bu ilçe için yaklaşan konser bulunmadığından normal ziyaretçiler otomatik olarak <code>' . esc_html( $atts['hedef'] ) . '</code> adresine yönlendirilecektir (yönetici olduğunuz için yönlendirilmediniz).</div>';
+		return '<div style="padding:10px 14px;margin:10px 0;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;color:#991b1b;font-size:13px;"><strong>Konser Takvimi Bilgi:</strong> Bu ilçe (<code>' . esc_html( $lookup_key ) . '</code>) için yaklaşan konser bulunmadığından normal ziyaretçiler otomatik olarak <code>' . esc_html( $redirect_url ) . '</code> adresine yönlendirilecektir (yönetici olduğunuz için yönlendirilmediniz).</div>';
 	}
 
 	// Eğer template_redirect aşamasında çalışmadıysa (örneğin sayfa oluşturucu widget içindeyse) JS ile yedek yönlendirme
 	if ( ! $has_event ) {
-		$redirect_path = ! empty( $atts['hedef'] ) ? $atts['hedef'] : '/konserler';
-		$redirect_url  = ( 0 === strpos( $redirect_path, 'http' ) )
-			? esc_url( $redirect_path )
-			: esc_url( home_url( '/' . ltrim( $redirect_path, '/' ) ) );
-
-		return '<script>window.location.replace(' . wp_json_encode( $redirect_url ) . ');</script>';
+		return '<script>window.location.replace(' . wp_json_encode( esc_url( $redirect_url ) ) . ');</script>';
 	}
 
 	return '';

@@ -205,7 +205,7 @@ function kt_konser_admin_page() {
 	// 2. Sekme: Düğme Biçimleri & Renk Ayarlarını Kaydetme veya Sıfırlama
 	if ( isset( $_POST['kt_reset_styles'] ) && check_admin_referer( 'kt_styles_nonce_action', 'kt_styles_nonce' ) ) {
 		delete_option( KT_STYLES_OPT );
-		$message = '<div class="notice notice-info is-dismissible"><p>Düğme biçimleri ve renk paletleri varsayılan ayarlara döndürüldü.</p></div>';
+		$message = '<div class="notice notice-info is-dismissible"><p>Düğme biçimleri, yönlendirme hedefi ve renk paletleri varsayılan ayarlara döndürüldü.</p></div>';
 	} elseif ( isset( $_POST['kt_save_styles'] ) && check_admin_referer( 'kt_styles_nonce_action', 'kt_styles_nonce' ) ) {
 		$defaults = kt_get_default_style_settings();
 
@@ -215,6 +215,13 @@ function kt_konser_admin_page() {
 		$min_w      = isset( $_POST['card_min_w'] ) ? max( 180, min( 450, intval( $_POST['card_min_w'] ) ) ) : 250;
 		$max_it     = isset( $_POST['max_items'] ) ? max( 1, min( 100, intval( $_POST['max_items'] ) ) ) : 16;
 		$del_uninst = isset( $_POST['delete_on_uninst'] ) ? 1 : 0;
+
+		$raw_redirect = isset( $_POST['redirect_target'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['redirect_target'] ) ) ) : '/konserler';
+		if ( empty( $raw_redirect ) ) {
+			$raw_redirect = '/konserler';
+		} elseif ( 0 !== strpos( $raw_redirect, 'http://' ) && 0 !== strpos( $raw_redirect, 'https://' ) && 0 !== strpos( $raw_redirect, '/' ) ) {
+			$raw_redirect = '/' . $raw_redirect;
+		}
 
 		$d_text = isset( $_POST['date_text'] ) ? sanitize_hex_color( wp_unslash( $_POST['date_text'] ) ) : '';
 		$c_text = isset( $_POST['city_text'] ) ? sanitize_hex_color( wp_unslash( $_POST['city_text'] ) ) : '';
@@ -241,6 +248,7 @@ function kt_konser_admin_page() {
 			'max_items'        => $max_it,
 			'date_text'        => $d_text ? $d_text : $defaults['date_text'],
 			'city_text'        => $c_text ? $c_text : $defaults['city_text'],
+			'redirect_target'  => $raw_redirect,
 			'delete_on_uninst' => $del_uninst,
 			'palettes'         => $palettes,
 		);
@@ -280,7 +288,7 @@ function kt_konser_admin_page() {
 		<h1>Konser Takvimi</h1>
 		<p>
 			Takvimi göstermek için <code>[konser_takvimi]</code> (veya <code>[subadap_konserler]</code>) kısa kodunu;
-			ilçe sayfalarında aktif konser yoksa <code>/konserler</code> sayfasına yönlendirmek için <code>[konser_ilce_yonlendir]</code> kısa kodunu kullanabilirsiniz.
+			ilçe sayfalarında aktif konser yoksa yönlendirme yapmak için <code>[konser_ilce_yonlendir]</code> kısa kodunu kullanabilirsiniz.
 		</p>
 		<?php echo $message; ?>
 
@@ -528,6 +536,24 @@ function kt_konser_admin_page() {
 							</div>
 						<?php endfor; ?>
 					</div>
+				</div>
+
+				<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #2271b1; border-radius: 4px; padding: 16px 20px; margin-bottom: 20px;">
+					<h2 style="margin-top: 0;">İlçe Sayfası Yönlendirme Ayarı (<code>[konser_ilce_yonlendir]</code>)</h2>
+					<table class="form-table" role="presentation" style="margin-top: 0;">
+						<tr>
+							<th scope="row"><label for="redirect_target">Varsayılan Yönlendirme Sayfası</label></th>
+							<td>
+								<input type="text" id="redirect_target" name="redirect_target" value="<?php echo esc_attr( $styles['redirect_target'] ); ?>" class="regular-text" placeholder="/konserler">
+								<p class="description">
+									İlçe sayfasında aktif konser bulunmadığında ziyaretçilerin yönlendirileceği sayfa yolu (örn. <code>/konserler</code>) veya tam URL.
+								</p>
+								<p class="description" style="margin-top: 6px; color: #1d2327;">
+									<strong>Önemli Not:</strong> <code>[konser_ilce_yonlendir]</code> kısa kodu parametresiz kullanıldığında kontrolü <strong>sayfanın URL uzantısına (slug)</strong> göre yapar. Otomatik algılama için sayfa URL'sinde ilçe adının mutlaka yer alması gerekir (örneğin <code>/urla-konseri</code> veya <code>/urla-konser</code>). URL'de ilçe adı geçmiyorsa kısa kodu <code>[konser_ilce_yonlendir ilce="Urla"]</code> biçiminde kullanabilirsiniz.
+								</p>
+							</td>
+						</tr>
+					</table>
 				</div>
 
 				<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #d63638; border-radius: 4px; padding: 16px 20px; margin-bottom: 20px;">

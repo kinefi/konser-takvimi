@@ -6,7 +6,8 @@ Konser ve etkinlik takvimini yönetmek, yaklaşan etkinlikleri renkli rozetler h
 
 - **Takvim Kısa Kodu (`[konser_takvimi]` ve `[subadap_konserler]`):** Herhangi bir sayfaya veya yazıya eklendiğinde yalnızca tarihi ve son seans saati henüz geçmemiş konserleri (İstanbul saat dilimine göre) kronolojik olarak listeler.
 - **Çift Seans Desteği (`12.00 ve 14.00`):** Aynı gün iki seans varsa 2. seans saati girilebilir; rozet üzerinde `12.00 ve 14.00` biçiminde gösterilir ve 2. seans saati dolana kadar konser aktif kalır.
-- **İlçe Sayfası Yönlendirme Kısa Kodu (`[konser_ilce_yonlendir]`):** `ilce-konser` veya `ilce-konseri` sayfalarına eklendiğinde o ilçeye ait yaklaşan konser olup olmadığını kontrol eder; aktif konser yoksa ziyaretçiyi otomatik olarak `/konserler` sayfasına yönlendirir. İsteğe bağlı olarak `[konser_ilce_yonlendir ilce="Urla" hedef="/konserler"]` parametreleriyle özelleştirilebilir.
+- **İlçe Sayfası Yönlendirme Kısa Kodu (`[konser_ilce_yonlendir]`):** İlçe konser sayfalarına eklendiğinde o ilçeye ait yaklaşan konser olup olmadığını kontrol eder; aktif konser yoksa ziyaretçiyi otomatik olarak Ayarlar sekmesinde tanımlanan yönlendirme sayfasına (varsayılan `/konserler`) yönlendirir.
+  - **Önemli URL Notu:** Kısa kod parametresiz (`[konser_ilce_yonlendir]`) kullanıldığında kontrolü sayfanın URL uzantısına (slug) göre yapar; bu nedenle sayfa URL'sinde ilçe adının mutlaka yer alması gerekir (örneğin `/urla-konseri` veya `/urla-konser`). URL'de ilçe adı geçmiyorsa `[konser_ilce_yonlendir ilce="Urla"]` parametresi kullanılabilir.
 - **Otomatik `ilce-konseri` Uzantısı ve Canlı Sayfa Kontrolü:** İlçe/şehir yazıldığında URL uzantısını otomatik `ilce-konseri` olarak oluşturur; ilgili uzantıda yayımlanmış sayfa veya yazı varsa yeşil, yoksa kırmızı uyarıyla anlık bildirir.
 - **Mevcut Yazı ve Sayfalardan Seçim:** Link uzantısı alanında sitenizdeki yayımlanmış yazı ve sayfalar arasında başlık veya URL uzantısına göre anlık arama/filtreleme yapabilirsiniz.
 - **Otomatik Arşivleme:** Tarihi ve son seans saati geçen konserler otomatik olarak yönetim panelindeki açılır-kapanır **Arşivlenen Konserler** bölümüne taşınır, salt okunur hale getirilir ve siteden gizlenir.
@@ -17,7 +18,7 @@ Konser ve etkinlik takvimini yönetmek, yaklaşan etkinlikleri renkli rozetler h
 ## Kurulum
 
 1. Eski sürüm yüklüyse WordPress **Eklentiler** sayfasından önce onu etkisizleştirip silin (ayarlarda silme seçeneği işaretli değilse veritabanı kayıtlarınız korunur).
-2. `konser-takvimi-3.0.0.zip` arşivini indirin.
+2. `konser-takvimi-3.1.0.zip` arşivini indirin.
 3. WordPress yönetim panelinde **Eklentiler > Yeni Eklenti Ekle > Eklenti Yükle** yolunu izleyin.
 4. `.zip` dosyasını seçip yükleyin ve eklentiyi etkinleştirin.
 
@@ -25,8 +26,8 @@ Konser ve etkinlik takvimini yönetmek, yaklaşan etkinlikleri renkli rozetler h
 
 1. Sol menüdeki **Konser Takvimi** sekmesinden yaklaşan konserlerinizi (tek veya çift seans olarak) ekleyin ve kaydedin.
 2. Takvimi göstermek istediğiniz sayfaya `[konser_takvimi]` (veya geriye dönük uyumlu `[subadap_konserler]`) kısa kodunu yerleştirin.
-3. İlçe konser sayfalarının başına `[konser_ilce_yonlendir]` kısa kodunu yerleştirin; o ilçede aktif konser kalmadığında sayfa otomatik `/konserler` adresine yönlenecektir.
-4. Rozetlerin renk ve boyutlarını özelleştirmek için **Düğme Biçimleri, Renkler & Ayarlar** sekmesini kullanın.
+3. URL'sinde ilçe adı geçen konser sayfalarının başına `[konser_ilce_yonlendir]` kısa kodunu yerleştirin; o ilçede aktif konser kalmadığında sayfa otomatik olarak ayarlanan hedefe yönlenecektir.
+4. Rozetlerin renk, boyut ve yönlendirme hedefini özelleştirmek için **Düğme Biçimleri, Renkler & Ayarlar** sekmesini kullanın.
 
 ## Dosya Yapısı
 
