@@ -1,9 +1,8 @@
 document.addEventListener('DOMContentLoaded', function () {
-	var tableBody = document.querySelector('#subadap-concerts-table tbody');
+	var tableBody = document.querySelector('#kt-concerts-table tbody');
 	var addBtn = document.getElementById('add-concert-row');
-	var postsDatalist = document.getElementById('subadap-existing-posts-list');
+	var postsDatalist = document.getElementById('kt-existing-posts-list');
 
-	// Datalist içindeki mevcut yayımlanmış yazı ve sayfa slug'larını haritaya al
 	var existingSlugsMap = {};
 	if (postsDatalist) {
 		Array.from(postsDatalist.options).forEach(function (opt) {
@@ -15,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	function checkSlugExistence(row) {
 		var slugInput = row.querySelector('input[name="concert_slug[]"]');
-		var statusSpan = row.querySelector('.subadap-slug-status');
+		var statusSpan = row.querySelector('.kt-slug-status');
 		if (!slugInput || !statusSpan) {
 			return;
 		}
@@ -80,7 +79,6 @@ document.addEventListener('DOMContentLoaded', function () {
 			}
 		}
 
-		// Sayfa yüklendiğinde mevcut satırların sayfa varlık durumunu kontrol et
 		Array.from(tableBody.querySelectorAll('tr')).forEach(function (row) {
 			checkSlugExistence(row);
 		});
@@ -108,10 +106,11 @@ document.addEventListener('DOMContentLoaded', function () {
 			row.innerHTML =
 				'<td style="vertical-align: top;"><input type="date" name="concert_date[]" required style="width: 100%;"></td>' +
 				'<td style="vertical-align: top;"><input type="time" name="concert_time[]" value="15:00" required style="width: 100%;"></td>' +
+				'<td style="vertical-align: top;"><input type="time" name="concert_time2[]" value="" style="width: 100%;"></td>' +
 				'<td style="vertical-align: top;"><input type="text" name="concert_city[]" placeholder="Örn: Urla" required style="width: 100%;"></td>' +
 				'<td style="vertical-align: top;">' +
-					'<input type="text" class="subadap-slug-input" name="concert_slug[]" list="subadap-existing-posts-list" data-auto="1" placeholder="ilce-konseri veya ara..." autocomplete="off">' +
-					'<span class="subadap-slug-status"></span>' +
+					'<input type="text" class="kt-slug-input" name="concert_slug[]" list="kt-existing-posts-list" data-auto="1" placeholder="ilce-konseri veya ara..." autocomplete="off">' +
+					'<span class="kt-slug-status"></span>' +
 				'</td>' +
 				'<td style="vertical-align: top;"><button type="button" class="button remove-row" style="color: #b32d2e;">Sil</button></td>';
 			tableBody.appendChild(row);
@@ -124,9 +123,8 @@ document.addEventListener('DOMContentLoaded', function () {
 		});
 	}
 
-	// Arşivlenen konserler için sayfalama (sayfa başına 10 kayıt)
-	var archiveRows = Array.from(document.querySelectorAll('#subadap-archive-table tbody tr.archive-row'));
-	var paginationContainer = document.getElementById('subadap-archive-pagination');
+	var archiveRows = Array.from(document.querySelectorAll('#kt-archive-table tbody tr.archive-row'));
+	var paginationContainer = document.getElementById('kt-archive-pagination');
 
 	if (archiveRows.length > 0 && paginationContainer) {
 		var perPage = 10;
@@ -179,8 +177,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		renderArchivePage(1);
 	}
 
-	// Düğme Biçimleri & Renkler Sekmesi - Canlı Önizleme
-	var previewBox = document.getElementById('subadap-live-preview-box');
+	var previewBox = document.getElementById('kt-live-preview-box');
 	if (previewBox) {
 		var radiusInput = document.getElementById('border_radius');
 		var heightInput = document.getElementById('badge_height');

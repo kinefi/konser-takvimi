@@ -3,37 +3,43 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-add_action( 'admin_menu', 'subadap_register_concert_menu' );
-function subadap_register_concert_menu() {
+add_action( 'admin_menu', 'kt_register_concert_menu' );
+function kt_register_concert_menu() {
 	add_menu_page(
 		'Konser Takvimi',
 		'Konser Takvimi',
 		'manage_options',
-		'subadap-konseriler',
-		'subadap_konser_admin_page',
+		'konser-takvimi',
+		'kt_konser_admin_page',
 		'dashicons-calendar-alt',
 		25
 	);
 }
 
-add_action( 'admin_enqueue_scripts', 'subadap_enqueue_admin_assets' );
-function subadap_enqueue_admin_assets( $hook ) {
-	if ( 'toplevel_page_subadap-konseriler' !== $hook ) {
+add_action( 'admin_enqueue_scripts', 'kt_enqueue_admin_assets' );
+function kt_enqueue_admin_assets( $hook ) {
+	if ( 'toplevel_page_konser-takvimi' !== $hook ) {
 		return;
 	}
-	wp_enqueue_script(
-		'subadap-admin-js',
-		SUBADAP_KONSER_URL . 'assets/js/admin.js',
+	wp_enqueue_style(
+		'kt-admin-css',
+		KT_PLUGIN_URL . 'assets/css/admin.css',
 		array(),
-		SUBADAP_KONSER_VER,
+		KT_PLUGIN_VER
+	);
+	wp_enqueue_script(
+		'kt-admin-js',
+		KT_PLUGIN_URL . 'assets/js/admin.js',
+		array(),
+		KT_PLUGIN_VER,
 		true
 	);
 }
 
 // JSON ve CSV Dışa Aktarma (Export) İşleyicisi
-add_action( 'admin_init', 'subadap_handle_concert_export' );
-function subadap_handle_concert_export() {
-	if ( ! isset( $_POST['subadap_export_action'] ) ) {
+add_action( 'admin_init', 'kt_handle_concert_export' );
+function kt_handle_concert_export() {
+	if ( ! isset( $_POST['kt_export_action'] ) ) {
 		return;
 	}
 
@@ -41,7 +47,7 @@ function subadap_handle_concert_export() {
 		wp_die( 'Yetkisiz erişim.' );
 	}
 
-	check_admin_referer( 'subadap_export_nonce_action', 'subadap_export_nonce' );
+	check_admin_referer( 'kt_export_nonce_action', 'kt_export_nonce' );
 
 	$format = isset( $_POST['export_format'] ) ? sanitize_key( $_POST['export_format'] ) : 'json';
 	$scope  = isset( $_POST['export_scope'] ) ? sanitize_key( $_POST['export_scope'] ) : 'all';
@@ -53,16 +59,16 @@ function subadap_handle_concert_export() {
 		$scope = 'all';
 	}
 
-	$now_ts     = subadap_get_istanbul_timestamp();
-	$all_events = get_option( SUBADAP_KONSER_OPT, array() );
+	$now_ts     = kt_get_istanbul_timestamp();
+	$all_events = get_option( KT_EVENTS_OPT, array() );
 	if ( ! is_array( $all_events ) ) {
 		$all_events = array();
 	}
 
 	$filtered = array();
 	foreach ( $all_events as $ev ) {
-		$ev_ts       = isset( $ev['datetime'] ) ? strtotime( $ev['datetime'] ) : false;
-		$is_archived = ( false !== $ev_ts && $ev_ts < $now_ts );
+		$end_ts      = kt_get_event_end_timestamp( $ev );
+		$is_archived = ( false !== $end_ts && $end_ts < $now_ts );
 
 		if ( 'active' === $scope && $is_archived ) {
 			continue;
@@ -76,7 +82,7 @@ function subadap_handle_concert_export() {
 	}
 
 	$date_stamp = gmdate( 'Y-m-d', $now_ts + 10800 );
-	$filename   = "subadap-konseriler-{$scope}-{$date_stamp}.{$format}";
+	$filename   = "konser-takvimi-{$scope}-{$date_stamp}.{$format}";
 
 	nocache_headers();
 
@@ -86,12 +92,13 @@ function subadap_handle_concert_export() {
 
 		$output = fopen( 'php://output', 'w' );
 		fwrite( $output, "\xEF\xBB\xBF" );
-		fputcsv( $output, array( 'Tarih', 'Saat', 'Şehir / İlçe', 'Slug', 'Durum', 'ISO Tarih' ), ';' );
+		fputcsv( $output, array( 'Tarih', '1. Seans', '2. Seans', 'Şehir / İlçe', 'Slug', 'Durum', 'ISO Tarih' ), ';' );
 
 		foreach ( $filtered as $row ) {
 			$dt_parts  = explode( 'T', $row['datetime'] );
 			$d_val     = isset( $dt_parts[0] ) ? $dt_parts[0] : '';
-			$t_val     = isset( $dt_parts[1] ) ? substr( $dt_parts[1], 0, 5 ) : '';
+			$t1_val    = isset( $dt_parts[1] ) ? substr( $dt_parts[1], 0, 5 ) : '';
+			$t2_val    = isset( $row['time2'] ) ? $row['time2'] : '';
 			$safe_city = preg_replace( '/^[=+\-@]/', "'$0", $row['city'] );
 			$safe_slug = preg_replace( '/^[=+\-@]/', "'$0", $row['slug'] );
 
@@ -99,7 +106,8 @@ function subadap_handle_concert_export() {
 				$output,
 				array(
 					$d_val,
-					$t_val,
+					$t1_val,
+					$t2_val,
 					$safe_city,
 					$safe_slug,
 					$row['status'],
@@ -118,7 +126,7 @@ function subadap_handle_concert_export() {
 	exit;
 }
 
-function subadap_konser_admin_page() {
+function kt_konser_admin_page() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
@@ -129,36 +137,38 @@ function subadap_konser_admin_page() {
 	}
 
 	$message         = '';
-	$now_ts          = subadap_get_istanbul_timestamp();
-	$existing_events = get_option( SUBADAP_KONSER_OPT, array() );
+	$now_ts          = kt_get_istanbul_timestamp();
+	$existing_events = get_option( KT_EVENTS_OPT, array() );
 
 	if ( ! is_array( $existing_events ) ) {
 		$existing_events = array();
 	}
 
 	// 1. Sekme: Konserleri Kaydetme
-	if ( isset( $_POST['subadap_save_concerts'] ) && check_admin_referer( 'subadap_conser_nonce_action', 'subadap_conser_nonce' ) ) {
+	if ( isset( $_POST['kt_save_concerts'] ) && check_admin_referer( 'kt_conser_nonce_action', 'kt_conser_nonce' ) ) {
 		$archived_events = array();
 
 		foreach ( $existing_events as $ev ) {
-			$ev_ts = isset( $ev['datetime'] ) ? strtotime( $ev['datetime'] ) : false;
-			if ( false !== $ev_ts && $ev_ts < $now_ts ) {
+			$end_ts = kt_get_event_end_timestamp( $ev );
+			if ( false !== $end_ts && $end_ts < $now_ts ) {
 				$archived_events[] = $ev;
 			}
 		}
 
 		$dates         = isset( $_POST['concert_date'] ) ? (array) $_POST['concert_date'] : array();
 		$times         = isset( $_POST['concert_time'] ) ? (array) $_POST['concert_time'] : array();
+		$times2        = isset( $_POST['concert_time2'] ) ? (array) $_POST['concert_time2'] : array();
 		$cities        = isset( $_POST['concert_city'] ) ? (array) $_POST['concert_city'] : array();
 		$slugs         = isset( $_POST['concert_slug'] ) ? (array) $_POST['concert_slug'] : array();
 		$active_events = array();
 		$total         = count( $cities );
 
 		for ( $i = 0; $i < $total; $i++ ) {
-			$city = sanitize_text_field( wp_unslash( $cities[ $i ] ) );
-			$date = isset( $dates[ $i ] ) ? sanitize_text_field( wp_unslash( $dates[ $i ] ) ) : '';
-			$time = isset( $times[ $i ] ) ? sanitize_text_field( wp_unslash( $times[ $i ] ) ) : '';
-			$slug = isset( $slugs[ $i ] ) ? sanitize_title( wp_unslash( $slugs[ $i ] ) ) : '';
+			$city  = sanitize_text_field( wp_unslash( $cities[ $i ] ) );
+			$date  = isset( $dates[ $i ] ) ? sanitize_text_field( wp_unslash( $dates[ $i ] ) ) : '';
+			$time  = isset( $times[ $i ] ) ? sanitize_text_field( wp_unslash( $times[ $i ] ) ) : '';
+			$time2 = isset( $times2[ $i ] ) ? sanitize_text_field( wp_unslash( $times2[ $i ] ) ) : '';
+			$slug  = isset( $slugs[ $i ] ) ? sanitize_title( wp_unslash( $slugs[ $i ] ) ) : '';
 
 			if ( empty( $city ) || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
 				continue;
@@ -168,31 +178,36 @@ function subadap_konser_admin_page() {
 				$time = '15:00';
 			}
 
+			if ( ! preg_match( '/^\d{2}:\d{2}$/', $time2 ) ) {
+				$time2 = '';
+			}
+
 			if ( empty( $slug ) ) {
 				$slug = sanitize_title( $city . '-konseri' );
 			}
 
 			$active_events[] = array(
 				'datetime' => $date . 'T' . $time . ':00+03:00',
+				'time2'    => $time2,
 				'city'     => $city,
 				'slug'     => $slug,
 			);
 		}
 
 		$all_events = array_merge( $archived_events, $active_events );
-		usort( $all_events, 'subadap_sort_events_asc' );
+		usort( $all_events, 'kt_sort_events_asc' );
 
-		update_option( SUBADAP_KONSER_OPT, $all_events, false );
+		update_option( KT_EVENTS_OPT, $all_events, false );
 		$existing_events = $all_events;
 		$message         = '<div class="notice notice-success is-dismissible"><p>Konser listesi veritabanına kaydedildi.</p></div>';
 	}
 
 	// 2. Sekme: Düğme Biçimleri & Renk Ayarlarını Kaydetme veya Sıfırlama
-	if ( isset( $_POST['subadap_reset_styles'] ) && check_admin_referer( 'subadap_styles_nonce_action', 'subadap_styles_nonce' ) ) {
-		delete_option( SUBADAP_STYLE_OPT );
+	if ( isset( $_POST['kt_reset_styles'] ) && check_admin_referer( 'kt_styles_nonce_action', 'kt_styles_nonce' ) ) {
+		delete_option( KT_STYLES_OPT );
 		$message = '<div class="notice notice-info is-dismissible"><p>Düğme biçimleri ve renk paletleri varsayılan ayarlara döndürüldü.</p></div>';
-	} elseif ( isset( $_POST['subadap_save_styles'] ) && check_admin_referer( 'subadap_styles_nonce_action', 'subadap_styles_nonce' ) ) {
-		$defaults = subadap_get_default_style_settings();
+	} elseif ( isset( $_POST['kt_save_styles'] ) && check_admin_referer( 'kt_styles_nonce_action', 'kt_styles_nonce' ) ) {
+		$defaults = kt_get_default_style_settings();
 
 		$radius     = isset( $_POST['border_radius'] ) ? max( 0, min( 50, intval( $_POST['border_radius'] ) ) ) : 20;
 		$height     = isset( $_POST['badge_height'] ) ? max( 60, min( 160, intval( $_POST['badge_height'] ) ) ) : 90;
@@ -230,7 +245,7 @@ function subadap_konser_admin_page() {
 			'palettes'         => $palettes,
 		);
 
-		update_option( SUBADAP_STYLE_OPT, $new_styles, false );
+		update_option( KT_STYLES_OPT, $new_styles, false );
 		$message = '<div class="notice notice-success is-dismissible"><p>Düğme biçimleri ve ayarlar kaydedildi.</p></div>';
 	}
 
@@ -238,20 +253,19 @@ function subadap_konser_admin_page() {
 	$archived_list = array();
 
 	foreach ( $existing_events as $event ) {
-		$ev_ts = isset( $event['datetime'] ) ? strtotime( $event['datetime'] ) : false;
-		if ( false !== $ev_ts && $ev_ts < $now_ts ) {
+		$end_ts = kt_get_event_end_timestamp( $event );
+		if ( false !== $end_ts && $end_ts < $now_ts ) {
 			$archived_list[] = $event;
 		} else {
 			$upcoming_list[] = $event;
 		}
 	}
 
-	usort( $archived_list, 'subadap_sort_events_desc' );
+	usort( $archived_list, 'kt_sort_events_desc' );
 	$archive_count = count( $archived_list );
 	$active_count  = count( $upcoming_list );
-	$styles        = subadap_get_style_settings();
+	$styles        = kt_get_style_settings();
 
-	// Mevcut yayımlanmış yazı ve sayfaların slug ve başlıklarını çek
 	$existing_posts = get_posts(
 		array(
 			'post_type'      => array( 'post', 'page' ),
@@ -263,54 +277,25 @@ function subadap_konser_admin_page() {
 	);
 	?>
 	<div class="wrap">
-		<h1>Şubadap Konser Takvimi</h1>
-		<p>Sayfada göstermek için <code>[subadap_konserler]</code> kısa kodunu kullanabilirsiniz.</p>
+		<h1>Konser Takvimi</h1>
+		<p>
+			Takvimi göstermek için <code>[konser_takvimi]</code> (veya <code>[subadap_konserler]</code>) kısa kodunu;
+			ilçe sayfalarında aktif konser yoksa <code>/konserler</code> sayfasına yönlendirmek için <code>[konser_ilce_yonlendir]</code> kısa kodunu kullanabilirsiniz.
+		</p>
 		<?php echo $message; ?>
 
-		<style>
-			.subadap-slug-input {
-				width: 100%;
-				transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
-			}
-			.subadap-slug-input.is-valid-page {
-				border: 1.5px solid #16a34a !important;
-				background-color: #f0fdf4 !important;
-				box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.15);
-			}
-			.subadap-slug-input.is-missing-page {
-				border: 1.5px solid #dc2626 !important;
-				background-color: #fef2f2 !important;
-				box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.15);
-			}
-			.subadap-slug-status {
-				display: block;
-				font-size: 11px;
-				margin-top: 3px;
-				line-height: 1.3;
-				font-weight: 600;
-			}
-			.subadap-slug-status.is-valid-page {
-				color: #15803d;
-			}
-			.subadap-slug-status.is-missing-page {
-				color: #b91c1c;
-			}
-		</style>
-
-		<!-- Sekme Menüsü -->
-		<nav class="nav-tab-wrapper" style="margin-top: 15px; max-width: 950px;">
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=subadap-konseriler&tab=concerts' ) ); ?>" class="nav-tab <?php echo 'concerts' === $active_tab ? 'nav-tab-active' : ''; ?>">
+		<nav class="nav-tab-wrapper" style="margin-top: 15px; max-width: 1020px;">
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=concerts' ) ); ?>" class="nav-tab <?php echo 'concerts' === $active_tab ? 'nav-tab-active' : ''; ?>">
 				Konser Listesi & Arşiv
 			</a>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=subadap-konseriler&tab=styles' ) ); ?>" class="nav-tab <?php echo 'styles' === $active_tab ? 'nav-tab-active' : ''; ?>">
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=styles' ) ); ?>" class="nav-tab <?php echo 'styles' === $active_tab ? 'nav-tab-active' : ''; ?>">
 				Düğme Biçimleri, Renkler & Ayarlar
 			</a>
 		</nav>
 
 		<?php if ( 'concerts' === $active_tab ) : ?>
 
-			<!-- Mevcut WordPress Yazı ve Sayfaları İçin Filtrelenebilir Seçim Listesi -->
-			<datalist id="subadap-existing-posts-list">
+			<datalist id="kt-existing-posts-list">
 				<?php foreach ( $existing_posts as $wp_post ) : ?>
 					<?php
 					if ( ! empty( $wp_post->post_name ) ) :
@@ -324,19 +309,20 @@ function subadap_konser_admin_page() {
 			</datalist>
 
 			<h2 style="margin-top: 25px;">Yaklaşan Konserler (Düzenlenebilir)</h2>
-			<p class="description">İlçe/şehir yazıldığında link uzantısı otomatik olarak <code>ilce-konseri</code> biçiminde oluşturulur. İlgili uzantıda yayımlanmış bir sayfa veya yazı varsa kutu <span style="color:#15803d;font-weight:600;">yeşil</span>, yoksa <span style="color:#b91c1c;font-weight:600;">kırmızı</span> görünür.</p>
+			<p class="description">Aynı gün iki seans varsa <strong>2. Seans</strong> alanını doldurun; düğmede <code>12.00 ve 14.00</code> olarak gösterilir. Tek seans için 2. seansı boş bırakabilirsiniz.</p>
 
 			<form method="post" action="">
-				<?php wp_nonce_field( 'subadap_conser_nonce_action', 'subadap_conser_nonce' ); ?>
+				<?php wp_nonce_field( 'kt_conser_nonce_action', 'kt_conser_nonce' ); ?>
 
-				<table class="widefat fixed striped" id="subadap-concerts-table" style="max-width: 950px; margin-top: 10px;">
+				<table class="widefat fixed striped" id="kt-concerts-table" style="max-width: 1020px; margin-top: 10px;">
 					<thead>
 						<tr>
-							<th style="width: 150px;">Tarih</th>
-							<th style="width: 100px;">Saat</th>
-							<th style="width: 200px;">Şehir / İlçe Adı</th>
+							<th style="width: 145px;">Tarih</th>
+							<th style="width: 95px;">1. Seans</th>
+							<th style="width: 110px;">2. Seans (Ops.)</th>
+							<th style="width: 185px;">Şehir / İlçe Adı</th>
 							<th>Link Uzantısı (Otomatik: ilce-konseri / Mevcut Yazı-Sayfa)</th>
-							<th style="width: 75px;">İşlem</th>
+							<th style="width: 70px;">İşlem</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -344,15 +330,17 @@ function subadap_konser_admin_page() {
 						foreach ( $upcoming_list as $event ) :
 							$dt_parts = explode( 'T', $event['datetime'] );
 							$d_val    = isset( $dt_parts[0] ) ? $dt_parts[0] : '';
-							$t_val    = isset( $dt_parts[1] ) ? substr( $dt_parts[1], 0, 5 ) : '15:00';
+							$t1_val   = isset( $dt_parts[1] ) ? substr( $dt_parts[1], 0, 5 ) : '15:00';
+							$t2_val   = isset( $event['time2'] ) ? $event['time2'] : '';
 							?>
 						<tr>
 							<td style="vertical-align: top;"><input type="date" name="concert_date[]" value="<?php echo esc_attr( $d_val ); ?>" required style="width: 100%;"></td>
-							<td style="vertical-align: top;"><input type="time" name="concert_time[]" value="<?php echo esc_attr( $t_val ); ?>" required style="width: 100%;"></td>
+							<td style="vertical-align: top;"><input type="time" name="concert_time[]" value="<?php echo esc_attr( $t1_val ); ?>" required style="width: 100%;"></td>
+							<td style="vertical-align: top;"><input type="time" name="concert_time2[]" value="<?php echo esc_attr( $t2_val ); ?>" style="width: 100%;"></td>
 							<td style="vertical-align: top;"><input type="text" name="concert_city[]" value="<?php echo esc_attr( $event['city'] ); ?>" placeholder="Örn: Urla" required style="width: 100%;"></td>
 							<td style="vertical-align: top;">
-								<input type="text" class="subadap-slug-input" name="concert_slug[]" list="subadap-existing-posts-list" value="<?php echo esc_attr( $event['slug'] ); ?>" data-auto="0" placeholder="ilce-konseri veya ara..." autocomplete="off">
-								<span class="subadap-slug-status"></span>
+								<input type="text" class="kt-slug-input" name="concert_slug[]" list="kt-existing-posts-list" value="<?php echo esc_attr( $event['slug'] ); ?>" data-auto="0" placeholder="ilce-konseri veya ara..." autocomplete="off">
+								<span class="kt-slug-status"></span>
 							</td>
 							<td style="vertical-align: top;"><button type="button" class="button remove-row" style="color: #b32d2e;">Sil</button></td>
 						</tr>
@@ -362,20 +350,19 @@ function subadap_konser_admin_page() {
 
 				<p style="margin-top: 15px;">
 					<button type="button" class="button button-secondary" id="add-concert-row">+ Yeni Konser Ekle</button>
-					<input type="submit" name="subadap_save_concerts" class="button button-primary" value="Değişiklikleri Kaydet" style="margin-left: 10px;">
+					<input type="submit" name="kt_save_concerts" class="button button-primary" value="Değişiklikleri Kaydet" style="margin-left: 10px;">
 				</p>
 			</form>
 
-			<hr style="max-width: 950px; margin: 35px 0 25px 0;">
+			<hr style="max-width: 1020px; margin: 35px 0 25px 0;">
 
-			<!-- Yedekle / Dışa Aktar Kutusu (Arşiv panelinin hemen üstünde) -->
-			<div style="max-width: 950px; background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #2271b1; border-radius: 4px; padding: 12px 16px; margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; box-sizing: border-box;">
+			<div style="max-width: 1020px; background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #2271b1; border-radius: 4px; padding: 12px 16px; margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; box-sizing: border-box;">
 				<div>
 					<strong>Yedekle / Dışa Aktar (Export):</strong>
 					<span class="description" style="margin-left: 6px;">Aktif (<?php echo intval( $active_count ); ?>), Arşiv (<?php echo intval( $archive_count ); ?>) veya Tüm kayıtları indirin.</span>
 				</div>
 				<form method="post" action="" style="display: flex; align-items: center; gap: 8px; margin: 0;">
-					<?php wp_nonce_field( 'subadap_export_nonce_action', 'subadap_export_nonce' ); ?>
+					<?php wp_nonce_field( 'kt_export_nonce_action', 'kt_export_nonce' ); ?>
 					<select name="export_scope" aria-label="Kapsam">
 						<option value="all">Tümü (Aktif + Arşiv)</option>
 						<option value="active">Sadece Aktif Konserler</option>
@@ -385,24 +372,24 @@ function subadap_konser_admin_page() {
 						<option value="json">JSON (.json)</option>
 						<option value="csv">Excel / CSV (.csv)</option>
 					</select>
-					<input type="submit" name="subadap_export_action" class="button button-secondary" value="İndir">
+					<input type="submit" name="kt_export_action" class="button button-secondary" value="İndir">
 				</form>
 			</div>
 
-			<!-- Açılır-Kapanır Arşiv Paneli -->
-			<details id="subadap-archive-accordion" style="max-width: 950px; background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 12px 16px; box-sizing: border-box;">
+			<details id="kt-archive-accordion" style="max-width: 1020px; background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 12px 16px; box-sizing: border-box;">
 				<summary style="cursor: pointer; font-size: 15px; font-weight: 600; color: #1d2327; user-select: none;">
 					Arşivlenen Konserler (<?php echo intval( $archive_count ); ?> adet - Görmek için tıklayın)
 				</summary>
 
 				<div style="margin-top: 15px;">
-					<p class="description" style="margin-bottom: 12px;">Tarihi geçen konserler otomatik olarak buraya taşınır, düzenlemeye kapatılır ve sitedeki kısa kod alanında gizlenir.</p>
+					<p class="description" style="margin-bottom: 12px;">Tarihi ve son seans saati geçen konserler otomatik olarak buraya taşınır, düzenlemeye kapatılır ve sitedeki kısa kod alanında gizlenir.</p>
 
-					<table class="widefat fixed striped" id="subadap-archive-table" style="opacity: 0.85;">
+					<table class="widefat fixed striped" id="kt-archive-table" style="opacity: 0.85;">
 						<thead>
 							<tr>
-								<th style="width: 150px;">Tarih</th>
-								<th style="width: 100px;">Saat</th>
+								<th style="width: 145px;">Tarih</th>
+								<th style="width: 95px;">1. Seans</th>
+								<th style="width: 95px;">2. Seans</th>
 								<th>Şehir / İlçe Adı</th>
 								<th>Link Uzantısı (Slug)</th>
 								<th style="width: 95px;">Durum</th>
@@ -411,18 +398,20 @@ function subadap_konser_admin_page() {
 						<tbody>
 							<?php if ( empty( $archived_list ) ) : ?>
 								<tr>
-									<td colspan="5" style="text-align: center; color: #666;">Henüz arşivlenmiş konser bulunmuyor.</td>
+									<td colspan="6" style="text-align: center; color: #666;">Henüz arşivlenmiş konser bulunmuyor.</td>
 								</tr>
 							<?php else : ?>
 								<?php
 								foreach ( $archived_list as $event ) :
 									$dt_parts = explode( 'T', $event['datetime'] );
 									$d_val    = isset( $dt_parts[0] ) ? $dt_parts[0] : '';
-									$t_val    = isset( $dt_parts[1] ) ? substr( $dt_parts[1], 0, 5 ) : '15:00';
+									$t1_val   = isset( $dt_parts[1] ) ? substr( $dt_parts[1], 0, 5 ) : '15:00';
+									$t2_val   = isset( $event['time2'] ) ? $event['time2'] : '';
 									?>
 								<tr class="archive-row">
 									<td><input type="date" value="<?php echo esc_attr( $d_val ); ?>" disabled style="width: 100%; background: #f0f0f1; color: #50575e;"></td>
-									<td><input type="time" value="<?php echo esc_attr( $t_val ); ?>" disabled style="width: 100%; background: #f0f0f1; color: #50575e;"></td>
+									<td><input type="time" value="<?php echo esc_attr( $t1_val ); ?>" disabled style="width: 100%; background: #f0f0f1; color: #50575e;"></td>
+									<td><input type="text" value="<?php echo esc_attr( $t2_val ? $t2_val : '-' ); ?>" disabled style="width: 100%; background: #f0f0f1; color: #50575e; text-align: center;"></td>
 									<td><input type="text" value="<?php echo esc_attr( $event['city'] ); ?>" disabled style="width: 100%; background: #f0f0f1; color: #50575e;"></td>
 									<td><input type="text" value="<?php echo esc_attr( $event['slug'] ); ?>" disabled style="width: 100%; background: #f0f0f1; color: #50575e;"></td>
 									<td><span style="display: inline-block; padding: 3px 8px; background: #e2e8f0; color: #475569; border-radius: 4px; font-size: 12px; font-weight: 600;">Arşivlendi</span></td>
@@ -432,21 +421,21 @@ function subadap_konser_admin_page() {
 						</tbody>
 					</table>
 
-					<div id="subadap-archive-pagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;"></div>
+					<div id="kt-archive-pagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;"></div>
 				</div>
 			</details>
 
 		<?php else : ?>
 
-			<!-- 2. Sekme: Düğme Biçimleri, Renkler & Ayarlar -->
-			<form method="post" action="" style="max-width: 950px; margin-top: 20px;">
-				<?php wp_nonce_field( 'subadap_styles_nonce_action', 'subadap_styles_nonce' ); ?>
+			<form method="post" action="" style="max-width: 1020px; margin-top: 20px;">
+				<?php wp_nonce_field( 'kt_styles_nonce_action', 'kt_styles_nonce' ); ?>
 
 				<div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 16px 20px; margin-bottom: 20px;">
 					<h2 style="margin-top: 0;">Canlı Düğme Önizlemesi</h2>
-					<div id="subadap-live-preview-box" style="display: flex; flex-wrap: wrap; gap: <?php echo intval( $styles['grid_gap'] ); ?>px; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
+					<div id="kt-live-preview-box" style="display: flex; flex-wrap: wrap; gap: <?php echo intval( $styles['grid_gap'] ); ?>px; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
 						<?php
 						$sample_cities = array( 'İzmir', 'İstanbul', 'Ankara', 'Bursa' );
+						$sample_times  = array( '12.00 ve 14.00', '15.00', '13.00 ve 15.00', '14.00' );
 						for ( $p = 0; $p < 4; $p++ ) :
 							$d_bg = $styles['palettes'][ $p ]['date'];
 							$c_bg = $styles['palettes'][ $p ]['city'];
@@ -455,7 +444,7 @@ function subadap_konser_admin_page() {
 								<div class="preview-date" style="width: 44%; background-color: <?php echo esc_attr( $d_bg ); ?>; color: <?php echo esc_attr( $styles['date_text'] ); ?>; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; line-height: 1.2;">
 									<strong style="font-size: 15px;">24 Ekim</strong>
 									<span style="font-size: 13px;">Cumartesi</span>
-									<strong style="font-size: 13px;">15:00</strong>
+									<strong style="font-size: 12px;"><?php echo esc_html( $sample_times[ $p ] ); ?></strong>
 								</div>
 								<div class="preview-city" style="width: 56%; background-color: <?php echo esc_attr( $c_bg ); ?>; color: <?php echo esc_attr( $styles['city_text'] ); ?>; display: flex; justify-content: center; align-items: center; font-size: 20px; font-weight: 700;">
 									<?php echo esc_html( $sample_cities[ $p ] ); ?>
@@ -553,8 +542,8 @@ function subadap_konser_admin_page() {
 				</div>
 
 				<p>
-					<input type="submit" name="subadap_save_styles" class="button button-primary" value="Ayarları Kaydet">
-					<input type="submit" name="subadap_reset_styles" class="button button-secondary" value="Varsayılan Renk ve Boyutlara Sıfırla" style="margin-left: 10px;" onclick="return confirm('Tüm düğme biçimi ve renk ayarları varsayılana sıfırlanacak. Emin misiniz?');">
+					<input type="submit" name="kt_save_styles" class="button button-primary" value="Ayarları Kaydet">
+					<input type="submit" name="kt_reset_styles" class="button button-secondary" value="Varsayılan Renk ve Boyutlara Sıfırla" style="margin-left: 10px;" onclick="return confirm('Tüm düğme biçimi ve renk ayarları varsayılana sıfırlanacak. Emin misiniz?');">
 				</p>
 			</form>
 

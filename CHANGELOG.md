@@ -1,5 +1,18 @@
 # Değişiklik Günlüğü (Changelog)
 
+## [3.0.0] - 2026-11-16
+### Eklenenler & Değiştirilenler
+- **Çift Seans Desteği (`12.00 ve 14.00`):** Yönetim paneline isteğe bağlı **2. Seans** alanı eklendi. İkinci seans girildiğinde düğmede saat `12.00 ve 14.00` biçiminde tek satırda gösterilir ve 2. seans saati geçene kadar konser aktif kalır.
+- **İlçe Sayfası Yönlendirme Kısa Kodu (`[konser_ilce_yonlendir]`):** İlçe konser sayfalarına yerleştirildiğinde ilgili ilçede yaklaşan konser olup olmadığını denetler; aktif konser yoksa ziyaretçiyi otomatik `/konserler` sayfasına (`302` geçici yönlendirme ile) yönlendirir. Yöneticiler için sayfa içinde durum bilgi kutusu gösterir.
+- **CSV / JSON Dışa Aktarma Güncellemesi:** CSV dışa aktarımına `1. Seans` ve `2. Seans` sütunları eklendi.
+
+## [2.9.0] - 2026-11-16
+### Değiştirilenler
+- **Genel Dosya ve Klasör Yapısı:** Eklenti klasörü ve dosyaları yeniden kullanılabilir genel isimlere (`konser-takvimi/konser-takvimi.php`, `assets/css/frontend.css`, `assets/css/admin.css`, `assets/js/frontend.js`) dönüştürüldü.
+- **Modüler Panel Stili:** Yönetim paneli satır içi CSS kuralları `assets/css/admin.css` dosyasına ayrıldı.
+- **Genel Kısa Kod & Geriye Dönük Uyumluluk:** Yeni genel `[konser_takvimi]` kısa kodu eklendi; mevcut veritabanı kayıtları ve `[subadap_konserler]` kısa kodu tam uyumlu şekilde korundu.
+- **Dinamik Site URL Desteği:** Rozet bağlantılarındaki kök adres sabit URL yerine WordPress `home_url()` fonksiyonundan dinamik alınacak şekilde güncellendi.
+
 ## [2.8.1] - 2026-11-15
 ### Eklenenler & Değiştirilenler
 - **Otomatik `ilce-konseri` Slug Formatı:** Yeni konser eklerken ilçe/şehir girildiğinde link uzantısı otomatik olarak `ilce-konseri` biçiminde oluşturulur.

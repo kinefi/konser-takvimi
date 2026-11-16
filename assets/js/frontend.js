@@ -1,13 +1,13 @@
 (function () {
-	function initSubadapGrid() {
-		var gridContainer = document.getElementById('subadapConcertGrid');
-		if (!gridContainer || typeof subadapKonserData === 'undefined') {
+	function initConcertGrid() {
+		var gridContainer = document.getElementById('ktConcertGrid');
+		if (!gridContainer || typeof ktConcertData === 'undefined') {
 			return;
 		}
 
-		var manualEvents = subadapKonserData.events || [];
-		var baseUrl = subadapKonserData.baseUrl || 'https://www.subadapcocuk.org/';
-		var maxItems = parseInt(subadapKonserData.maxItems, 10) || 16;
+		var manualEvents = ktConcertData.events || [];
+		var baseUrl = ktConcertData.baseUrl || '/';
+		var maxItems = parseInt(ktConcertData.maxItems, 10) || 16;
 
 		var monthNames = [
 			'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
@@ -20,7 +20,8 @@
 		var now = new Date();
 		var upcomingEvents = manualEvents
 			.filter(function (event) {
-				return new Date(event.datetime) >= now;
+				var checkDate = event.endDatetime ? event.endDatetime : event.datetime;
+				return new Date(checkDate) >= now;
 			})
 			.slice(0, maxItems);
 
@@ -46,6 +47,16 @@
 			var hours = String(trDate.getHours()).padStart(2, '0');
 			var minutes = String(trDate.getMinutes()).padStart(2, '0');
 
+			var formattedTime1 = hours + '.' + minutes;
+			var timeText = formattedTime1;
+			var hasTwoSessions = false;
+
+			if (event.time2 && /^\d{2}:\d{2}$/.test(event.time2)) {
+				var formattedTime2 = event.time2.replace(':', '.');
+				timeText = formattedTime1 + ' ve ' + formattedTime2;
+				hasTwoSessions = true;
+			}
+
 			var colorClass = 'style-' + ((index % 12) + 1);
 
 			var link = document.createElement('a');
@@ -66,8 +77,8 @@
 			dayNameDiv.textContent = dayName;
 
 			var timeDiv = document.createElement('div');
-			timeDiv.className = 'time';
-			timeDiv.textContent = hours + ':' + minutes;
+			timeDiv.className = hasTwoSessions ? 'time has-two-sessions' : 'time';
+			timeDiv.textContent = timeText;
 
 			datePart.append(dayMonthDiv, dayNameDiv, timeDiv);
 
@@ -85,8 +96,8 @@
 	}
 
 	if (document.readyState === 'loading') {
-		document.addEventListener('DOMContentLoaded', initSubadapGrid);
+		document.addEventListener('DOMContentLoaded', initConcertGrid);
 	} else {
-		initSubadapGrid();
+		initConcertGrid();
 	}
 })();
