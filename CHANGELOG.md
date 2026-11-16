@@ -1,5 +1,15 @@
 # Değişiklik Günlüğü (Changelog)
 
+## [3.3.0] - 2026-11-16
+### Eklenenler & İyileştirilenler
+- **Varsayılan Bilet Satış URL'si Ayarı:** Ayarlar sekmesine **Varsayılan Bilet Satış URL'si** alanı eklendi. Bu alan doldurulduğunda sayfalarda `url="..."` parametresi vermeden doğrudan `[konser_bilet_butonu]` kısa kodu kullanılabilir.
+- **Önbellek (Cache) Uyumlu Sayfa Görüntülenme Sayacı:** İlçe sayfası görüntülenmeleri (`views`) tıpkı bilet tıklamaları gibi `tracker.js` üzerinden AJAX ile kaydedilecek şekilde güncellendi; böylece LiteSpeed Cache, WP Rocket veya Cloudflare gibi sayfa önbellekleme eklentileri aktifken dahi ziyaret sayıları eksiksiz artar.
+
+## [3.2.1] - 2026-11-16
+### Eklenenler
+- **Kısa Kodsuz Otomatik Bilet Tıklama Takibi:** `[konser_bilet_butonu]` kısa kodu kullanılmayan mevcut sayfalarda dahi, sayfada `[konser_ilce_yonlendir]` varsa Ayarlar sekmesinde tanımlanan bilet alan adlarına (`biletinial.com`, `biletix.com`, `passo.com.tr`, `bubilet.com.tr`, `mobilet.com`, `biletino.com`) veya varsayılan bilet görseline yapılan tıklamalar otomatik yakalanıp ilgili ilçenin istatistiklerine kaydedilir.
+- **Otomatik Takip Edilecek Bilet Alan Adları Ayarı:** Ayarlar sekmesine düzenlenebilir bilet alan adları listesi eklendi.
+
 ## [3.2.0] - 2026-11-16
 ### Eklenenler
 - **Bilet Düğmesi Kısa Kodu (`[konser_bilet_butonu]`):** Mevcut `<figure class="wp-block-image size-large">` yapısını koruyan `[konser_bilet_butonu url="..."]` kısa kodu eklendi. Ayarlar sekmesinden varsayılan bilet düğmesi görseli Ortam Kütüphanesinden seçilebilir veya URL olarak tanımlanabilir.
@@ -32,7 +42,7 @@
 - **Canlı Sayfa / Yazı Varlık Kontrolü:** Girilen veya otomatik oluşan uzantı sitenizde yayımlanmış bir sayfa/yazı ile eşleşiyorsa kutu yeşil, eşleşmiyorsa kırmızı çerçeve ve bilgi etiketiyle gösterilir.
 
 ## [2.7.0] - 2026-11-15
-### Eklenenler & Değiştirilenler
+### Eklenenler
 - **Mevcut Yazılardan Slug Filtreleme ve Seçme:** Link uzantısı kutusuna sitenizdeki yayımlanmış yazı ve sayfaları başlık/slug üzerinden filtreleyip seçme özelliği (`datalist`) eklendi.
 
 ## [2.6.0] - 2026-11-15

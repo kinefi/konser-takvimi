@@ -264,7 +264,7 @@ function kt_konser_admin_page() {
 	// Ayarlar Sekmesi Kaydetme veya Sıfırlama
 	if ( isset( $_POST['kt_reset_styles'] ) && check_admin_referer( 'kt_styles_nonce_action', 'kt_styles_nonce' ) ) {
 		delete_option( KT_STYLES_OPT );
-		$message = '<div class="notice notice-info is-dismissible"><p>Düğme biçimleri, yönlendirme hedefi, bilet görseli ve renk paletleri varsayılan ayarlara döndürüldü.</p></div>';
+		$message = '<div class="notice notice-info is-dismissible"><p>Düğme biçimleri, yönlendirme hedefi, bilet düğmesi ve renk paletleri varsayılan ayarlara döndürüldü.</p></div>';
 	} elseif ( isset( $_POST['kt_save_styles'] ) && check_admin_referer( 'kt_styles_nonce_action', 'kt_styles_nonce' ) ) {
 		$defaults = kt_get_default_style_settings();
 
@@ -282,10 +282,14 @@ function kt_konser_admin_page() {
 			$raw_redirect = '/' . $raw_redirect;
 		}
 
+		$raw_ticket_url = isset( $_POST['ticket_btn_url'] ) ? esc_url_raw( trim( wp_unslash( $_POST['ticket_btn_url'] ) ) ) : '';
+
 		$raw_ticket_img = isset( $_POST['ticket_btn_img'] ) ? esc_url_raw( trim( wp_unslash( $_POST['ticket_btn_img'] ) ) ) : '';
 		if ( empty( $raw_ticket_img ) ) {
 			$raw_ticket_img = $defaults['ticket_btn_img'];
 		}
+
+		$raw_domains = isset( $_POST['ticket_domains'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_domains'] ) ) : $defaults['ticket_domains'];
 
 		$d_text = isset( $_POST['date_text'] ) ? sanitize_hex_color( wp_unslash( $_POST['date_text'] ) ) : '';
 		$c_text = isset( $_POST['city_text'] ) ? sanitize_hex_color( wp_unslash( $_POST['city_text'] ) ) : '';
@@ -313,7 +317,9 @@ function kt_konser_admin_page() {
 			'date_text'        => $d_text ? $d_text : $defaults['date_text'],
 			'city_text'        => $c_text ? $c_text : $defaults['city_text'],
 			'redirect_target'  => $raw_redirect,
+			'ticket_btn_url'   => $raw_ticket_url,
 			'ticket_btn_img'   => $raw_ticket_img,
+			'ticket_domains'   => $raw_domains,
 			'delete_on_uninst' => $del_uninst,
 			'palettes'         => $palettes,
 		);
@@ -352,7 +358,7 @@ function kt_konser_admin_page() {
 	<div class="wrap">
 		<h1>Konser Takvimi</h1>
 		<p>
-			Takvimi göstermek için <code>[konser_takvimi]</code>, ilçe sayfasında konser yoksa yönlendirmek için <code>[konser_ilce_yonlendir]</code>, bilet düğmesi eklemek için <code>[konser_bilet_butonu url="..."]</code> kısa kodlarını kullanabilirsiniz.
+			Takvimi göstermek için <code>[konser_takvimi]</code>, ilçe sayfasında konser yoksa yönlendirmek ve sayfa istatistiklerini toplamak için <code>[konser_ilce_yonlendir]</code>, bilet düğmesi için <code>[konser_bilet_butonu]</code> kısa kodlarını kullanabilirsiniz.
 		</p>
 		<?php echo $message; ?>
 
@@ -508,7 +514,6 @@ function kt_konser_admin_page() {
 				$stats = array();
 			}
 
-			// Ziyaret sayısına göre büyükten küçüğe sırala
 			uasort(
 				$stats,
 				function ( $a, $b ) {
@@ -550,7 +555,7 @@ function kt_konser_admin_page() {
 
 				<div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 12px 16px; margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;">
 					<span class="description">
-						Yönetici girişleri sayımlara dahil edilmez. Ziyaretler <code>[konser_ilce_yonlendir]</code>, tıklamalar <code>[konser_bilet_butonu]</code> üzerinden kaydedilir.
+						Yönetici/editör girişleri sayımlara dahil edilmez (test için gizli sekmeden ziyaret edin). Önbellek (cache) uyumlu AJAX izleme aktiftir.
 					</span>
 					<form method="post" action="" style="display: flex; gap: 8px; margin: 0;">
 						<?php wp_nonce_field( 'kt_stats_nonce_action', 'kt_stats_nonce' ); ?>
@@ -709,7 +714,7 @@ function kt_konser_admin_page() {
 				</div>
 
 				<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #2271b1; border-radius: 4px; padding: 16px 20px; margin-bottom: 20px;">
-					<h2 style="margin-top: 0;">İlçe Sayfası Yönlendirme & Bilet Düğmesi Ayarları</h2>
+					<h2 style="margin-top: 0;">İlçe Sayfası Yönlendirme, Bilet Düğmesi & Otomatik Takip Ayarları</h2>
 					<table class="form-table" role="presentation" style="margin-top: 0;">
 						<tr>
 							<th scope="row"><label for="redirect_target">Varsayılan Yönlendirme Sayfası</label></th>
@@ -720,6 +725,15 @@ function kt_konser_admin_page() {
 								</p>
 								<p class="description" style="margin-top: 6px; color: #1d2327;">
 									<strong>Önemli Not:</strong> <code>[konser_ilce_yonlendir]</code> kısa kodu parametresiz kullanıldığında kontrolü <strong>sayfanın URL uzantısına (slug)</strong> göre yapar. Otomatik algılama için sayfa URL'sinde ilçe adının mutlaka yer alması gerekir (örneğin <code>/urla-konseri</code> veya <code>/urla-konser</code>). URL'de ilçe adı geçmiyorsa kısa kodu <code>[konser_ilce_yonlendir ilce="Urla"]</code> biçiminde kullanabilirsiniz.
+								</p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="ticket_btn_url">Varsayılan Bilet Satış URL'si</label></th>
+							<td>
+								<input type="url" id="ticket_btn_url" name="ticket_btn_url" value="<?php echo esc_url( $styles['ticket_btn_url'] ); ?>" class="large-text" placeholder="https://biletinial.com/tr-tr/tiyatro/subadap-cocuk-konseri">
+								<p class="description">
+									Buraya bir varsayılan bilet bağlantısı girerseniz sayfalarda parametre vermeden doğrudan <code>[konser_bilet_butonu]</code> yazabilirsiniz. Belirli bir ilçe için farklı link kullanmak isterseniz <code>[konser_bilet_butonu url="https://..."]</code> ile ezebilirsiniz.
 								</p>
 							</td>
 						</tr>
@@ -736,7 +750,16 @@ function kt_konser_admin_page() {
 									<?php endif; ?>
 								</div>
 								<p class="description" style="margin-top: 6px;">
-									Sayfalarda <code>[konser_bilet_butonu url="https://biletinial.com/..."]</code> şeklinde kullanılır ve tıklamaları <strong>İstatistikler</strong> sekmesine kaydeder. Gerekirse tekil sayfalarda <code>resim="..."</code> veya <code>ilce="..."</code> parametresi eklenebilir.
+									Gerekirse tekil sayfalarda <code>resim="..."</code> veya <code>ilce="..."</code> parametresi eklenebilir.
+								</p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="ticket_domains">Otomatik Takip Edilecek Bilet Alan Adları</label></th>
+							<td>
+								<input type="text" id="ticket_domains" name="ticket_domains" value="<?php echo esc_attr( $styles['ticket_domains'] ); ?>" class="large-text" placeholder="biletinial.com, biletix.com, passo.com.tr, bubilet.com.tr">
+								<p class="description">
+									Sayfada <code>[konser_bilet_butonu]</code> kısa kodu <strong>olmasa bile</strong>, <code>[konser_ilce_yonlendir]</code> bulunan sayfalarda bu alan adlarına giden bağlantılara veya bilet görseli içeren linklere yapılan tıklamalar otomatik olarak ilgili ilçeye kaydedilir. Virgülle ayırarak alan adı ekleyebilirsiniz.
 								</p>
 							</td>
 						</tr>
