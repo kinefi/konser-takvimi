@@ -249,4 +249,34 @@ document.addEventListener('DOMContentLoaded', function () {
 			cInput.addEventListener('input', updatePreview);
 		});
 	}
+
+	// Ortam Kütüphanesinden Varsayılan Bilet Görseli Seçimi
+	var selectImgBtn = document.getElementById('kt-select-ticket-img');
+	var ticketImgInput = document.getElementById('ticket_btn_img');
+	var ticketImgPreview = document.getElementById('kt-ticket-img-preview');
+
+	if (selectImgBtn && ticketImgInput && typeof wp !== 'undefined' && wp.media) {
+		var mediaFrame;
+		selectImgBtn.addEventListener('click', function (e) {
+			e.preventDefault();
+			if (mediaFrame) {
+				mediaFrame.open();
+				return;
+			}
+			mediaFrame = wp.media({
+				title: 'Varsayılan Bilet Düğmesi Görselini Seçin',
+				button: { text: 'Bu Görseli Kullan' },
+				multiple: false
+			});
+			mediaFrame.on('select', function () {
+				var attachment = mediaFrame.state().get('selection').first().toJSON();
+				var chosenUrl = (attachment.sizes && attachment.sizes.large) ? attachment.sizes.large.url : attachment.url;
+				ticketImgInput.value = chosenUrl;
+				if (ticketImgPreview) {
+					ticketImgPreview.innerHTML = '<img src="' + chosenUrl + '" alt="Bilet Düğmesi Önizleme" style="max-width: 360px; height: auto; border: 1px solid #dcdcde; border-radius: 4px; padding: 4px; background: #f8fafc;">';
+				}
+			});
+			mediaFrame.open();
+		});
+	}
 });

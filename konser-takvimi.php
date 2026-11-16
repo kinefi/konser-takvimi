@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Konser Takvimi
- * Description: Veritabanı tabanlı, çift seans destekli, geçmiş konserleri otomatik arşivleyen ve ilçe sayfası yönlendirme kısa kodu sunan WordPress eklentisi.
- * Version: 3.1.0
+ * Description: Veritabanı tabanlı, çift seans destekli, geçmiş konserleri otomatik arşivleyen, ilçe sayfası yönlendirme ve bilet tıklama istatistikleri sunan WordPress eklentisi.
+ * Version: 3.2.0
  * Author: Şubadap Çocuk
  * License: GPL-3.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -14,14 +14,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'KT_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'KT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'KT_PLUGIN_VER', '3.1.0' );
+define( 'KT_PLUGIN_VER', '3.2.0' );
 define( 'KT_EVENTS_OPT', 'subadap_konserler_list' );
 define( 'KT_STYLES_OPT', 'subadap_konserler_styles' );
+define( 'KT_STATS_OPT', 'subadap_konserler_stats' );
 
 function kt_get_istanbul_timestamp() {
 	$tz  = new DateTimeZone( 'Europe/Istanbul' );
 	$now = new DateTime( 'now', $tz );
 	return $now->getTimestamp();
+}
+
+function kt_get_istanbul_datetime_str() {
+	$tz  = new DateTimeZone( 'Europe/Istanbul' );
+	$now = new DateTime( 'now', $tz );
+	return $now->format( 'Y-m-d H:i' );
 }
 
 /**
@@ -69,6 +76,7 @@ function kt_get_default_style_settings() {
 		'date_text'        => '#111827',
 		'city_text'        => '#0f172a',
 		'redirect_target'  => '/konserler',
+		'ticket_btn_img'   => 'https://subadapcocuk.org/wp-content/uploads/2026/09/4-edited-1024x281.png',
 		'delete_on_uninst' => 0,
 		'palettes'         => array(
 			array( 'date' => '#e94c86', 'city' => '#fce1ec' ),
@@ -102,6 +110,10 @@ function kt_get_style_settings() {
 		$merged['redirect_target'] = '/konserler';
 	}
 
+	if ( empty( $merged['ticket_btn_img'] ) ) {
+		$merged['ticket_btn_img'] = $defaults['ticket_btn_img'];
+	}
+
 	for ( $i = 0; $i < 12; $i++ ) {
 		$d_col = isset( $saved['palettes'][ $i ]['date'] ) ? sanitize_hex_color( $saved['palettes'][ $i ]['date'] ) : '';
 		$c_col = isset( $saved['palettes'][ $i ]['city'] ) ? sanitize_hex_color( $saved['palettes'][ $i ]['city'] ) : '';
@@ -120,6 +132,10 @@ function kt_init_db_option() {
 	$existing = get_option( KT_EVENTS_OPT );
 	if ( ! is_array( $existing ) ) {
 		update_option( KT_EVENTS_OPT, array(), false );
+	}
+	$stats = get_option( KT_STATS_OPT );
+	if ( ! is_array( $stats ) ) {
+		update_option( KT_STATS_OPT, array(), false );
 	}
 }
 
@@ -150,6 +166,78 @@ function kt_register_frontend_assets() {
 		KT_PLUGIN_VER,
 		true
 	);
+
+	wp_register_script(
+		'kt-tracker-js',
+		KT_PLUGIN_URL . 'assets/js/tracker.js',
+		array(),
+		KT_PLUGIN_VER,
+		true
+	);
+}
+
+/**
+ * İlçe anahtarını (slug) normalize eder ve etiketini çözer.
+ */
+function kt_normalize_district_key( $raw_key ) {
+	$slug = sanitize_title( $raw_key );
+	if ( empty( $slug ) ) {
+		return '';
+	}
+	$base = preg_replace( '/-(konseri|konser)$/', '', $slug );
+	return ! empty( $base ) ? $base : $slug;
+}
+
+/**
+ * İstatistik sayacını (views veya clicks) güvenli biçimde artırır.
+ */
+function kt_record_district_stat( $raw_key, $type = 'views', $page_title = '' ) {
+	$key = kt_normalize_district_key( $raw_key );
+	if ( empty( $key ) || ! in_array( $type, array( 'views', 'clicks' ), true ) ) {
+		return;
+	}
+
+	$stats = get_option( KT_STATS_OPT, array() );
+	if ( ! is_array( $stats ) ) {
+		$stats = array();
+	}
+
+	if ( ! isset( $stats[ $key ] ) || ! is_array( $stats[ $key ] ) ) {
+		$stats[ $key ] = array(
+			'label'   => ! empty( $page_title ) ? sanitize_text_field( $page_title ) : ucfirst( str_replace( '-', ' ', $key ) ),
+			'views'   => 0,
+			'clicks'  => 0,
+			'updated' => '',
+		);
+	} elseif ( ! empty( $page_title ) ) {
+		$stats[ $key ]['label'] = sanitize_text_field( $page_title );
+	}
+
+	$stats[ $key ][ $type ] = intval( $stats[ $key ][ $type ] ) + 1;
+	$stats[ $key ]['updated'] = kt_get_istanbul_datetime_str();
+
+	update_option( KT_STATS_OPT, $stats, false );
+}
+
+/**
+ * AJAX üzerinden bilet düğmesi tıklama kaydı.
+ */
+add_action( 'wp_ajax_kt_track_ticket_click', 'kt_ajax_track_ticket_click' );
+add_action( 'wp_ajax_nopriv_kt_track_ticket_click', 'kt_ajax_track_ticket_click' );
+function kt_ajax_track_ticket_click() {
+	if ( current_user_can( 'edit_pages' ) ) {
+		wp_send_json_success( array( 'ignored' => 'admin' ) );
+	}
+
+	$district = isset( $_POST['district'] ) ? sanitize_text_field( wp_unslash( $_POST['district'] ) ) : '';
+	$label    = isset( $_POST['label'] ) ? sanitize_text_field( wp_unslash( $_POST['label'] ) ) : '';
+
+	if ( empty( $district ) ) {
+		wp_send_json_error( array( 'message' => 'missing_district' ), 400 );
+	}
+
+	kt_record_district_stat( $district, 'clicks', $label );
+	wp_send_json_success( array( 'recorded' => true ) );
 }
 
 /**
@@ -161,7 +249,6 @@ function kt_has_upcoming_concert_for_target( $target ) {
 		return false;
 	}
 
-	// "urla-konseri" veya "urla-konser" gibi ekleri soyarak temel ilçe slug'ını da çıkar
 	$base_target = preg_replace( '/-(konseri|konser)$/', '', $target_slug );
 
 	$all_events = get_option( KT_EVENTS_OPT, array() );
@@ -209,8 +296,9 @@ function kt_resolve_redirect_url( $custom_target = '' ) {
 }
 
 /**
- * [konser_ilce_yonlendir] kısa kodunu sayfa HTML'i gönderilmeden önce yakalar
- * ve yaklaşan konser yoksa belirlenen sayfaya yönlendirir.
+ * [konser_ilce_yonlendir] kısa kodunu sayfa HTML'i gönderilmeden önce yakalar:
+ * - Yaklaşan konser yoksa belirlenen sayfaya yönlendirir.
+ * - Yaklaşan konser varsa sayfa görüntülenme istatistiğini kaydeder.
  */
 add_action( 'template_redirect', 'kt_handle_district_redirect_shortcode' );
 function kt_handle_district_redirect_shortcode() {
@@ -227,7 +315,7 @@ function kt_handle_district_redirect_shortcode() {
 		return;
 	}
 
-	// Yönetici olarak giriş yapmış kullanıcıları düzenleme/önizleme yapabilsin diye yönlendirme
+	// Yönetici olarak giriş yapmış kullanıcıları yönlendirme ve istatistiklere dahil etme
 	if ( current_user_can( 'edit_pages' ) ) {
 		return;
 	}
@@ -252,6 +340,8 @@ function kt_handle_district_redirect_shortcode() {
 				wp_safe_redirect( $redirect_url, 302 );
 				exit;
 			}
+
+			kt_record_district_stat( $lookup_key, 'views', $post->post_title );
 		}
 	}
 }
@@ -272,7 +362,6 @@ function kt_district_redirect_shortcode_output( $atts ) {
 	$has_event    = kt_has_upcoming_concert_for_target( $lookup_key );
 	$redirect_url = kt_resolve_redirect_url( $atts['hedef'] );
 
-	// Yöneticiye sayfa içinde bilgilendirme rozeti göster
 	if ( current_user_can( 'edit_pages' ) ) {
 		if ( $has_event ) {
 			return '<div style="padding:10px 14px;margin:10px 0;background:#f0fdf4;border:1px solid #86efac;border-radius:6px;color:#166534;font-size:13px;"><strong>Konser Takvimi Bilgi:</strong> Bu ilçe (<code>' . esc_html( $lookup_key ) . '</code>) için yaklaşan konser aktif olduğundan ziyaretçiler bu sayfada kalacaktır.</div>';
@@ -280,12 +369,80 @@ function kt_district_redirect_shortcode_output( $atts ) {
 		return '<div style="padding:10px 14px;margin:10px 0;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;color:#991b1b;font-size:13px;"><strong>Konser Takvimi Bilgi:</strong> Bu ilçe (<code>' . esc_html( $lookup_key ) . '</code>) için yaklaşan konser bulunmadığından normal ziyaretçiler otomatik olarak <code>' . esc_html( $redirect_url ) . '</code> adresine yönlendirilecektir (yönetici olduğunuz için yönlendirilmediniz).</div>';
 	}
 
-	// Eğer template_redirect aşamasında çalışmadıysa (örneğin sayfa oluşturucu widget içindeyse) JS ile yedek yönlendirme
 	if ( ! $has_event ) {
 		return '<script>window.location.replace(' . wp_json_encode( esc_url( $redirect_url ) ) . ');</script>';
 	}
 
 	return '';
+}
+
+/**
+ * [konser_bilet_butonu url="..." resim="..." ilce="..." alt="..." hedef="_blank"]
+ * Mevcut <figure class="wp-block-image size-large"> yapısını korur ve tıklamaları sayar.
+ */
+add_shortcode( 'konser_bilet_butonu', 'kt_ticket_button_shortcode' );
+function kt_ticket_button_shortcode( $atts ) {
+	$styles = kt_get_style_settings();
+
+	$atts = shortcode_atts(
+		array(
+			'url'   => '',
+			'resim' => $styles['ticket_btn_img'],
+			'ilce'  => '',
+			'alt'   => 'Bilet Al',
+			'hedef' => '',
+		),
+		$atts,
+		'konser_bilet_butonu'
+	);
+
+	if ( empty( $atts['url'] ) ) {
+		return '';
+	}
+
+	global $post;
+	$district_key = ! empty( $atts['ilce'] ) ? $atts['ilce'] : ( $post ? $post->post_name : 'genel' );
+	$page_label   = $post ? $post->post_title : '';
+	$img_url      = ! empty( $atts['resim'] ) ? $atts['resim'] : $styles['ticket_btn_img'];
+
+	wp_enqueue_script( 'kt-tracker-js' );
+	wp_localize_script(
+		'kt-tracker-js',
+		'ktTrackerData',
+		array(
+			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+		)
+	);
+
+	$target_attr = '';
+	if ( ! empty( $atts['hedef'] ) ) {
+		$target_attr = ' target="' . esc_attr( $atts['hedef'] ) . '" rel="noopener noreferrer"';
+	}
+
+	$attachment_id = attachment_url_to_postid( $img_url );
+	if ( $attachment_id ) {
+		$img_html = wp_get_attachment_image(
+			$attachment_id,
+			'large',
+			false,
+			array(
+				'fetchpriority' => 'high',
+				'decoding'      => 'async',
+				'alt'           => $atts['alt'],
+			)
+		);
+	} else {
+		$img_html = '<img fetchpriority="high" decoding="async" width="1024" height="281" src="' . esc_url( $img_url ) . '" alt="' . esc_attr( $atts['alt'] ) . '">';
+	}
+
+	return sprintf(
+		'<figure class="wp-block-image size-large"><a href="%s" class="kt-ticket-btn-link" data-kt-district="%s" data-kt-label="%s"%s>%s</a></figure>',
+		esc_url( $atts['url'] ),
+		esc_attr( kt_normalize_district_key( $district_key ) ),
+		esc_attr( $page_label ),
+		$target_attr,
+		$img_html
+	);
 }
 
 add_shortcode( 'konser_takvimi', 'kt_concert_grid_shortcode' );
