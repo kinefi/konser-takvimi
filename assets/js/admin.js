@@ -177,6 +177,127 @@ document.addEventListener('DOMContentLoaded', function () {
 		renderArchivePage(1);
 	}
 
+	// Son 14 Günlük Ziyaretçi & Bilet Tıklama Canvas Grafiği
+	var chartCanvas = document.getElementById('kt-stats-canvas');
+	var chartJsonEl = document.getElementById('kt-chart-json-data');
+	var chartSelect = document.getElementById('kt-chart-district-select');
+
+	if (chartCanvas && chartJsonEl) {
+		var chartData = JSON.parse(chartJsonEl.textContent || '{}');
+
+		function drawStatsChart(districtKey) {
+			var seriesObj = (chartData.series && chartData.series[districtKey]) ? chartData.series[districtKey] : chartData.series.all;
+			if (!seriesObj) {
+				return;
+			}
+
+			var labels = chartData.labels || [];
+			var visitors = seriesObj.visitors || [];
+			var clicks = seriesObj.clicks || [];
+
+			var dpr = window.devicePixelRatio || 1;
+			var rect = chartCanvas.getBoundingClientRect();
+			var width = Math.max(600, Math.floor(rect.width || 980));
+			var height = 250;
+
+			chartCanvas.width = width * dpr;
+			chartCanvas.height = height * dpr;
+
+			var ctx = chartCanvas.getContext('2d');
+			ctx.scale(dpr, dpr);
+			ctx.clearRect(0, 0, width, height);
+
+			var padLeft = 42;
+			var padRight = 18;
+			var padTop = 22;
+			var padBottom = 34;
+			var plotW = width - padLeft - padRight;
+			var plotH = height - padTop - padBottom;
+
+			var maxVal = 5;
+			for (var i = 0; i < labels.length; i++) {
+				if (visitors[i] > maxVal) maxVal = visitors[i];
+				if (clicks[i] > maxVal) maxVal = clicks[i];
+			}
+			maxVal = Math.ceil(maxVal * 1.15);
+
+			// Yatay kılavuz çizgileri ve Y ekseni değerleri
+			ctx.font = '11px system-ui, -apple-system, sans-serif';
+			ctx.textAlign = 'right';
+			ctx.textBaseline = 'middle';
+
+			var gridSteps = 4;
+			for (var s = 0; s <= gridSteps; s++) {
+				var val = Math.round((maxVal / gridSteps) * s);
+				var y = padTop + plotH - (plotH * (s / gridSteps));
+
+				ctx.strokeStyle = s === 0 ? '#cbd5e1' : '#f1f5f9';
+				ctx.lineWidth = 1;
+				ctx.beginPath();
+				ctx.moveTo(padLeft, y);
+				ctx.lineTo(width - padRight, y);
+				ctx.stroke();
+
+				ctx.fillStyle = '#64748b';
+				ctx.fillText(String(val), padLeft - 8, y);
+			}
+
+			var count = labels.length;
+			var slotW = plotW / count;
+			var barW = Math.max(6, Math.min(18, (slotW - 10) / 2));
+
+			for (var j = 0; j < count; j++) {
+				var centerX = padLeft + slotW * j + slotW / 2;
+
+				// Ziyaretçi sütunu (Mavi)
+				var visH = (visitors[j] / maxVal) * plotH;
+				var visX = centerX - barW - 1.5;
+				var visY = padTop + plotH - visH;
+				ctx.fillStyle = '#2271b1';
+				ctx.fillRect(visX, visY, barW, visH);
+
+				if (visitors[j] > 0) {
+					ctx.fillStyle = '#1e3a8a';
+					ctx.textAlign = 'center';
+					ctx.textBaseline = 'bottom';
+					ctx.fillText(String(visitors[j]), visX + barW / 2, visY - 3);
+				}
+
+				// Tıklama sütunu (Yeşil)
+				var clkH = (clicks[j] / maxVal) * plotH;
+				var clkX = centerX + 1.5;
+				var clkY = padTop + plotH - clkH;
+				ctx.fillStyle = '#16a34a';
+				ctx.fillRect(clkX, clkY, barW, clkH);
+
+				if (clicks[j] > 0) {
+					ctx.fillStyle = '#14532d';
+					ctx.textAlign = 'center';
+					ctx.textBaseline = 'bottom';
+					ctx.fillText(String(clicks[j]), clkX + barW / 2, clkY - 3);
+				}
+
+				// X ekseni tarih etiketi
+				ctx.fillStyle = '#475569';
+				ctx.textAlign = 'center';
+				ctx.textBaseline = 'top';
+				ctx.fillText(labels[j], centerX, padTop + plotH + 8);
+			}
+		}
+
+		drawStatsChart('all');
+
+		if (chartSelect) {
+			chartSelect.addEventListener('change', function () {
+				drawStatsChart(chartSelect.value);
+			});
+		}
+
+		window.addEventListener('resize', function () {
+			drawStatsChart(chartSelect ? chartSelect.value : 'all');
+		});
+	}
+
 	var previewBox = document.getElementById('kt-live-preview-box');
 	if (previewBox) {
 		var radiusInput = document.getElementById('border_radius');

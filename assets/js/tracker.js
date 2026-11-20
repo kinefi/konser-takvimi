@@ -1,5 +1,10 @@
 (function () {
-	function sendStatEvent(eventType, district, label) {
+	var pageStartMs = Date.now();
+	var activeMs = 0;
+	var lastResumeMs = document.hidden ? null : pageStartMs;
+	var durationSent = false;
+
+	function sendStatEvent(eventType, district, label, extraParams) {
 		if (typeof ktTrackerData === 'undefined' || !ktTrackerData.ajaxUrl || !district) {
 			return;
 		}
@@ -10,6 +15,12 @@
 		formData.append('district', district);
 		formData.append('label', label || '');
 
+		if (extraParams) {
+			Object.keys(extraParams).forEach(function (k) {
+				formData.append(k, extraParams[k]);
+			});
+		}
+
 		if (navigator.sendBeacon) {
 			navigator.sendBeacon(ktTrackerData.ajaxUrl, formData);
 		} else {
@@ -17,6 +28,45 @@
 				method: 'POST',
 				body: formData,
 				keepalive: true
+			});
+		}
+	}
+
+	function checkDailyUniqueVisitor(district, todayStr) {
+		if (!district || !todayStr) {
+			return '1';
+		}
+		try {
+			var storageKey = 'kt_vis_' + district + '_' + todayStr;
+			if (window.localStorage.getItem(storageKey) === '1') {
+				return '0';
+			}
+			window.localStorage.setItem(storageKey, '1');
+			return '1';
+		} catch (err) {
+			return '1';
+		}
+	}
+
+	function flushActiveDuration() {
+		if (durationSent || typeof ktTrackerData === 'undefined' || parseInt(ktTrackerData.trackView, 10) !== 1) {
+			return;
+		}
+		if (!ktTrackerData.defaultDistrict) {
+			return;
+		}
+
+		var now = Date.now();
+		if (lastResumeMs !== null) {
+			activeMs += (now - lastResumeMs);
+			lastResumeMs = null;
+		}
+
+		var seconds = Math.round(activeMs / 1000);
+		if (seconds >= 1) {
+			durationSent = true;
+			sendStatEvent('duration', ktTrackerData.defaultDistrict, ktTrackerData.defaultLabel, {
+				seconds: String(seconds)
 			});
 		}
 	}
@@ -53,15 +103,34 @@
 		return false;
 	}
 
-	// Sayfa önbelleğe (cache) alınmış olsa dahi ilçe sayfası görüntülenmesini AJAX ile kaydet
+	// İlçe sayfası görüntülenme ve günlük tekil ziyaretçi kaydı
 	if (typeof ktTrackerData !== 'undefined' && parseInt(ktTrackerData.trackView, 10) === 1 && ktTrackerData.defaultDistrict) {
-		if (document.readyState === 'loading') {
-			document.addEventListener('DOMContentLoaded', function () {
-				sendStatEvent('views', ktTrackerData.defaultDistrict, ktTrackerData.defaultLabel);
+		var recordViewOnce = function () {
+			var isUnique = checkDailyUniqueVisitor(ktTrackerData.defaultDistrict, ktTrackerData.todayStr);
+			sendStatEvent('views', ktTrackerData.defaultDistrict, ktTrackerData.defaultLabel, {
+				is_unique: isUnique
 			});
+		};
+
+		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', recordViewOnce);
 		} else {
-			sendStatEvent('views', ktTrackerData.defaultDistrict, ktTrackerData.defaultLabel);
+			recordViewOnce();
 		}
+
+		document.addEventListener('visibilitychange', function () {
+			if (document.hidden) {
+				if (lastResumeMs !== null) {
+					activeMs += (Date.now() - lastResumeMs);
+					lastResumeMs = null;
+				}
+				flushActiveDuration();
+			} else if (!durationSent) {
+				lastResumeMs = Date.now();
+			}
+		});
+
+		window.addEventListener('pagehide', flushActiveDuration);
 	}
 
 	document.addEventListener('click', function (e) {
@@ -78,5 +147,6 @@
 		var label = link.getAttribute('data-kt-label') || ktTrackerData.defaultLabel || '';
 
 		sendStatEvent('clicks', district, label);
+		flushActiveDuration();
 	});
 })();

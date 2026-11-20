@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Konser Takvimi
- * Description: Veritabanı tabanlı, çift seans destekli, geçmiş konserleri otomatik arşivleyen, ilçe sayfası yönlendirme ve bilet tıklama istatistikleri sunan WordPress eklentisi.
- * Version: 3.3.0
+ * Description: Veritabanı tabanlı, çift seans destekli, geçmiş konserleri otomatik arşivleyen, ilçe sayfası yönlendirme, günlük ziyaretçi/süre analitiği, grafik ve haftalık e-posta raporu sunan WordPress eklentisi.
+ * Version: 3.4.0
  * Author: Şubadap Çocuk
  * License: GPL-3.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -14,10 +14,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'KT_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'KT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'KT_PLUGIN_VER', '3.3.0' );
+define( 'KT_PLUGIN_VER', '3.4.0' );
 define( 'KT_EVENTS_OPT', 'subadap_konserler_list' );
 define( 'KT_STYLES_OPT', 'subadap_konserler_styles' );
 define( 'KT_STATS_OPT', 'subadap_konserler_stats' );
+define( 'KT_CRON_HOOK', 'kt_weekly_stats_report_event' );
 
 function kt_get_istanbul_timestamp() {
 	$tz  = new DateTimeZone( 'Europe/Istanbul' );
@@ -29,6 +30,15 @@ function kt_get_istanbul_datetime_str() {
 	$tz  = new DateTimeZone( 'Europe/Istanbul' );
 	$now = new DateTime( 'now', $tz );
 	return $now->format( 'Y-m-d H:i' );
+}
+
+function kt_get_istanbul_date_str( $offset_days = 0 ) {
+	$tz  = new DateTimeZone( 'Europe/Istanbul' );
+	$now = new DateTime( 'now', $tz );
+	if ( 0 !== intval( $offset_days ) ) {
+		$now->modify( intval( $offset_days ) . ' days' );
+	}
+	return $now->format( 'Y-m-d' );
 }
 
 /**
@@ -68,19 +78,22 @@ function kt_sort_events_desc( $a, $b ) {
 
 function kt_get_default_style_settings() {
 	return array(
-		'border_radius'    => 20,
-		'badge_height'     => 90,
-		'grid_gap'         => 20,
-		'card_min_w'       => 250,
-		'max_items'        => 16,
-		'date_text'        => '#111827',
-		'city_text'        => '#0f172a',
-		'redirect_target'  => '/konserler',
-		'ticket_btn_url'   => '',
-		'ticket_btn_img'   => 'https://subadapcocuk.org/wp-content/uploads/2026/09/4-edited-1024x281.png',
-		'ticket_domains'   => 'biletinial.com, biletix.com, passo.com.tr, bubilet.com.tr, mobilet.com, biletino.com',
-		'delete_on_uninst' => 0,
-		'palettes'         => array(
+		'border_radius'       => 20,
+		'badge_height'        => 90,
+		'grid_gap'            => 20,
+		'card_min_w'          => 250,
+		'max_items'           => 16,
+		'date_text'           => '#111827',
+		'city_text'           => '#0f172a',
+		'redirect_target'     => '/konserler',
+		'ticket_btn_url'      => '',
+		'ticket_btn_img'      => 'https://subadapcocuk.org/wp-content/uploads/2026/09/4-edited-1024x281.png',
+		'ticket_domains'      => 'biletinial.com, biletix.com, passo.com.tr, bubilet.com.tr, mobilet.com, biletino.com',
+		'weekly_report_on'    => 1,
+		'weekly_report_email' => '',
+		'weekly_report_day'   => 'monday',
+		'delete_on_uninst'    => 0,
+		'palettes'            => array(
 			array( 'date' => '#e94c86', 'city' => '#fce1ec' ),
 			array( 'date' => '#ffbc00', 'city' => '#fff4d1' ),
 			array( 'date' => '#00bcd4', 'city' => '#d1f2f7' ),
@@ -124,6 +137,11 @@ function kt_get_style_settings() {
 		$merged['ticket_domains'] = $defaults['ticket_domains'];
 	}
 
+	$valid_days = array( 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' );
+	if ( empty( $merged['weekly_report_day'] ) || ! in_array( $merged['weekly_report_day'], $valid_days, true ) ) {
+		$merged['weekly_report_day'] = 'monday';
+	}
+
 	for ( $i = 0; $i < 12; $i++ ) {
 		$d_col = isset( $saved['palettes'][ $i ]['date'] ) ? sanitize_hex_color( $saved['palettes'][ $i ]['date'] ) : '';
 		$c_col = isset( $saved['palettes'][ $i ]['city'] ) ? sanitize_hex_color( $saved['palettes'][ $i ]['city'] ) : '';
@@ -137,6 +155,50 @@ function kt_get_style_settings() {
 	return $merged;
 }
 
+/**
+ * Haftalık zamanlama aralığını WordPress cron sistemine kaydeder.
+ */
+add_filter( 'cron_schedules', 'kt_add_weekly_cron_schedule' );
+function kt_add_weekly_cron_schedule( $schedules ) {
+	if ( ! isset( $schedules['kt_weekly'] ) ) {
+		$schedules['kt_weekly'] = array(
+			'interval' => 604800,
+			'display'  => 'Haftada Bir (Konser Takvimi Raporu)',
+		);
+	}
+	return $schedules;
+}
+
+/**
+ * Haftalık rapor cron görevini ayarlara göre planlar veya günceller.
+ */
+function kt_sync_weekly_cron_schedule( $force_reschedule = false ) {
+	$styles = kt_get_style_settings();
+
+	if ( empty( $styles['weekly_report_on'] ) ) {
+		wp_clear_scheduled_hook( KT_CRON_HOOK );
+		return;
+	}
+
+	$next_ts = wp_next_scheduled( KT_CRON_HOOK );
+	if ( $next_ts && ! $force_reschedule ) {
+		return;
+	}
+
+	wp_clear_scheduled_hook( KT_CRON_HOOK );
+
+	$day_name = ! empty( $styles['weekly_report_day'] ) ? $styles['weekly_report_day'] : 'monday';
+	$tz       = new DateTimeZone( 'Europe/Istanbul' );
+	$target   = new DateTime( 'next ' . $day_name . ' 09:00:00', $tz );
+
+	wp_schedule_event( $target->getTimestamp(), 'kt_weekly', KT_CRON_HOOK );
+}
+
+add_action( 'init', 'kt_ensure_cron_scheduled' );
+function kt_ensure_cron_scheduled() {
+	kt_sync_weekly_cron_schedule( false );
+}
+
 register_activation_hook( __FILE__, 'kt_init_db_option' );
 function kt_init_db_option() {
 	$existing = get_option( KT_EVENTS_OPT );
@@ -147,6 +209,12 @@ function kt_init_db_option() {
 	if ( ! is_array( $stats ) ) {
 		update_option( KT_STATS_OPT, array(), false );
 	}
+	kt_sync_weekly_cron_schedule( true );
+}
+
+register_deactivation_hook( __FILE__, 'kt_deactivate_plugin' );
+function kt_deactivate_plugin() {
+	wp_clear_scheduled_hook( KT_CRON_HOOK );
 }
 
 if ( is_admin() ) {
@@ -187,11 +255,10 @@ function kt_register_frontend_assets() {
 }
 
 /**
- * Tracker scriptini ve ilçe bağlamını ön yüze yükler (önbellek uyumlu görüntülenme + tıklama izleme).
+ * Tracker scriptini ve ilçe bağlamını ön yüze yükler (görüntülenme, tekil ziyaretçi, kalma süresi ve bilet tıklama).
  */
 function kt_enqueue_tracker_script( $district_key = '', $page_label = '', $track_view = false ) {
-	static $already_enqueued = false;
-	static $track_page_view  = false;
+	static $track_page_view = false;
 
 	if ( $track_view ) {
 		$track_page_view = true;
@@ -219,12 +286,11 @@ function kt_enqueue_tracker_script( $district_key = '', $page_label = '', $track
 			'defaultDistrict' => kt_normalize_district_key( $district_key ),
 			'defaultLabel'    => sanitize_text_field( $page_label ),
 			'trackView'       => $track_page_view ? 1 : 0,
+			'todayStr'        => kt_get_istanbul_date_str( 0 ),
 			'ticketDomains'   => $domains,
 			'defaultImgUrl'   => esc_url_raw( $styles['ticket_btn_img'] ),
 		)
 	);
-
-	$already_enqueued = true;
 }
 
 /**
@@ -240,11 +306,27 @@ function kt_normalize_district_key( $raw_key ) {
 }
 
 /**
- * İstatistik sayacını (views veya clicks) güvenli biçimde artırır.
+ * Saniye cinsinden süreyi okunabilir "1 dk 24 sn" veya "42 sn" biçimine çevirir.
  */
-function kt_record_district_stat( $raw_key, $type = 'views', $page_title = '' ) {
+function kt_format_duration_human( $seconds ) {
+	$sec = max( 0, intval( round( $seconds ) ) );
+	if ( $sec <= 0 ) {
+		return '0 sn';
+	}
+	$mins = floor( $sec / 60 );
+	$rem  = $sec % 60;
+	if ( $mins > 0 ) {
+		return $mins . ' dk ' . $rem . ' sn';
+	}
+	return $rem . ' sn';
+}
+
+/**
+ * İstatistik sayacını (views, visitors, clicks, duration) ve son 90 günlük kırılımı güvenli biçimde günceller.
+ */
+function kt_record_district_stat( $raw_key, $type = 'views', $page_title = '', $extra = array() ) {
 	$key = kt_normalize_district_key( $raw_key );
-	if ( empty( $key ) || ! in_array( $type, array( 'views', 'clicks' ), true ) ) {
+	if ( empty( $key ) || ! in_array( $type, array( 'views', 'clicks', 'duration' ), true ) ) {
 		return;
 	}
 
@@ -253,25 +335,87 @@ function kt_record_district_stat( $raw_key, $type = 'views', $page_title = '' ) 
 		$stats = array();
 	}
 
+	$today_str = kt_get_istanbul_date_str( 0 );
+	$cutoff    = kt_get_istanbul_date_str( -90 );
+
 	if ( ! isset( $stats[ $key ] ) || ! is_array( $stats[ $key ] ) ) {
 		$stats[ $key ] = array(
-			'label'   => ! empty( $page_title ) ? sanitize_text_field( $page_title ) : ucfirst( str_replace( '-', ' ', $key ) ),
-			'views'   => 0,
-			'clicks'  => 0,
-			'updated' => '',
+			'label'          => ! empty( $page_title ) ? sanitize_text_field( $page_title ) : ucfirst( str_replace( '-', ' ', $key ) ),
+			'views'          => 0,
+			'visitors'       => 0,
+			'clicks'         => 0,
+			'total_seconds'  => 0,
+			'duration_count' => 0,
+			'daily'          => array(),
+			'updated'        => '',
 		);
-	} elseif ( ! empty( $page_title ) ) {
-		$stats[ $key ]['label'] = sanitize_text_field( $page_title );
+	} else {
+		if ( ! empty( $page_title ) ) {
+			$stats[ $key ]['label'] = sanitize_text_field( $page_title );
+		}
+		if ( ! isset( $stats[ $key ]['visitors'] ) ) {
+			$stats[ $key ]['visitors'] = 0;
+		}
+		if ( ! isset( $stats[ $key ]['total_seconds'] ) ) {
+			$stats[ $key ]['total_seconds'] = 0;
+		}
+		if ( ! isset( $stats[ $key ]['duration_count'] ) ) {
+			$stats[ $key ]['duration_count'] = 0;
+		}
+		if ( ! isset( $stats[ $key ]['daily'] ) || ! is_array( $stats[ $key ]['daily'] ) ) {
+			$stats[ $key ]['daily'] = array();
+		}
 	}
 
-	$stats[ $key ][ $type ] = intval( $stats[ $key ][ $type ] ) + 1;
+	if ( ! isset( $stats[ $key ]['daily'][ $today_str ] ) || ! is_array( $stats[ $key ]['daily'][ $today_str ] ) ) {
+		$stats[ $key ]['daily'][ $today_str ] = array(
+			'views'    => 0,
+			'visitors' => 0,
+			'clicks'   => 0,
+			'seconds'  => 0,
+			'sessions' => 0,
+		);
+	}
+
+	if ( 'views' === $type ) {
+		$is_unique = ! empty( $extra['is_unique'] );
+		$stats[ $key ]['views']                        = intval( $stats[ $key ]['views'] ) + 1;
+		$stats[ $key ]['daily'][ $today_str ]['views'] = intval( $stats[ $key ]['daily'][ $today_str ]['views'] ) + 1;
+
+		if ( $is_unique ) {
+			$stats[ $key ]['visitors']                        = intval( $stats[ $key ]['visitors'] ) + 1;
+			$stats[ $key ]['daily'][ $today_str ]['visitors'] = intval( $stats[ $key ]['daily'][ $today_str ]['visitors'] ) + 1;
+		}
+	} elseif ( 'clicks' === $type ) {
+		$stats[ $key ]['clicks']                        = intval( $stats[ $key ]['clicks'] ) + 1;
+		$stats[ $key ]['daily'][ $today_str ]['clicks'] = intval( $stats[ $key ]['daily'][ $today_str ]['clicks'] ) + 1;
+	} elseif ( 'duration' === $type ) {
+		// Tek oturumda 1 sn ile 1800 sn (30 dk) arası makul aktif kalma süresini kabul et
+		$sec = isset( $extra['seconds'] ) ? intval( $extra['seconds'] ) : 0;
+		if ( $sec >= 1 && $sec <= 1800 ) {
+			$stats[ $key ]['total_seconds']                     = intval( $stats[ $key ]['total_seconds'] ) + $sec;
+			$stats[ $key ]['duration_count']                    = intval( $stats[ $key ]['duration_count'] ) + 1;
+			$stats[ $key ]['daily'][ $today_str ]['seconds']  = intval( $stats[ $key ]['daily'][ $today_str ]['seconds'] ) + $sec;
+			$stats[ $key ]['daily'][ $today_str ]['sessions'] = intval( $stats[ $key ]['daily'][ $today_str ]['sessions'] ) + 1;
+		} else {
+			return;
+		}
+	}
+
 	$stats[ $key ]['updated'] = kt_get_istanbul_datetime_str();
+
+	// 90 günden eski günlük kayıtları temizleyerek veritabanını hafif tut
+	foreach ( $stats[ $key ]['daily'] as $d_key => $d_val ) {
+		if ( $d_key < $cutoff ) {
+			unset( $stats[ $key ]['daily'][ $d_key ] );
+		}
+	}
 
 	update_option( KT_STATS_OPT, $stats, false );
 }
 
 /**
- * AJAX üzerinden önbellek (cache) uyumlu ilçe sayfası görüntülenme ve bilet tıklama kaydı.
+ * AJAX üzerinden önbellek (cache) uyumlu görüntülenme, tekil ziyaretçi, kalma süresi ve tıklama kaydı.
  */
 add_action( 'wp_ajax_kt_track_district_event', 'kt_ajax_track_district_event' );
 add_action( 'wp_ajax_nopriv_kt_track_district_event', 'kt_ajax_track_district_event' );
@@ -284,7 +428,7 @@ function kt_ajax_track_district_event() {
 	$label    = isset( $_POST['label'] ) ? sanitize_text_field( wp_unslash( $_POST['label'] ) ) : '';
 	$ev_type  = isset( $_POST['event_type'] ) ? sanitize_key( wp_unslash( $_POST['event_type'] ) ) : 'clicks';
 
-	if ( ! in_array( $ev_type, array( 'views', 'clicks' ), true ) ) {
+	if ( ! in_array( $ev_type, array( 'views', 'clicks', 'duration' ), true ) ) {
 		$ev_type = 'clicks';
 	}
 
@@ -292,8 +436,181 @@ function kt_ajax_track_district_event() {
 		wp_send_json_error( array( 'message' => 'missing_district' ), 400 );
 	}
 
-	kt_record_district_stat( $district, $ev_type, $label );
+	$extra = array(
+		'is_unique' => isset( $_POST['is_unique'] ) && '1' === strval( $_POST['is_unique'] ),
+		'seconds'   => isset( $_POST['seconds'] ) ? intval( $_POST['seconds'] ) : 0,
+	);
+
+	kt_record_district_stat( $district, $ev_type, $label, $extra );
 	wp_send_json_success( array( 'recorded' => $ev_type ) );
+}
+
+/**
+ * Son 7 günün özet HTML raporunu oluşturur ve yönetici e-postasına gönderir.
+ */
+add_action( KT_CRON_HOOK, 'kt_send_weekly_stats_email' );
+function kt_send_weekly_stats_email( $override_email = '' ) {
+	$styles = kt_get_style_settings();
+
+	if ( empty( $override_email ) && empty( $styles['weekly_report_on'] ) ) {
+		return false;
+	}
+
+	$recipient = ! empty( $override_email ) ? sanitize_email( $override_email ) : ( ! empty( $styles['weekly_report_email'] ) ? sanitize_email( $styles['weekly_report_email'] ) : get_option( 'admin_email' ) );
+	if ( ! is_email( $recipient ) ) {
+		return false;
+	}
+
+	$stats = get_option( KT_STATS_OPT, array() );
+	if ( ! is_array( $stats ) ) {
+		$stats = array();
+	}
+
+	$days_7 = array();
+	for ( $d = 6; $d >= 0; $d-- ) {
+		$days_7[] = kt_get_istanbul_date_str( -$d );
+	}
+
+	$period_start = $days_7[0];
+	$period_end   = $days_7[6];
+
+	$rows            = array();
+	$sum_views_7     = 0;
+	$sum_visitors_7  = 0;
+	$sum_clicks_7    = 0;
+	$sum_seconds_7   = 0;
+	$sum_sessions_7  = 0;
+
+	foreach ( $stats as $key => $item ) {
+		$v7   = 0;
+		$vis7 = 0;
+		$c7   = 0;
+		$sec7 = 0;
+		$ses7 = 0;
+
+		if ( isset( $item['daily'] ) && is_array( $item['daily'] ) ) {
+			foreach ( $days_7 as $day_str ) {
+				if ( isset( $item['daily'][ $day_str ] ) ) {
+					$d_row = $item['daily'][ $day_str ];
+					$v7   += isset( $d_row['views'] ) ? intval( $d_row['views'] ) : 0;
+					$vis7 += isset( $d_row['visitors'] ) ? intval( $d_row['visitors'] ) : 0;
+					$c7   += isset( $d_row['clicks'] ) ? intval( $d_row['clicks'] ) : 0;
+					$sec7 += isset( $d_row['seconds'] ) ? intval( $d_row['seconds'] ) : 0;
+					$ses7 += isset( $d_row['sessions'] ) ? intval( $d_row['sessions'] ) : 0;
+				}
+			}
+		}
+
+		$all_v   = isset( $item['views'] ) ? intval( $item['views'] ) : 0;
+		$all_vis = isset( $item['visitors'] ) ? intval( $item['visitors'] ) : 0;
+		$all_c   = isset( $item['clicks'] ) ? intval( $item['clicks'] ) : 0;
+
+		if ( $v7 > 0 || $c7 > 0 || $all_v > 0 ) {
+			$rows[] = array(
+				'key'         => $key,
+				'label'       => isset( $item['label'] ) ? $item['label'] : $key,
+				'views_7'     => $v7,
+				'visitors_7'  => $vis7,
+				'clicks_7'    => $c7,
+				'avg_sec_7'   => $ses7 > 0 ? round( $sec7 / $ses7 ) : 0,
+				'total_views' => $all_v,
+				'total_vis'   => $all_vis,
+				'total_click' => $all_c,
+			);
+		}
+
+		$sum_views_7    += $v7;
+		$sum_visitors_7 += $vis7;
+		$sum_clicks_7   += $c7;
+		$sum_seconds_7  += $sec7;
+		$sum_sessions_7 += $ses7;
+	}
+
+	usort(
+		$rows,
+		function ( $a, $b ) {
+			if ( $a['visitors_7'] === $b['visitors_7'] ) {
+				return $b['views_7'] - $a['views_7'];
+			}
+			return $b['visitors_7'] - $a['visitors_7'];
+		}
+	);
+
+	$overall_avg_sec = $sum_sessions_7 > 0 ? round( $sum_seconds_7 / $sum_sessions_7 ) : 0;
+	$overall_ctr_7   = $sum_views_7 > 0 ? number_format( ( $sum_clicks_7 / $sum_views_7 ) * 100, 1, ',', '.' ) : '0,0';
+	$site_name       = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
+	$subject         = sprintf( '[%s] Haftalık Konser Sayfası İstatistik Raporu (%s - %s)', $site_name, $period_start, $period_end );
+
+	ob_start();
+	?>
+	<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e293b; max-width: 680px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+		<div style="background: #1e293b; color: #ffffff; padding: 20px 24px;">
+			<h2 style="margin: 0; font-size: 18px;">Konser Takvimi — Haftalık Performans Raporu</h2>
+			<p style="margin: 6px 0 0 0; font-size: 13px; color: #cbd5e1;">Dönem: <?php echo esc_html( $period_start . ' – ' . $period_end ); ?></p>
+		</div>
+
+		<div style="padding: 20px 24px;">
+			<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px; border-collapse: collapse;">
+				<tr>
+					<td style="width: 25%; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center;">
+						<div style="font-size: 11px; color: #64748b; font-weight: 600;">7 Günlük Ziyaretçi</div>
+						<div style="font-size: 20px; font-weight: 700; color: #0f172a; margin-top: 4px;"><?php echo number_format_i18n( $sum_visitors_7 ); ?></div>
+					</td>
+					<td style="width: 25%; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center;">
+						<div style="font-size: 11px; color: #64748b; font-weight: 600;">7 Günlük Gösterim</div>
+						<div style="font-size: 20px; font-weight: 700; color: #0f172a; margin-top: 4px;"><?php echo number_format_i18n( $sum_views_7 ); ?></div>
+					</td>
+					<td style="width: 25%; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center;">
+						<div style="font-size: 11px; color: #64748b; font-weight: 600;">Bilet Tıklaması</div>
+						<div style="font-size: 20px; font-weight: 700; color: #16a34a; margin-top: 4px;"><?php echo number_format_i18n( $sum_clicks_7 ); ?> (%<?php echo esc_html( $overall_ctr_7 ); ?>)</div>
+					</td>
+					<td style="width: 25%; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center;">
+						<div style="font-size: 11px; color: #64748b; font-weight: 600;">Ort. Kalma Süresi</div>
+						<div style="font-size: 20px; font-weight: 700; color: #2563eb; margin-top: 4px;"><?php echo esc_html( kt_format_duration_human( $overall_avg_sec ) ); ?></div>
+					</td>
+				</tr>
+			</table>
+
+			<h3 style="font-size: 15px; margin: 0 0 10px 0; color: #0f172a;">İlçe Bazlı Son 7 Gün ve Genel Toplamlar</h3>
+			<?php if ( empty( $rows ) ) : ?>
+				<p style="color: #64748b; font-size: 13px;">Bu dönemde henüz kayıtlı ziyaret verisi oluşmamıştır.</p>
+			<?php else : ?>
+				<table width="100%" cellpadding="8" cellspacing="0" style="border-collapse: collapse; font-size: 13px; border: 1px solid #e2e8f0;">
+					<thead>
+						<tr style="background: #f1f5f9; text-align: left;">
+							<th style="border-bottom: 1px solid #cbd5e1;">İlçe / Sayfa</th>
+							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Ziyaretçi (7g)</th>
+							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Gösterim (7g)</th>
+							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Bilet Tık (7g)</th>
+							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Ort. Süre</th>
+							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Genel Tık</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $rows as $r ) : ?>
+							<tr>
+								<td style="border-bottom: 1px solid #e2e8f0;"><strong><?php echo esc_html( $r['label'] ); ?></strong></td>
+								<td style="border-bottom: 1px solid #e2e8f0; text-align: right;"><?php echo number_format_i18n( $r['visitors_7'] ); ?></td>
+								<td style="border-bottom: 1px solid #e2e8f0; text-align: right;"><?php echo number_format_i18n( $r['views_7'] ); ?></td>
+								<td style="border-bottom: 1px solid #e2e8f0; text-align: right; color: #16a34a; font-weight: 600;"><?php echo number_format_i18n( $r['clicks_7'] ); ?></td>
+								<td style="border-bottom: 1px solid #e2e8f0; text-align: right;"><?php echo esc_html( kt_format_duration_human( $r['avg_sec_7'] ) ); ?></td>
+								<td style="border-bottom: 1px solid #e2e8f0; text-align: right; color: #64748b;"><?php echo number_format_i18n( $r['total_click'] ); ?></td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php endif; ?>
+
+			<p style="margin-top: 20px; font-size: 12px; color: #64748b;">
+				Detaylı günlük grafikler ve CSV çıktısı için WordPress yönetim panelindeki <a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats' ) ); ?>">Konser Takvimi &rarr; İstatistikler</a> sayfasını ziyaret edebilirsiniz.
+			</p>
+		</div>
+	</div>
+	<?php
+	$html_body = ob_get_clean();
+	$headers   = array( 'Content-Type: text/html; charset=UTF-8' );
+
+	return wp_mail( $recipient, $subject, $html_body, $headers );
 }
 
 /**
@@ -426,7 +743,6 @@ function kt_district_redirect_shortcode_output( $atts ) {
 		return '<script>window.location.replace(' . wp_json_encode( esc_url( $redirect_url ) ) . ');</script>';
 	}
 
-	// Sayfa önbelleğe (cache) alınsa dahi ziyaret ve tıklama istatistiklerini AJAX ile kaydet
 	kt_enqueue_tracker_script( $lookup_key, $page_label, true );
 
 	return '';
@@ -434,7 +750,6 @@ function kt_district_redirect_shortcode_output( $atts ) {
 
 /**
  * [konser_bilet_butonu url="..." resim="..." ilce="..." alt="..." hedef="_blank"]
- * url belirtilmezse Ayarlar sekmesindeki "Varsayılan Bilet Satış URL'si" kullanılır.
  */
 add_shortcode( 'konser_bilet_butonu', 'kt_ticket_button_shortcode' );
 function kt_ticket_button_shortcode( $atts ) {

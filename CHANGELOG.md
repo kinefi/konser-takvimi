@@ -1,5 +1,12 @@
 # Değişiklik Günlüğü (Changelog)
 
+## [3.4.0] - 2026-11-19
+### Eklenenler
+- **Günlük Tekil Ziyaretçi Takibi:** Çerez (cookie) gerektirmeden `localStorage` üzerinden aynı gün içindeki tekrar sayfa yenilemelerini ayırarak **Bugünkü Tekil Ziyaretçi** ve **Toplam Tekil Ziyaretçi** metrikleri eklendi.
+- **Sayfada Kalma Süresi Ölçümü:** Ziyaretçinin sekmede aktif kaldığı süre (`visibilitychange` / `pagehide` / bilet tıklaması anında) `navigator.sendBeacon()` ile kaydedilerek ilçe bazında **Ortalama Kalma Süresi** hesaplandı.
+- **Son 14 Günlük İnteraktif Grafik:** Yönetim panelindeki **İstatistikler & Grafik** sekmesine harici kütüphane gerektirmeyen hafif HTML5 Canvas çubuk grafiği ve ilçe filtresi eklendi.
+- **Haftalık Yönetici E-Posta Raporu:** `wp_cron` altyapısıyla her hafta seçilen günde son 7 günün performans özetini HTML tablo olarak yönetici e-posta adresine gönderen otomatik rapor sistemi ve **Şimdi Örnek Rapor E-Postası Gönder** butonu eklendi.
+
 ## [3.3.0] - 2026-11-16
 ### Eklenenler & İyileştirilenler
 - **Varsayılan Bilet Satış URL'si Ayarı:** Ayarlar sekmesine **Varsayılan Bilet Satış URL'si** alanı eklendi. Bu alan doldurulduğunda sayfalarda `url="..."` parametresi vermeden doğrudan `[konser_bilet_butonu]` kısa kodu kullanılabilir.
