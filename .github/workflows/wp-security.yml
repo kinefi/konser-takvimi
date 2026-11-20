@@ -13,7 +13,7 @@ permissions:
   actions: read
 
 jobs:
-  # 1. KATMAN: WordPress Güvenlik ve Kod Standartları (PHPCS + WPCS)
+# 1. KATMAN: WordPress Güvenlik ve Kod Standartları (PHPCS + WPCS)
   wp-security-standards:
     name: WPCS & Security Audit
     runs-on: ubuntu-latest
@@ -24,17 +24,16 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          tools: composer, phpcs
+          tools: composer
 
       - name: Install WordPress Coding Standards & Security Rules
         run: |
           composer global config allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
           composer global require wp-coding-standards/wpcs:"^3.0" phpcompatibility/phpcompatibility-wp:"*"
-          phpcs --config-set installed_paths ~/.composer/vendor/wp-coding-standards/wpcs,~/.composer/vendor/phpcompatibility/phpcompatibility-wp,~/.composer/vendor/phpcompatibility/php-compatibility
 
       - name: Run WP Security & Escaping Checks
         run: |
-          phpcs --standard=WordPress \
+          ~/.composer/vendor/bin/phpcs --standard=WordPress \
             --sniffs=WordPress.Security.EscapeOutput,WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput,WordPress.Security.SafeRedirect,WordPress.DB.PreparedSQL \
             --extensions=php \
             --ignore=vendor/* .

@@ -150,7 +150,7 @@ function kt_handle_stats_export() {
 	<div class="print-bar">
 		<button type="button" class="print-btn" onclick="window.print()">Yazdır / PDF Olarak Kaydet</button>
 	</div>
-	<?php echo $bundle['html_card']; ?>
+	<?php echo htmlentities($bundle['html_card']); ?>
 </body>
 </html>
 	<?php
