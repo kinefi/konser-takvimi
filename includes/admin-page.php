@@ -37,10 +37,10 @@ function kt_enqueue_admin_assets( $hook ) {
 	);
 }
 
-// İstatistik CSV Dışa Aktarma İşleyicisi
+// İstatistik Rapor İndirme (HTML Yazdırılabilir Rapor veya CSV) İşleyicisi
 add_action( 'admin_init', 'kt_handle_stats_export' );
 function kt_handle_stats_export() {
-	if ( ! isset( $_POST['kt_export_stats_action'] ) ) {
+	if ( ! isset( $_POST['kt_download_report_action'] ) && ! isset( $_POST['kt_export_stats_action'] ) ) {
 		return;
 	}
 
@@ -50,53 +50,110 @@ function kt_handle_stats_export() {
 
 	check_admin_referer( 'kt_stats_nonce_action', 'kt_stats_nonce' );
 
-	$stats = get_option( KT_STATS_OPT, array() );
-	if ( ! is_array( $stats ) ) {
-		$stats = array();
+	$date_stamp    = kt_get_istanbul_date_str( 0 );
+	$report_format = isset( $_POST['report_format'] ) ? sanitize_key( $_POST['report_format'] ) : 'html';
+	$report_period = isset( $_POST['report_period'] ) ? intval( $_POST['report_period'] ) : 7;
+
+	if ( isset( $_POST['kt_export_stats_action'] ) ) {
+		$report_format = 'csv';
 	}
 
-	$today_str  = kt_get_istanbul_date_str( 0 );
-	$date_stamp = kt_get_istanbul_date_str( 0 );
-	$filename   = "konser-ilce-istatistikleri-{$date_stamp}.csv";
+	if ( ! in_array( $report_period, array( 7, 14, 30, 0 ), true ) ) {
+		$report_period = 7;
+	}
 
+	$bundle = kt_build_stats_report_bundle( $report_period );
+	$scope  = ( $report_period > 0 ) ? "son-{$report_period}-gun" : 'tum-zamanlar';
+
+	if ( 'csv' === $report_format ) {
+		$filename = "konser-istatistik-raporu-{$scope}-{$date_stamp}.csv";
+
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+
+		$output = fopen( 'php://output', 'w' );
+		fwrite( $output, "\xEF\xBB\xBF" );
+		fputcsv(
+			$output,
+			array(
+				'Dönem: ' . $bundle['period_label'],
+				'Oluşturulma: ' . $bundle['generated_at'],
+			),
+			';'
+		);
+		fputcsv( $output, array(), ';' );
+		fputcsv(
+			$output,
+			array(
+				'İlçe / Anahtar',
+				'Sayfa Başlığı',
+				'Tekil Ziyaretçi',
+				'Sayfa Gösterimi',
+				'Bilet Tıklaması',
+				'Tıklama Oranı (%)',
+				'Ort. Kalma Süresi (sn)',
+				'Genel Toplam Ziyaretçi',
+				'Genel Toplam Tıklama',
+			),
+			';'
+		);
+
+		foreach ( $bundle['rows'] as $row ) {
+			$label = preg_replace( '/^[=+\-@]/', "'$0", $row['label'] );
+			$ctr   = number_format( $row['ctr'], 1, ',', '' );
+			fputcsv(
+				$output,
+				array(
+					$row['key'],
+					$label,
+					$row['visitors'],
+					$row['views'],
+					$row['clicks'],
+					$ctr,
+					$row['avg_sec'],
+					$row['total_vis'],
+					$row['total_clicks'],
+				),
+				';'
+			);
+		}
+
+		fclose( $output );
+		exit;
+	}
+
+	// Yazdırılabilir / PDF Kaydedilebilir Görsel HTML Rapor Dosyası
+	$filename = "konser-performans-raporu-{$scope}-{$date_stamp}.html";
 	nocache_headers();
-	header( 'Content-Type: text/csv; charset=utf-8' );
+	header( 'Content-Type: text/html; charset=utf-8' );
 	header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
-
-	$output = fopen( 'php://output', 'w' );
-	fwrite( $output, "\xEF\xBB\xBF" );
-	fputcsv(
-		$output,
-		array(
-			'İlçe / Anahtar',
-			'Sayfa Başlığı',
-			'Bugünkü Ziyaretçi',
-			'Toplam Tekil Ziyaretçi',
-			'Toplam Gösterim',
-			'Bilet Tıklaması',
-			'Tıklama Oranı (%)',
-			'Ort. Kalma Süresi (sn)',
-			'Son Etkileşim',
-		),
-		';'
-	);
-
-	foreach ( $stats as $key => $row ) {
-		$views     = isset( $row['views'] ) ? intval( $row['views'] ) : 0;
-		$visitors  = isset( $row['visitors'] ) ? intval( $row['visitors'] ) : 0;
-		$clicks    = isset( $row['clicks'] ) ? intval( $row['clicks'] ) : 0;
-		$tot_sec   = isset( $row['total_seconds'] ) ? intval( $row['total_seconds'] ) : 0;
-		$dur_cnt   = isset( $row['duration_count'] ) ? intval( $row['duration_count'] ) : 0;
-		$avg_sec   = $dur_cnt > 0 ? round( $tot_sec / $dur_cnt ) : 0;
-		$today_vis = ( isset( $row['daily'][ $today_str ]['visitors'] ) ) ? intval( $row['daily'][ $today_str ]['visitors'] ) : 0;
-		$ctr       = $views > 0 ? number_format( ( $clicks / $views ) * 100, 1, ',', '' ) : '0,0';
-		$label     = isset( $row['label'] ) ? preg_replace( '/^[=+\-@]/', "'$0", $row['label'] ) : $key;
-		$upd       = isset( $row['updated'] ) ? $row['updated'] : '';
-
-		fputcsv( $output, array( $key, $label, $today_vis, $visitors, $views, $clicks, $ctr, $avg_sec, $upd ), ';' );
-	}
-
-	fclose( $output );
+	?>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title><?php echo esc_html( $bundle['site_name'] . ' — Konser Performans Raporu (' . $bundle['period_label'] . ')' ); ?></title>
+	<style>
+		body { background: #f1f5f9; margin: 0; padding: 28px 16px; }
+		.print-bar { max-width: 760px; margin: 0 auto 14px auto; display: flex; justify-content: flex-end; }
+		.print-btn { background: #1e293b; color: #fff; border: none; padding: 9px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+		.print-btn:hover { background: #0f172a; }
+		@media print {
+			body { background: #ffffff; padding: 0; }
+			.print-bar { display: none; }
+		}
+	</style>
+</head>
+<body>
+	<div class="print-bar">
+		<button type="button" class="print-btn" onclick="window.print()">Yazdır / PDF Olarak Kaydet</button>
+	</div>
+	<?php echo $bundle['html_card']; ?>
+</body>
+</html>
+	<?php
 	exit;
 }
 
@@ -703,14 +760,26 @@ function kt_konser_admin_page() {
 					<script type="application/json" id="kt-chart-json-data"><?php echo wp_json_encode( $chart_payload ); ?></script>
 				</div>
 
-				<div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 12px 16px; margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;">
-					<span class="description">
-						Yönetici/editör girişleri sayımlara dahil edilmez. Günlük kırılımlar son 90 gün boyunca saklanır.
-					</span>
-					<form method="post" action="" style="display: flex; gap: 8px; margin: 0;">
+				<!-- Rapor İndirme & Sıfırlama Çubuğu -->
+				<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #16a34a; border-radius: 4px; padding: 12px 16px; margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;">
+					<div>
+						<strong>Rapor İndir:</strong>
+						<span class="description" style="margin-left: 4px;">Dönem ve biçim seçerek yazdırılabilir görsel rapor (HTML/PDF) veya Excel tablosu (CSV) indirin.</span>
+					</div>
+					<form method="post" action="" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0;">
 						<?php wp_nonce_field( 'kt_stats_nonce_action', 'kt_stats_nonce' ); ?>
-						<input type="submit" name="kt_export_stats_action" class="button button-secondary" value="CSV Olarak İndir" <?php disabled( empty( $stats ) ); ?>>
-						<input type="submit" name="kt_reset_stats" class="button" style="color: #b32d2e;" value="Tüm İstatistikleri Sıfırla" <?php disabled( empty( $stats ) ); ?> onclick="return confirm('Tüm ilçe ziyaret ve tıklama verileri kalıcı olarak sıfırlanacak. Emin misiniz?');">
+						<select name="report_period" aria-label="Rapor Dönemi">
+							<option value="7">Son 7 Gün (Haftalık)</option>
+							<option value="14">Son 14 Gün</option>
+							<option value="30">Son 30 Gün (Aylık)</option>
+							<option value="0">Tüm Zamanlar</option>
+						</select>
+						<select name="report_format" aria-label="Rapor Biçimi">
+							<option value="html">Görsel Rapor (HTML / Yazdır & PDF)</option>
+							<option value="csv">Excel Tablosu (.csv)</option>
+						</select>
+						<input type="submit" name="kt_download_report_action" class="button button-primary" value="Raporu İndir" <?php disabled( empty( $stats ) ); ?>>
+						<input type="submit" name="kt_reset_stats" class="button" style="color: #b32d2e; margin-left: 6px;" value="Tüm İstatistikleri Sıfırla" <?php disabled( empty( $stats ) ); ?> onclick="return confirm('Tüm ilçe ziyaret ve tıklama verileri kalıcı olarak sıfırlanacak. Emin misiniz?');">
 					</form>
 				</div>
 

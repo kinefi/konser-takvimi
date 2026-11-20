@@ -103,7 +103,6 @@
 		return false;
 	}
 
-	// İlçe sayfası görüntülenme ve günlük tekil ziyaretçi kaydı
 	if (typeof ktTrackerData !== 'undefined' && parseInt(ktTrackerData.trackView, 10) === 1 && ktTrackerData.defaultDistrict) {
 		var recordViewOnce = function () {
 			var isUnique = checkDailyUniqueVisitor(ktTrackerData.defaultDistrict, ktTrackerData.todayStr);

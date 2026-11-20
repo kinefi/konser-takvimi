@@ -1,5 +1,9 @@
 # Değişiklik Günlüğü (Changelog)
 
+## [3.4.1] - 2026-11-19
+### Eklenenler
+- **Dönem ve Biçim Seçenekli Rapor İndirme Düğmesi:** Yönetim panelindeki **İstatistikler & Grafik** sekmesine **Son 7 Gün (Haftalık)**, **Son 14 Gün**, **Son 30 Gün (Aylık)** veya **Tüm Zamanlar** dönemleri için yazdırılabilir/PDF kaydedilebilir **Görsel Rapor (HTML)** ve **Excel Tablosu (.csv)** indirme düğmesi eklendi.
+
 ## [3.4.0] - 2026-11-19
 ### Eklenenler
 - **Günlük Tekil Ziyaretçi Takibi:** Çerez (cookie) gerektirmeden `localStorage` üzerinden aynı gün içindeki tekrar sayfa yenilemelerini ayırarak **Bugünkü Tekil Ziyaretçi** ve **Toplam Tekil Ziyaretçi** metrikleri eklendi.
@@ -9,33 +13,24 @@
 
 ## [3.3.0] - 2026-11-16
 ### Eklenenler & İyileştirilenler
-- **Varsayılan Bilet Satış URL'si Ayarı:** Ayarlar sekmesine **Varsayılan Bilet Satış URL'si** alanı eklendi. Bu alan doldurulduğunda sayfalarda `url="..."` parametresi vermeden doğrudan `[konser_bilet_butonu]` kısa kodu kullanılabilir.
-- **Önbellek (Cache) Uyumlu Sayfa Görüntülenme Sayacı:** İlçe sayfası görüntülenmeleri (`views`) tıpkı bilet tıklamaları gibi `tracker.js` üzerinden AJAX ile kaydedilecek şekilde güncellendi; böylece LiteSpeed Cache, WP Rocket veya Cloudflare gibi sayfa önbellekleme eklentileri aktifken dahi ziyaret sayıları eksiksiz artar.
+- **Varsayılan Bilet Satış URL'si Ayarı:** Ayarlar sekmesine **Varsayılan Bilet Satış URL'si** alanı eklendi.
+- **Önbellek (Cache) Uyumlu Sayfa Görüntülenme Sayacı:** İlçe sayfası görüntülenmeleri (`views`) `tracker.js` üzerinden AJAX ile kaydedilecek şekilde güncellendi.
 
 ## [3.2.1] - 2026-11-16
 ### Eklenenler
-- **Kısa Kodsuz Otomatik Bilet Tıklama Takibi:** `[konser_bilet_butonu]` kısa kodu kullanılmayan mevcut sayfalarda dahi, sayfada `[konser_ilce_yonlendir]` varsa Ayarlar sekmesinde tanımlanan bilet alan adlarına (`biletinial.com`, `biletix.com`, `passo.com.tr`, `bubilet.com.tr`, `mobilet.com`, `biletino.com`) veya varsayılan bilet görseline yapılan tıklamalar otomatik yakalanıp ilgili ilçenin istatistiklerine kaydedilir.
-- **Otomatik Takip Edilecek Bilet Alan Adları Ayarı:** Ayarlar sekmesine düzenlenebilir bilet alan adları listesi eklendi.
+- **Kısa Kodsuz Otomatik Bilet Tıklama Takibi:** `[konser_ilce_yonlendir]` bulunan sayfalarda bilet alan adlarına veya varsayılan bilet görseline yapılan tıklamalar otomatik yakalanır.
 
 ## [3.2.0] - 2026-11-16
 ### Eklenenler
-- **Bilet Düğmesi Kısa Kodu (`[konser_bilet_butonu]`):** Mevcut `<figure class="wp-block-image size-large">` yapısını koruyan `[konser_bilet_butonu url="..."]` kısa kodu eklendi. Ayarlar sekmesinden varsayılan bilet düğmesi görseli Ortam Kütüphanesinden seçilebilir veya URL olarak tanımlanabilir.
-- **İlçe Ziyaret & Bilet Tıklama İstatistikleri:** Yönetim paneline **İstatistikler** sekmesi eklendi. Her ilçe sayfasının toplam görüntülenme sayısı (`[konser_ilce_yonlendir]` aktifken), bilet düğmesi tıklama sayısı (`[konser_bilet_butonu]`), tıklama oranı (CTR %) ve son etkileşim zamanı kaydedilir; CSV dışa aktarma ve sıfırlama desteği sunar.
-
-## [3.1.1] - 2026-11-16
-### Değiştirilenler
-- **Arayüz ve Dokümantasyon Sadeleştirmesi:** Yönetim paneli ve dokümantasyonda yalnızca `[konser_takvimi]` kısa kodu belirtilecek şekilde sadeleştirildi.
+- **Bilet Düğmesi Kısa Kodu (`[konser_bilet_butonu]`):** `<figure class="wp-block-image size-large">` yapısında bilet düğmesi kısa kodu ve **İstatistikler** sekmesi eklendi.
 
 ## [3.1.0] - 2026-11-16
 ### Eklenenler & Değiştirilenler
-- **Ayarlanabilir Yönlendirme Hedefi:** **Düğme Biçimleri, Renkler & Ayarlar** sekmesine `[konser_ilce_yonlendir]` kısa kodunun varsayılan yönlendirme adresini (varsayılan `/konserler`) belirleme alanı eklendi.
-- **URL ve İlçe Adı Bilgilendirmesi:** Ayarlar sekmesine ve dokümantasyona, otomatik eşleşme için ilçe adının sayfa URL uzantısında yer alması gerektiğine dair açıklayıcı not eklendi.
+- **Ayarlanabilir Yönlendirme Hedefi:** Varsayılan yönlendirme adresini (varsayılan `/konserler`) belirleme alanı eklendi.
 
 ## [3.0.0] - 2026-11-16
 ### Eklenenler & Değiştirilenler
-- **Çift Seans Desteği (`12.00 ve 14.00`):** Yönetim paneline isteğe bağlı **2. Seans** alanı eklendi. İkinci seans girildiğinde düğmede saat `12.00 ve 14.00` biçiminde tek satırda gösterilir ve 2. seans saati geçene kadar konser aktif kalır.
-- **İlçe Sayfası Yönlendirme Kısa Kodu (`[konser_ilce_yonlendir]`):** İlçe konser sayfalarına yerleştirildiğinde ilgili ilçede yaklaşan konser olup olmadığını denetler; aktif konser yoksa ziyaretçiyi otomatik belirlenen sayfaya (`302` geçici yönlendirme ile) yönlendirir.
-- **CSV / JSON Dışa Aktarma Güncellemesi:** CSV dışa aktarımına `1. Seans` ve `2. Seans` sütunları eklendi.
+- **Çift Seans Desteği (`12.00 ve 14.00`)** ve **İlçe Sayfası Yönlendirme Kısa Kodu (`[konser_ilce_yonlendir]`)** eklendi.
 
 ## [2.9.0] - 2026-11-16
 ### Değiştirilenler

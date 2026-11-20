@@ -1,9 +1,4 @@
 <?php
-/**
- * WordPress eklenti kaldırma (Uninstall) dosyası.
- * Yalnızca yönetim panelinde "Eklenti silindiğinde veritabanı kayıtlarını da temizle" seçeneği işaretliyse verileri siler.
- */
-
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }

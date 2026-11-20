@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Konser Takvimi
- * Description: Veritabanı tabanlı, çift seans destekli, geçmiş konserleri otomatik arşivleyen, ilçe sayfası yönlendirme, günlük ziyaretçi/süre analitiği, grafik ve haftalık e-posta raporu sunan WordPress eklentisi.
- * Version: 3.4.0
+ * Description: Veritabanı tabanlı, çift seans destekli, geçmiş konserleri otomatik arşivleyen, ilçe sayfası yönlendirme, günlük ziyaretçi/süre analitiği, grafik ve indirilebilir/e-posta raporları sunan WordPress eklentisi.
+ * Version: 3.4.1
  * Author: Şubadap Çocuk
  * License: GPL-3.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'KT_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'KT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'KT_PLUGIN_VER', '3.4.0' );
+define( 'KT_PLUGIN_VER', '3.4.1' );
 define( 'KT_EVENTS_OPT', 'subadap_konserler_list' );
 define( 'KT_STYLES_OPT', 'subadap_konserler_styles' );
 define( 'KT_STATS_OPT', 'subadap_konserler_stats' );
@@ -390,7 +390,6 @@ function kt_record_district_stat( $raw_key, $type = 'views', $page_title = '', $
 		$stats[ $key ]['clicks']                        = intval( $stats[ $key ]['clicks'] ) + 1;
 		$stats[ $key ]['daily'][ $today_str ]['clicks'] = intval( $stats[ $key ]['daily'][ $today_str ]['clicks'] ) + 1;
 	} elseif ( 'duration' === $type ) {
-		// Tek oturumda 1 sn ile 1800 sn (30 dk) arası makul aktif kalma süresini kabul et
 		$sec = isset( $extra['seconds'] ) ? intval( $extra['seconds'] ) : 0;
 		if ( $sec >= 1 && $sec <= 1800 ) {
 			$stats[ $key ]['total_seconds']                     = intval( $stats[ $key ]['total_seconds'] ) + $sec;
@@ -404,7 +403,6 @@ function kt_record_district_stat( $raw_key, $type = 'views', $page_title = '', $
 
 	$stats[ $key ]['updated'] = kt_get_istanbul_datetime_str();
 
-	// 90 günden eski günlük kayıtları temizleyerek veritabanını hafif tut
 	foreach ( $stats[ $key ]['daily'] as $d_key => $d_val ) {
 		if ( $d_key < $cutoff ) {
 			unset( $stats[ $key ]['daily'][ $d_key ] );
@@ -446,6 +444,194 @@ function kt_ajax_track_district_event() {
 }
 
 /**
+ * Belirtilen gün sayısı (örn. 7, 14, 30 veya tüm zamanlar) için özet istatistik raporu verilerini ve HTML çıktısını üretir.
+ */
+function kt_build_stats_report_bundle( $days_span = 7 ) {
+	$stats = get_option( KT_STATS_OPT, array() );
+	if ( ! is_array( $stats ) ) {
+		$stats = array();
+	}
+
+	$days_span  = intval( $days_span );
+	$is_alltime = ( $days_span <= 0 );
+	$day_keys   = array();
+
+	if ( ! $is_alltime ) {
+		for ( $d = $days_span - 1; $d >= 0; $d-- ) {
+			$day_keys[] = kt_get_istanbul_date_str( -$d );
+		}
+		$period_label = $day_keys[0] . ' – ' . $day_keys[ count( $day_keys ) - 1 ] . ' (Son ' . $days_span . ' Gün)';
+	} else {
+		$period_label = 'Tüm Zamanlar (Kümülatif)';
+	}
+
+	$rows           = array();
+	$sum_views      = 0;
+	$sum_visitors   = 0;
+	$sum_clicks     = 0;
+	$sum_seconds    = 0;
+	$sum_sessions   = 0;
+
+	foreach ( $stats as $key => $item ) {
+		$all_v   = isset( $item['views'] ) ? intval( $item['views'] ) : 0;
+		$all_vis = isset( $item['visitors'] ) ? intval( $item['visitors'] ) : 0;
+		$all_c   = isset( $item['clicks'] ) ? intval( $item['clicks'] ) : 0;
+		$all_sec = isset( $item['total_seconds'] ) ? intval( $item['total_seconds'] ) : 0;
+		$all_ses = isset( $item['duration_count'] ) ? intval( $item['duration_count'] ) : 0;
+
+		if ( $is_alltime ) {
+			$p_v   = $all_v;
+			$p_vis = $all_vis;
+			$p_c   = $all_c;
+			$p_sec = $all_sec;
+			$p_ses = $all_ses;
+		} else {
+			$p_v   = 0;
+			$p_vis = 0;
+			$p_c   = 0;
+			$p_sec = 0;
+			$p_ses = 0;
+
+			if ( isset( $item['daily'] ) && is_array( $item['daily'] ) ) {
+				foreach ( $day_keys as $day_str ) {
+					if ( isset( $item['daily'][ $day_str ] ) ) {
+						$d_row  = $item['daily'][ $day_str ];
+						$p_v   += isset( $d_row['views'] ) ? intval( $d_row['views'] ) : 0;
+						$p_vis += isset( $d_row['visitors'] ) ? intval( $d_row['visitors'] ) : 0;
+						$p_c   += isset( $d_row['clicks'] ) ? intval( $d_row['clicks'] ) : 0;
+						$p_sec += isset( $d_row['seconds'] ) ? intval( $d_row['seconds'] ) : 0;
+						$p_ses += isset( $d_row['sessions'] ) ? intval( $d_row['sessions'] ) : 0;
+					}
+				}
+			}
+		}
+
+		if ( $p_v > 0 || $p_c > 0 || $all_v > 0 ) {
+			$rows[] = array(
+				'key'          => $key,
+				'label'        => isset( $item['label'] ) ? $item['label'] : $key,
+				'views'        => $p_v,
+				'visitors'     => $p_vis,
+				'clicks'       => $p_c,
+				'ctr'          => $p_v > 0 ? round( ( $p_c / $p_v ) * 100, 1 ) : 0.0,
+				'avg_sec'      => $p_ses > 0 ? round( $p_sec / $p_ses ) : 0,
+				'total_views'  => $all_v,
+				'total_vis'    => $all_vis,
+				'total_clicks' => $all_c,
+			);
+		}
+
+		$sum_views    += $p_v;
+		$sum_visitors += $p_vis;
+		$sum_clicks   += $p_c;
+		$sum_seconds  += $p_sec;
+		$sum_sessions += $p_ses;
+	}
+
+	usort(
+		$rows,
+		function ( $a, $b ) {
+			if ( $a['visitors'] === $b['visitors'] ) {
+				return $b['views'] - $a['views'];
+			}
+			return $b['visitors'] - $a['visitors'];
+		}
+	);
+
+	$overall_avg_sec = $sum_sessions > 0 ? round( $sum_seconds / $sum_sessions ) : 0;
+	$overall_ctr     = $sum_views > 0 ? number_format( ( $sum_clicks / $sum_views ) * 100, 1, ',', '.' ) : '0,0';
+	$site_name       = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
+	$generated_at    = kt_get_istanbul_datetime_str();
+
+	ob_start();
+	?>
+	<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e293b; max-width: 760px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+		<div style="background: #1e293b; color: #ffffff; padding: 20px 24px;">
+			<h2 style="margin: 0; font-size: 18px;"><?php echo esc_html( $site_name ); ?> — Konser Sayfası Performans Raporu</h2>
+			<p style="margin: 6px 0 0 0; font-size: 13px; color: #cbd5e1;">Dönem: <?php echo esc_html( $period_label ); ?> &bull; Oluşturulma: <?php echo esc_html( $generated_at ); ?></p>
+		</div>
+
+		<div style="padding: 20px 24px;">
+			<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px; border-collapse: collapse;">
+				<tr>
+					<td style="width: 25%; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center;">
+						<div style="font-size: 11px; color: #64748b; font-weight: 600;">Tekil Ziyaretçi</div>
+						<div style="font-size: 20px; font-weight: 700; color: #0f172a; margin-top: 4px;"><?php echo number_format_i18n( $sum_visitors ); ?></div>
+					</td>
+					<td style="width: 25%; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center;">
+						<div style="font-size: 11px; color: #64748b; font-weight: 600;">Sayfa Gösterimi</div>
+						<div style="font-size: 20px; font-weight: 700; color: #0f172a; margin-top: 4px;"><?php echo number_format_i18n( $sum_views ); ?></div>
+					</td>
+					<td style="width: 25%; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center;">
+						<div style="font-size: 11px; color: #64748b; font-weight: 600;">Bilet Tıklaması</div>
+						<div style="font-size: 20px; font-weight: 700; color: #16a34a; margin-top: 4px;"><?php echo number_format_i18n( $sum_clicks ); ?> (%<?php echo esc_html( $overall_ctr ); ?>)</div>
+					</td>
+					<td style="width: 25%; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center;">
+						<div style="font-size: 11px; color: #64748b; font-weight: 600;">Ort. Kalma Süresi</div>
+						<div style="font-size: 20px; font-weight: 700; color: #2563eb; margin-top: 4px;"><?php echo esc_html( kt_format_duration_human( $overall_avg_sec ) ); ?></div>
+					</td>
+				</tr>
+			</table>
+
+			<h3 style="font-size: 15px; margin: 0 0 10px 0; color: #0f172a;">İlçe Bazlı Performans Dağılımı</h3>
+			<?php if ( empty( $rows ) ) : ?>
+				<p style="color: #64748b; font-size: 13px;">Bu dönemde henüz kayıtlı ziyaret verisi oluşmamıştır.</p>
+			<?php else : ?>
+				<table width="100%" cellpadding="8" cellspacing="0" style="border-collapse: collapse; font-size: 13px; border: 1px solid #e2e8f0;">
+					<thead>
+						<tr style="background: #f1f5f9; text-align: left;">
+							<th style="border-bottom: 1px solid #cbd5e1;">İlçe / Sayfa</th>
+							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Ziyaretçi</th>
+							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Gösterim</th>
+							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Bilet Tık</th>
+							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">CTR</th>
+							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Ort. Süre</th>
+							<?php if ( ! $is_alltime ) : ?>
+								<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Genel Tık</th>
+							<?php endif; ?>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $rows as $r ) : ?>
+							<tr>
+								<td style="border-bottom: 1px solid #e2e8f0;"><strong><?php echo esc_html( $r['label'] ); ?></strong></td>
+								<td style="border-bottom: 1px solid #e2e8f0; text-align: right;"><?php echo number_format_i18n( $r['visitors'] ); ?></td>
+								<td style="border-bottom: 1px solid #e2e8f0; text-align: right;"><?php echo number_format_i18n( $r['views'] ); ?></td>
+								<td style="border-bottom: 1px solid #e2e8f0; text-align: right; color: #16a34a; font-weight: 600;"><?php echo number_format_i18n( $r['clicks'] ); ?></td>
+								<td style="border-bottom: 1px solid #e2e8f0; text-align: right;">%<?php echo esc_html( number_format( $r['ctr'], 1, ',', '.' ) ); ?></td>
+								<td style="border-bottom: 1px solid #e2e8f0; text-align: right;"><?php echo esc_html( kt_format_duration_human( $r['avg_sec'] ) ); ?></td>
+								<?php if ( ! $is_alltime ) : ?>
+									<td style="border-bottom: 1px solid #e2e8f0; text-align: right; color: #64748b;"><?php echo number_format_i18n( $r['total_clicks'] ); ?></td>
+								<?php endif; ?>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php endif; ?>
+
+			<p style="margin-top: 20px; font-size: 12px; color: #64748b;">
+				Detaylı günlük grafikler için WordPress yönetim panelindeki <a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats' ) ); ?>">Konser Takvimi &rarr; İstatistikler &amp; Grafik</a> sayfasını ziyaret edebilirsiniz.
+			</p>
+		</div>
+	</div>
+	<?php
+	$html_card = ob_get_clean();
+
+	return array(
+		'period_label'    => $period_label,
+		'generated_at'    => $generated_at,
+		'site_name'       => $site_name,
+		'sum_visitors'    => $sum_visitors,
+		'sum_views'       => $sum_views,
+		'sum_clicks'      => $sum_clicks,
+		'overall_ctr'     => $overall_ctr,
+		'overall_avg_sec' => $overall_avg_sec,
+		'rows'            => $rows,
+		'html_card'       => $html_card,
+	);
+}
+
+/**
  * Son 7 günün özet HTML raporunu oluşturur ve yönetici e-postasına gönderir.
  */
 add_action( KT_CRON_HOOK, 'kt_send_weekly_stats_email' );
@@ -461,156 +647,11 @@ function kt_send_weekly_stats_email( $override_email = '' ) {
 		return false;
 	}
 
-	$stats = get_option( KT_STATS_OPT, array() );
-	if ( ! is_array( $stats ) ) {
-		$stats = array();
-	}
+	$bundle  = kt_build_stats_report_bundle( 7 );
+	$subject = sprintf( '[%s] Haftalık Konser Sayfası İstatistik Raporu (%s)', $bundle['site_name'], $bundle['period_label'] );
+	$headers = array( 'Content-Type: text/html; charset=UTF-8' );
 
-	$days_7 = array();
-	for ( $d = 6; $d >= 0; $d-- ) {
-		$days_7[] = kt_get_istanbul_date_str( -$d );
-	}
-
-	$period_start = $days_7[0];
-	$period_end   = $days_7[6];
-
-	$rows            = array();
-	$sum_views_7     = 0;
-	$sum_visitors_7  = 0;
-	$sum_clicks_7    = 0;
-	$sum_seconds_7   = 0;
-	$sum_sessions_7  = 0;
-
-	foreach ( $stats as $key => $item ) {
-		$v7   = 0;
-		$vis7 = 0;
-		$c7   = 0;
-		$sec7 = 0;
-		$ses7 = 0;
-
-		if ( isset( $item['daily'] ) && is_array( $item['daily'] ) ) {
-			foreach ( $days_7 as $day_str ) {
-				if ( isset( $item['daily'][ $day_str ] ) ) {
-					$d_row = $item['daily'][ $day_str ];
-					$v7   += isset( $d_row['views'] ) ? intval( $d_row['views'] ) : 0;
-					$vis7 += isset( $d_row['visitors'] ) ? intval( $d_row['visitors'] ) : 0;
-					$c7   += isset( $d_row['clicks'] ) ? intval( $d_row['clicks'] ) : 0;
-					$sec7 += isset( $d_row['seconds'] ) ? intval( $d_row['seconds'] ) : 0;
-					$ses7 += isset( $d_row['sessions'] ) ? intval( $d_row['sessions'] ) : 0;
-				}
-			}
-		}
-
-		$all_v   = isset( $item['views'] ) ? intval( $item['views'] ) : 0;
-		$all_vis = isset( $item['visitors'] ) ? intval( $item['visitors'] ) : 0;
-		$all_c   = isset( $item['clicks'] ) ? intval( $item['clicks'] ) : 0;
-
-		if ( $v7 > 0 || $c7 > 0 || $all_v > 0 ) {
-			$rows[] = array(
-				'key'         => $key,
-				'label'       => isset( $item['label'] ) ? $item['label'] : $key,
-				'views_7'     => $v7,
-				'visitors_7'  => $vis7,
-				'clicks_7'    => $c7,
-				'avg_sec_7'   => $ses7 > 0 ? round( $sec7 / $ses7 ) : 0,
-				'total_views' => $all_v,
-				'total_vis'   => $all_vis,
-				'total_click' => $all_c,
-			);
-		}
-
-		$sum_views_7    += $v7;
-		$sum_visitors_7 += $vis7;
-		$sum_clicks_7   += $c7;
-		$sum_seconds_7  += $sec7;
-		$sum_sessions_7 += $ses7;
-	}
-
-	usort(
-		$rows,
-		function ( $a, $b ) {
-			if ( $a['visitors_7'] === $b['visitors_7'] ) {
-				return $b['views_7'] - $a['views_7'];
-			}
-			return $b['visitors_7'] - $a['visitors_7'];
-		}
-	);
-
-	$overall_avg_sec = $sum_sessions_7 > 0 ? round( $sum_seconds_7 / $sum_sessions_7 ) : 0;
-	$overall_ctr_7   = $sum_views_7 > 0 ? number_format( ( $sum_clicks_7 / $sum_views_7 ) * 100, 1, ',', '.' ) : '0,0';
-	$site_name       = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
-	$subject         = sprintf( '[%s] Haftalık Konser Sayfası İstatistik Raporu (%s - %s)', $site_name, $period_start, $period_end );
-
-	ob_start();
-	?>
-	<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e293b; max-width: 680px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
-		<div style="background: #1e293b; color: #ffffff; padding: 20px 24px;">
-			<h2 style="margin: 0; font-size: 18px;">Konser Takvimi — Haftalık Performans Raporu</h2>
-			<p style="margin: 6px 0 0 0; font-size: 13px; color: #cbd5e1;">Dönem: <?php echo esc_html( $period_start . ' – ' . $period_end ); ?></p>
-		</div>
-
-		<div style="padding: 20px 24px;">
-			<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px; border-collapse: collapse;">
-				<tr>
-					<td style="width: 25%; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center;">
-						<div style="font-size: 11px; color: #64748b; font-weight: 600;">7 Günlük Ziyaretçi</div>
-						<div style="font-size: 20px; font-weight: 700; color: #0f172a; margin-top: 4px;"><?php echo number_format_i18n( $sum_visitors_7 ); ?></div>
-					</td>
-					<td style="width: 25%; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center;">
-						<div style="font-size: 11px; color: #64748b; font-weight: 600;">7 Günlük Gösterim</div>
-						<div style="font-size: 20px; font-weight: 700; color: #0f172a; margin-top: 4px;"><?php echo number_format_i18n( $sum_views_7 ); ?></div>
-					</td>
-					<td style="width: 25%; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center;">
-						<div style="font-size: 11px; color: #64748b; font-weight: 600;">Bilet Tıklaması</div>
-						<div style="font-size: 20px; font-weight: 700; color: #16a34a; margin-top: 4px;"><?php echo number_format_i18n( $sum_clicks_7 ); ?> (%<?php echo esc_html( $overall_ctr_7 ); ?>)</div>
-					</td>
-					<td style="width: 25%; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center;">
-						<div style="font-size: 11px; color: #64748b; font-weight: 600;">Ort. Kalma Süresi</div>
-						<div style="font-size: 20px; font-weight: 700; color: #2563eb; margin-top: 4px;"><?php echo esc_html( kt_format_duration_human( $overall_avg_sec ) ); ?></div>
-					</td>
-				</tr>
-			</table>
-
-			<h3 style="font-size: 15px; margin: 0 0 10px 0; color: #0f172a;">İlçe Bazlı Son 7 Gün ve Genel Toplamlar</h3>
-			<?php if ( empty( $rows ) ) : ?>
-				<p style="color: #64748b; font-size: 13px;">Bu dönemde henüz kayıtlı ziyaret verisi oluşmamıştır.</p>
-			<?php else : ?>
-				<table width="100%" cellpadding="8" cellspacing="0" style="border-collapse: collapse; font-size: 13px; border: 1px solid #e2e8f0;">
-					<thead>
-						<tr style="background: #f1f5f9; text-align: left;">
-							<th style="border-bottom: 1px solid #cbd5e1;">İlçe / Sayfa</th>
-							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Ziyaretçi (7g)</th>
-							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Gösterim (7g)</th>
-							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Bilet Tık (7g)</th>
-							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Ort. Süre</th>
-							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Genel Tık</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php foreach ( $rows as $r ) : ?>
-							<tr>
-								<td style="border-bottom: 1px solid #e2e8f0;"><strong><?php echo esc_html( $r['label'] ); ?></strong></td>
-								<td style="border-bottom: 1px solid #e2e8f0; text-align: right;"><?php echo number_format_i18n( $r['visitors_7'] ); ?></td>
-								<td style="border-bottom: 1px solid #e2e8f0; text-align: right;"><?php echo number_format_i18n( $r['views_7'] ); ?></td>
-								<td style="border-bottom: 1px solid #e2e8f0; text-align: right; color: #16a34a; font-weight: 600;"><?php echo number_format_i18n( $r['clicks_7'] ); ?></td>
-								<td style="border-bottom: 1px solid #e2e8f0; text-align: right;"><?php echo esc_html( kt_format_duration_human( $r['avg_sec_7'] ) ); ?></td>
-								<td style="border-bottom: 1px solid #e2e8f0; text-align: right; color: #64748b;"><?php echo number_format_i18n( $r['total_click'] ); ?></td>
-							</tr>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
-			<?php endif; ?>
-
-			<p style="margin-top: 20px; font-size: 12px; color: #64748b;">
-				Detaylı günlük grafikler ve CSV çıktısı için WordPress yönetim panelindeki <a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats' ) ); ?>">Konser Takvimi &rarr; İstatistikler</a> sayfasını ziyaret edebilirsiniz.
-			</p>
-		</div>
-	</div>
-	<?php
-	$html_body = ob_get_clean();
-	$headers   = array( 'Content-Type: text/html; charset=UTF-8' );
-
-	return wp_mail( $recipient, $subject, $html_body, $headers );
+	return wp_mail( $recipient, $subject, $bundle['html_card'], $headers );
 }
 
 /**

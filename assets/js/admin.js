@@ -221,7 +221,6 @@ document.addEventListener('DOMContentLoaded', function () {
 			}
 			maxVal = Math.ceil(maxVal * 1.15);
 
-			// Yatay kılavuz çizgileri ve Y ekseni değerleri
 			ctx.font = '11px system-ui, -apple-system, sans-serif';
 			ctx.textAlign = 'right';
 			ctx.textBaseline = 'middle';
@@ -249,7 +248,6 @@ document.addEventListener('DOMContentLoaded', function () {
 			for (var j = 0; j < count; j++) {
 				var centerX = padLeft + slotW * j + slotW / 2;
 
-				// Ziyaretçi sütunu (Mavi)
 				var visH = (visitors[j] / maxVal) * plotH;
 				var visX = centerX - barW - 1.5;
 				var visY = padTop + plotH - visH;
@@ -263,7 +261,6 @@ document.addEventListener('DOMContentLoaded', function () {
 					ctx.fillText(String(visitors[j]), visX + barW / 2, visY - 3);
 				}
 
-				// Tıklama sütunu (Yeşil)
 				var clkH = (clicks[j] / maxVal) * plotH;
 				var clkX = centerX + 1.5;
 				var clkY = padTop + plotH - clkH;
@@ -277,7 +274,6 @@ document.addEventListener('DOMContentLoaded', function () {
 					ctx.fillText(String(clicks[j]), clkX + barW / 2, clkY - 3);
 				}
 
-				// X ekseni tarih etiketi
 				ctx.fillStyle = '#475569';
 				ctx.textAlign = 'center';
 				ctx.textBaseline = 'top';
@@ -371,7 +367,6 @@ document.addEventListener('DOMContentLoaded', function () {
 		});
 	}
 
-	// Ortam Kütüphanesinden Varsayılan Bilet Görseli Seçimi
 	var selectImgBtn = document.getElementById('kt-select-ticket-img');
 	var ticketImgInput = document.getElementById('ticket_btn_img');
 	var ticketImgPreview = document.getElementById('kt-ticket-img-preview');

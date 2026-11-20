@@ -1,6 +1,6 @@
 # Konser Takvimi (WordPress Eklentisi)
 
-Konser ve etkinlik takvimini yönetmek, yaklaşan etkinlikleri renkli rozetler halinde sayfada göstermek, çift seanslı konserleri tek düğmede listelemek, ilçe sayfalarını otomatik yönlendirmek, günlük tekil ziyaretçi ve sayfada kalma süresi analitiğini grafiklerle izlemek ve haftalık e-posta raporları göndermek için geliştirilmiş veritabanı tabanlı WordPress eklentisidir.
+Konser ve etkinlik takvimini yönetmek, yaklaşan etkinlikleri renkli rozetler halinde sayfada göstermek, çift seanslı konserleri tek düğmede listelemek, ilçe sayfalarını otomatik yönlendirmek, günlük tekil ziyaretçi ve sayfada kalma süresi analitiğini grafiklerle izlemek ve indirilebilir/e-posta raporları üretmek için geliştirilmiş veritabanı tabanlı WordPress eklentisidir.
 
 ## Özellikler
 
@@ -9,12 +9,12 @@ Konser ve etkinlik takvimini yönetmek, yaklaşan etkinlikleri renkli rozetler h
 - **İlçe Sayfası Yönlendirme Kısa Kodu (`[konser_ilce_yonlendir]`):** İlçe konser sayfalarına eklendiğinde o ilçeye ait yaklaşan konser olup olmadığını kontrol eder; aktif konser yoksa ziyaretçiyi otomatik olarak Ayarlar sekmesinde tanımlanan yönlendirme sayfasına (varsayılan `/konserler`) yönlendirir, aktif konser varsa ilçe sayfasının ziyaretçi ve süre istatistiklerini toplar.
   - **Önemli URL Notu:** Kısa kod parametresiz (`[konser_ilce_yonlendir]`) kullanıldığında kontrolü sayfanın URL uzantısına (slug) göre yapar; bu nedenle sayfa URL'sinde ilçe adının mutlaka yer alması gerekir (örneğin `/urla-konseri` veya `/urla-konser`). URL'de ilçe adı geçmiyorsa `[konser_ilce_yonlendir ilce="Urla"]` parametresi kullanılabilir.
 - **Bilet Düğmesi Kısa Kodu (`[konser_bilet_butonu]`) ve Otomatik Tıklama Takibi:**
-  - Ayarlar sekmesinden **Varsayılan Bilet Satış URL'si** ve **Varsayılan Bilet Düğmesi Görseli** tanımlandığında sayfalarda parametresiz olarak doğrudan `[konser_bilet_butonu]` kullanılabilir. Gerekirse tekil sayfalarda `url="..."`, `resim="..."`, `ilce="..."`, `alt="..."`, `hedef="_blank"` parametreleriyle özelleştirilebilir.
+  - Ayarlar sekmesinden **Varsayılan Bilet Satış URL'si** ve **Varsayılan Bilet Düğmesi Görseli** tanımlandığında sayfalarda parametresiz olarak doğrudan `[konser_bilet_butonu]` kullanılabilir.
   - Kısa kod kullanılmayan eski sayfalarda dahi, sayfada `[konser_ilce_yonlendir]` varsa Ayarlar sekmesindeki bilet alan adlarına (`biletinial.com`, `biletix.com`, `passo.com.tr`, `bubilet.com.tr`, `mobilet.com`, `biletino.com`) veya varsayılan bilet görseline yapılan tıklamalar otomatik yakalanır.
-- **Günlük Ziyaretçi, Sayfada Kalma Süresi & Son 14 Gün Grafiği:**
+- **Günlük Ziyaretçi, Sayfada Kalma Süresi, Grafik & Rapor İndirme:**
   - Çerez kullanmadan (`localStorage`) günlük tekil ziyaretçileri ve toplam gösterimleri ayırır; kullanıcının sekmede aktif kaldığı süreyi ölçerek ilçe bazında ortalama kalma süresini hesaplar.
-  - Yönetim panelindeki **İstatistikler & Grafik** sekmesinde ilçe bazında filtrelenebilir son 14 günlük çubuk grafik sunar ve son 90 günlük kırılımı saklar.
-- **Haftalık Yönetici E-Posta Raporu (`wp_cron`):** Ayarlar sekmesinde seçilen gün (varsayılan Pazartesi saat 09:00) son 7 günün özet tablosunu (ziyaretçi, gösterim, bilet tıklaması, ortalama kalma süresi) yönetici e-posta adresine HTML rapor olarak gönderir; tek tıkla örnek rapor gönderme düğmesi içerir.
+  - **İstatistikler & Grafik** sekmesinde ilçe bazında filtrelenebilir son 14 günlük çubuk grafik sunar ve **Son 7 Gün / Son 14 Gün / Son 30 Gün / Tüm Zamanlar** dönemleri için yazdırılabilir görsel rapor (HTML/PDF) veya Excel tablosu (CSV) indirme imkânı verir.
+- **Haftalık Yönetici E-Posta Raporu (`wp_cron`):** Ayarlar sekmesinde seçilen gün (varsayılan Pazartesi saat 09:00) son 7 günün özet tablosunu yönetici e-posta adresine HTML rapor olarak gönderir.
 - **Otomatik `ilce-konseri` Uzantısı, Arşivleme & JSON/CSV Dışa Aktarma:** İlçe yazıldığında URL uzantısını otomatik `ilce-konseri` olarak oluşturur, sayfa varlığını renkli olarak doğrular, geçmiş konserleri otomatik arşivler ve yedekleme imkânı sunar.
 - **Otomatik Arşivleme:** Tarihi ve son seans saati geçen konserler otomatik olarak yönetim panelindeki açılır-kapanır **Arşivlenen Konserler** bölümüne taşınır, salt okunur hale getirilir ve siteden gizlenir.
 - **JSON ve CSV Dışa Aktarma (Export):** Aktif, arşivlenmiş veya tüm konser kayıtlarını tek tıkla `.json` ya da Excel uyumlu (UTF-8 BOM) `.csv` dosyası olarak yedekleme imkânı sunar.
@@ -23,7 +23,7 @@ Konser ve etkinlik takvimini yönetmek, yaklaşan etkinlikleri renkli rozetler h
 ## Kurulum
 
 1. Eski sürüm yüklüyse WordPress **Eklentiler** sayfasından önce onu etkisizleştirip silin (ayarlarda silme seçeneği işaretli değilse veritabanı kayıtlarınız korunur).
-2. `konser-takvimi-3.4.0.zip` arşivini indirin.
+2. `konser-takvimi-3.4.1.zip` arşivini indirin.
 3. WordPress yönetim panelinde **Eklentiler > Yeni Eklenti Ekle > Eklenti Yükle** yolunu izleyin.
 4. `.zip` dosyasını seçip yükleyin ve eklentiyi etkinleştirin.
 

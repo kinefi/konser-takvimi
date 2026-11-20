@@ -101,7 +101,6 @@
 	font-weight: 600;
 }
 
-/* Varsayılan Renk Paletleri (Yönetim panelinden ezilebilir) */
 #ktConcertGridContainer .style-1 .date-part { background-color: #e94c86; }
 #ktConcertGridContainer .style-1 .city-part { background-color: #fce1ec; }
 #ktConcertGridContainer .style-2 .date-part { background-color: #ffbc00; }
