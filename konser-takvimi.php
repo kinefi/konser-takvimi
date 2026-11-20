@@ -289,6 +289,7 @@ function kt_enqueue_tracker_script( $district_key = '', $page_label = '', $track
 		'ktTrackerData',
 		array(
 			'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
+			'nonce'           => wp_create_nonce( 'kt_track_nonce' ),
 			'defaultDistrict' => kt_normalize_district_key( $district_key ),
 			'defaultLabel'    => sanitize_text_field( $page_label ),
 			'trackView'       => $track_page_view ? 1 : 0,
@@ -428,6 +429,8 @@ function kt_ajax_track_district_event() {
 		wp_send_json_success( array( 'ignored' => 'admin' ) );
 	}
 
+	check_ajax_referer( 'kt_track_nonce', 'nonce' );
+
 	$district = isset( $_POST['district'] ) ? sanitize_text_field( wp_unslash( $_POST['district'] ) ) : '';
 	$label    = isset( $_POST['label'] ) ? sanitize_text_field( wp_unslash( $_POST['label'] ) ) : '';
 	$ev_type  = isset( $_POST['event_type'] ) ? sanitize_key( wp_unslash( $_POST['event_type'] ) ) : 'clicks';
@@ -441,8 +444,8 @@ function kt_ajax_track_district_event() {
 	}
 
 	$extra = array(
-		'is_unique' => isset( $_POST['is_unique'] ) && '1' === strval( $_POST['is_unique'] ),
-		'seconds'   => isset( $_POST['seconds'] ) ? intval( $_POST['seconds'] ) : 0,
+		'is_unique' => isset( $_POST['is_unique'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['is_unique'] ) ),
+		'seconds'   => isset( $_POST['seconds'] ) ? intval( wp_unslash( $_POST['seconds'] ) ) : 0,
 	);
 
 	kt_record_district_stat( $district, $ev_type, $label, $extra );
@@ -562,15 +565,15 @@ function kt_build_stats_report_bundle( $days_span = 7 ) {
 				<tr>
 					<td style="width: 25%; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center;">
 						<div style="font-size: 11px; color: #64748b; font-weight: 600;">Tekil Ziyaretçi</div>
-						<div style="font-size: 20px; font-weight: 700; color: #0f172a; margin-top: 4px;"><?php echo number_format_i18n( $sum_visitors ); ?></div>
+						<div style="font-size: 20px; font-weight: 700; color: #0f172a; margin-top: 4px;"><?php echo esc_html( number_format_i18n( $sum_visitors ) ); ?></div>
 					</td>
 					<td style="width: 25%; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center;">
 						<div style="font-size: 11px; color: #64748b; font-weight: 600;">Sayfa Gösterimi</div>
-						<div style="font-size: 20px; font-weight: 700; color: #0f172a; margin-top: 4px;"><?php echo number_format_i18n( $sum_views ); ?></div>
+						<div style="font-size: 20px; font-weight: 700; color: #0f172a; margin-top: 4px;"><?php echo esc_html( number_format_i18n( $sum_views ) ); ?></div>
 					</td>
 					<td style="width: 25%; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center;">
 						<div style="font-size: 11px; color: #64748b; font-weight: 600;">Bilet Tıklaması</div>
-						<div style="font-size: 20px; font-weight: 700; color: #16a34a; margin-top: 4px;"><?php echo number_format_i18n( $sum_clicks ); ?> (%<?php echo esc_html( $overall_ctr ); ?>)</div>
+						<div style="font-size: 20px; font-weight: 700; color: #16a34a; margin-top: 4px;"><?php echo esc_html( number_format_i18n( $sum_clicks ) ); ?> (%<?php echo esc_html( $overall_ctr ); ?>)</div>
 					</td>
 					<td style="width: 25%; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center;">
 						<div style="font-size: 11px; color: #64748b; font-weight: 600;">Ort. Kalma Süresi</div>
@@ -601,13 +604,13 @@ function kt_build_stats_report_bundle( $days_span = 7 ) {
 						<?php foreach ( $rows as $r ) : ?>
 							<tr>
 								<td style="border-bottom: 1px solid #e2e8f0;"><strong><?php echo esc_html( $r['label'] ); ?></strong></td>
-								<td style="border-bottom: 1px solid #e2e8f0; text-align: right;"><?php echo number_format_i18n( $r['visitors'] ); ?></td>
-								<td style="border-bottom: 1px solid #e2e8f0; text-align: right;"><?php echo number_format_i18n( $r['views'] ); ?></td>
-								<td style="border-bottom: 1px solid #e2e8f0; text-align: right; color: #16a34a; font-weight: 600;"><?php echo number_format_i18n( $r['clicks'] ); ?></td>
+								<td style="border-bottom: 1px solid #e2e8f0; text-align: right;"><?php echo esc_html( number_format_i18n( $r['visitors'] ) ); ?></td>
+								<td style="border-bottom: 1px solid #e2e8f0; text-align: right;"><?php echo esc_html( number_format_i18n( $r['views'] ) ); ?></td>
+								<td style="border-bottom: 1px solid #e2e8f0; text-align: right; color: #16a34a; font-weight: 600;"><?php echo esc_html( number_format_i18n( $r['clicks'] ) ); ?></td>
 								<td style="border-bottom: 1px solid #e2e8f0; text-align: right;">%<?php echo esc_html( number_format( $r['ctr'], 1, ',', '.' ) ); ?></td>
 								<td style="border-bottom: 1px solid #e2e8f0; text-align: right;"><?php echo esc_html( kt_format_duration_human( $r['avg_sec'] ) ); ?></td>
 								<?php if ( ! $is_alltime ) : ?>
-									<td style="border-bottom: 1px solid #e2e8f0; text-align: right; color: #64748b;"><?php echo number_format_i18n( $r['total_clicks'] ); ?></td>
+									<td style="border-bottom: 1px solid #e2e8f0; text-align: right; color: #64748b;"><?php echo esc_html( number_format_i18n( $r['total_clicks'] ) ); ?></td>
 								<?php endif; ?>
 							</tr>
 						<?php endforeach; ?>

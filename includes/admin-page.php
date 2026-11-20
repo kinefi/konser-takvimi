@@ -150,7 +150,7 @@ function kt_handle_stats_export() {
 	<div class="print-bar">
 		<button type="button" class="print-btn" onclick="window.print()">Yazdır / PDF Olarak Kaydet</button>
 	</div>
-	<?php echo htmlentities($bundle['html_card']); ?>
+	<?php echo wp_kses_post( $bundle['html_card'] ); ?>
 </body>
 </html>
 	<?php
@@ -276,11 +276,11 @@ function kt_konser_admin_page() {
 			}
 		}
 
-		$dates         = isset( $_POST['concert_date'] ) ? (array) $_POST['concert_date'] : array();
-		$times         = isset( $_POST['concert_time'] ) ? (array) $_POST['concert_time'] : array();
-		$times2        = isset( $_POST['concert_time2'] ) ? (array) $_POST['concert_time2'] : array();
-		$cities        = isset( $_POST['concert_city'] ) ? (array) $_POST['concert_city'] : array();
-		$slugs         = isset( $_POST['concert_slug'] ) ? (array) $_POST['concert_slug'] : array();
+		$dates         = isset( $_POST['concert_date'] ) ? map_deep( (array) wp_unslash( $_POST['concert_date'] ), 'sanitize_text_field' ) : array();
+		$times         = isset( $_POST['concert_time'] ) ? map_deep( (array) wp_unslash( $_POST['concert_time'] ), 'sanitize_text_field' ) : array();
+		$times2        = isset( $_POST['concert_time2'] ) ? map_deep( (array) wp_unslash( $_POST['concert_time2'] ), 'sanitize_text_field' ) : array();
+		$cities        = isset( $_POST['concert_city'] ) ? map_deep( (array) wp_unslash( $_POST['concert_city'] ), 'sanitize_text_field' ) : array();
+		$slugs         = isset( $_POST['concert_slug'] ) ? map_deep( (array) wp_unslash( $_POST['concert_slug'] ), 'sanitize_title' ) : array();
 		$active_events = array();
 		$total         = count( $cities );
 
@@ -373,9 +373,9 @@ function kt_konser_admin_page() {
 			$raw_redirect = '/' . $raw_redirect;
 		}
 
-		$raw_ticket_url = isset( $_POST['ticket_btn_url'] ) ? esc_url_raw( trim( wp_unslash( $_POST['ticket_btn_url'] ) ) ) : '';
+		$raw_ticket_url = isset( $_POST['ticket_btn_url'] ) ? trim( esc_url_raw( wp_unslash( $_POST['ticket_btn_url'] ) ) ) : '';
 
-		$raw_ticket_img = isset( $_POST['ticket_btn_img'] ) ? esc_url_raw( trim( wp_unslash( $_POST['ticket_btn_img'] ) ) ) : '';
+		$raw_ticket_img = isset( $_POST['ticket_btn_img'] ) ? trim( esc_url_raw( wp_unslash( $_POST['ticket_btn_img'] ) ) ) : '';
 		if ( empty( $raw_ticket_img ) ) {
 			$raw_ticket_img = $defaults['ticket_btn_img'];
 		}
@@ -395,8 +395,8 @@ function kt_konser_admin_page() {
 		$d_text = isset( $_POST['date_text'] ) ? sanitize_hex_color( wp_unslash( $_POST['date_text'] ) ) : '';
 		$c_text = isset( $_POST['city_text'] ) ? sanitize_hex_color( wp_unslash( $_POST['city_text'] ) ) : '';
 
-		$post_dates  = isset( $_POST['palette_date'] ) ? (array) $_POST['palette_date'] : array();
-		$post_cities = isset( $_POST['palette_city'] ) ? (array) $_POST['palette_city'] : array();
+		$post_dates  = isset( $_POST['palette_date'] ) ? map_deep( (array) wp_unslash( $_POST['palette_date'] ), 'sanitize_hex_color' ) : array();
+		$post_cities = isset( $_POST['palette_city'] ) ? map_deep( (array) wp_unslash( $_POST['palette_city'] ), 'sanitize_hex_color' ) : array();
 		$palettes    = array();
 
 		for ( $i = 0; $i < 12; $i++ ) {
@@ -467,7 +467,7 @@ function kt_konser_admin_page() {
 		<p>
 			Takvimi göstermek için <code>[konser_takvimi]</code>, ilçe sayfasında konser yoksa yönlendirmek ve sayfa istatistiklerini toplamak için <code>[konser_ilce_yonlendir]</code>, bilet düğmesi için <code>[konser_bilet_butonu]</code> kısa kodlarını kullanabilirsiniz.
 		</p>
-		<?php echo $message; ?>
+		<?php echo wp_kses_post( $message ); ?>
 
 		<nav class="nav-tab-wrapper" style="margin-top: 15px; max-width: 1060px;">
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=concerts' ) ); ?>" class="nav-tab <?php echo 'concerts' === $active_tab ? 'nav-tab-active' : ''; ?>">
@@ -747,18 +747,18 @@ function kt_konser_admin_page() {
 				<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(195px, 1fr)); gap: 14px; margin-bottom: 20px;">
 					<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #0284c7; border-radius: 4px; padding: 14px 16px;">
 						<div style="font-size: 12px; color: #50575e; font-weight: 600;">Bugünkü Tekil Ziyaretçi</div>
-						<div style="font-size: 24px; font-weight: 700; color: #1d2327; margin-top: 4px;"><?php echo number_format_i18n( $today_visitors ); ?></div>
+						<div style="font-size: 24px; font-weight: 700; color: #1d2327; margin-top: 4px;"><?php echo esc_html( number_format_i18n( $today_visitors ) ); ?></div>
 					</div>
 					<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #2271b1; border-radius: 4px; padding: 14px 16px;">
 						<div style="font-size: 12px; color: #50575e; font-weight: 600;">Toplam Ziyaretçi / Gösterim</div>
 						<div style="font-size: 24px; font-weight: 700; color: #1d2327; margin-top: 4px;">
-							<?php echo number_format_i18n( $total_visitors ); ?> <span style="font-size: 14px; font-weight: 500; color: #64748b;">/ <?php echo number_format_i18n( $total_views ); ?></span>
+							<?php echo esc_html( number_format_i18n( $total_visitors ) ); ?> <span style="font-size: 14px; font-weight: 500; color: #64748b;">/ <?php echo esc_html( number_format_i18n( $total_views ) ); ?></span>
 						</div>
 					</div>
 					<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #16a34a; border-radius: 4px; padding: 14px 16px;">
 						<div style="font-size: 12px; color: #50575e; font-weight: 600;">Bilet Tıklaması (CTR)</div>
 						<div style="font-size: 24px; font-weight: 700; color: #1d2327; margin-top: 4px;">
-							<?php echo number_format_i18n( $total_clicks ); ?> <span style="font-size: 14px; font-weight: 600; color: #16a34a;">(%<?php echo esc_html( $overall_ctr ); ?>)</span>
+							<?php echo esc_html( number_format_i18n( $total_clicks ) ); ?> <span style="font-size: 14px; font-weight: 600; color: #16a34a;">(%<?php echo esc_html( $overall_ctr ); ?>)</span>
 						</div>
 					</div>
 					<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #9333ea; border-radius: 4px; padding: 14px 16px;">
@@ -845,7 +845,7 @@ function kt_konser_admin_page() {
 								$sort_links[] = '<a href="' . esc_url( $s_url ) . '" style="text-decoration: none; padding: 3px 6px;">' . esc_html( $s_label ) . '</a>';
 							}
 						}
-						echo implode( ' &bull; ', $sort_links );
+						echo wp_kses_post( implode( ' &bull; ', $sort_links ) );
 						?>
 					</div>
 				</div>
@@ -893,10 +893,10 @@ function kt_konser_admin_page() {
 											<strong><?php echo esc_html( isset( $row['label'] ) ? $row['label'] : $key ); ?></strong>
 											<div style="font-size: 11px; color: #64748b;">Son: <?php echo esc_html( isset( $row['updated'] ) ? $row['updated'] : '-' ); ?></div>
 										</td>
-										<td><strong><?php echo number_format_i18n( $t_vis ); ?></strong></td>
-										<td><?php echo number_format_i18n( $vis ); ?></td>
-										<td><?php echo number_format_i18n( $v ); ?></td>
-										<td style="color: #15803d; font-weight: 600;"><?php echo number_format_i18n( $c ); ?></td>
+										<td><strong><?php echo esc_html( number_format_i18n( $t_vis ) ); ?></strong></td>
+										<td><?php echo esc_html( number_format_i18n( $vis ) ); ?></td>
+										<td><?php echo esc_html( number_format_i18n( $v ) ); ?></td>
+										<td style="color: #15803d; font-weight: 600;"><?php echo esc_html( number_format_i18n( $c ) ); ?></td>
 										<td><span style="display: inline-block; padding: 3px 8px; background: <?php echo esc_attr( $ctr_bg ); ?>; color: <?php echo esc_attr( $ctr_fg ); ?>; border-radius: 4px; font-weight: 700;">%<?php echo esc_html( $ctr ); ?></span></td>
 										<td><?php echo esc_html( kt_format_duration_human( $avg_sec ) ); ?></td>
 										<td>
@@ -925,7 +925,7 @@ function kt_konser_admin_page() {
 							$d_bg = $styles['palettes'][ $p ]['date'];
 							$c_bg = $styles['palettes'][ $p ]['city'];
 							?>
-							<div class="preview-badge" data-index="<?php echo $p; ?>" style="display: flex; width: <?php echo intval( $styles['card_min_w'] ); ?>px; height: <?php echo intval( $styles['badge_height'] ); ?>px; border-radius: <?php echo intval( $styles['border_radius'] ); ?>px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.06); font-family: system-ui, sans-serif;">
+							<div class="preview-badge" data-index="<?php echo intval( $p ); ?>" style="display: flex; width: <?php echo intval( $styles['card_min_w'] ); ?>px; height: <?php echo intval( $styles['badge_height'] ); ?>px; border-radius: <?php echo intval( $styles['border_radius'] ); ?>px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.06); font-family: system-ui, sans-serif;">
 								<div class="preview-date" style="width: 44%; background-color: <?php echo esc_attr( $d_bg ); ?>; color: <?php echo esc_attr( $styles['date_text'] ); ?>; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; line-height: 1.2;">
 									<strong style="font-size: 15px;">24 Ekim</strong>
 									<span style="font-size: 13px;">Cumartesi</span>
@@ -1000,15 +1000,15 @@ function kt_konser_admin_page() {
 
 					<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px;">
 						<?php for ( $i = 0; $i < 12; $i++ ) : ?>
-							<div class="palette-item-card" data-palette-idx="<?php echo $i; ?>" style="border: 1px solid #dcdcde; border-radius: 6px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; background: #fafafa;">
-								<strong style="min-width: 65px;">Renk #<?php echo $i + 1; ?></strong>
+							<div class="palette-item-card" data-palette-idx="<?php echo intval( $i ); ?>" style="border: 1px solid #dcdcde; border-radius: 6px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; background: #fafafa;">
+								<strong style="min-width: 65px;">Renk #<?php echo intval( $i + 1 ); ?></strong>
 								<label style="display: flex; align-items: center; gap: 4px; font-size: 12px;">
 									Tarih:
-									<input type="color" class="palette-date-input" name="palette_date[<?php echo $i; ?>]" value="<?php echo esc_attr( $styles['palettes'][ $i ]['date'] ); ?>">
+									<input type="color" class="palette-date-input" name="palette_date[<?php echo intval( $i ); ?>]" value="<?php echo esc_attr( $styles['palettes'][ $i ]['date'] ); ?>">
 								</label>
 								<label style="display: flex; align-items: center; gap: 4px; font-size: 12px;">
 									Şehir:
-									<input type="color" class="palette-city-input" name="palette_city[<?php echo $i; ?>]" value="<?php echo esc_attr( $styles['palettes'][ $i ]['city'] ); ?>">
+									<input type="color" class="palette-city-input" name="palette_city[<?php echo intval( $i ); ?>]" value="<?php echo esc_attr( $styles['palettes'][ $i ]['city'] ); ?>">
 								</label>
 							</div>
 						<?php endfor; ?>
