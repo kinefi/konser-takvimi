@@ -150,7 +150,7 @@ function kt_handle_stats_export() {
 	<div class="print-bar">
 		<button type="button" class="print-btn" onclick="window.print()">Yazdır / PDF Olarak Kaydet</button>
 	</div>
-	<?php echo wp_kses_post( $bundle['html_card'] ); ?>
+	<?php kt_build_stats_report_bundle( $report_period, true ); ?>
 </body>
 </html>
 	<?php

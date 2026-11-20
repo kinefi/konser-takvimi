@@ -455,7 +455,7 @@ function kt_ajax_track_district_event() {
 /**
  * Belirtilen gün sayısı (örn. 7, 14, 30 veya tüm zamanlar) için özet istatistik raporu verilerini ve HTML çıktısını üretir.
  */
-function kt_build_stats_report_bundle( $days_span = 7 ) {
+function kt_build_stats_report_bundle( $days_span = 7, $render_direct = false ) {
 	$stats = get_option( KT_STATS_OPT, array() );
 	if ( ! is_array( $stats ) ) {
 		$stats = array();
@@ -552,7 +552,9 @@ function kt_build_stats_report_bundle( $days_span = 7 ) {
 	$site_name       = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
 	$generated_at    = kt_get_istanbul_datetime_str();
 
-	ob_start();
+	if ( ! $render_direct ) {
+		ob_start();
+	}
 	?>
 	<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e293b; max-width: 760px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
 		<div style="background: #1e293b; color: #ffffff; padding: 20px 24px;">
@@ -624,7 +626,7 @@ function kt_build_stats_report_bundle( $days_span = 7 ) {
 		</div>
 	</div>
 	<?php
-	$html_card = ob_get_clean();
+	$html_card = ! $render_direct ? ob_get_clean() : '';
 
 	return array(
 		'period_label'    => $period_label,
