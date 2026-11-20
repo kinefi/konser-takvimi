@@ -743,7 +743,7 @@ function kt_konser_admin_page() {
 			);
 			?>
 
-			<div style="max-width: 1060px; margin-top: 20px;">
+	<div style="max-width: 1280px; margin-top: 20px;">
 				<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(195px, 1fr)); gap: 14px; margin-bottom: 20px;">
 					<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #0284c7; border-radius: 4px; padding: 14px 16px;">
 						<div style="font-size: 12px; color: #50575e; font-weight: 600;">Bugünkü Tekil Ziyaretçi</div>
@@ -852,7 +852,7 @@ function kt_konser_admin_page() {
 
 				<form method="post" action="">
 					<?php wp_nonce_field( 'kt_stats_nonce_action', 'kt_stats_nonce' ); ?>
-					<table class="widefat fixed striped">
+				<table class="widefat fixed striped">
 						<thead>
 							<tr>
 								<th style="width: 140px;">İlçe Anahtarı</th>

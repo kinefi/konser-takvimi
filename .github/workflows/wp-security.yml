@@ -10,7 +10,6 @@ on:
 
 permissions:
   contents: read
-  security-events: write
   actions: read
 
 jobs:
@@ -35,8 +34,10 @@ jobs:
 
       - name: Run WP Security & Escaping Checks
         run: |
-          # Sadece güvenlik (WordPress.Security) odaklı kuralları çalıştırır, stil/boşluk hatalarıyla boğmaz
-          phpcs --standard=WordPress --sniffs=WordPress.Security,WordPress.DB.PreparedSQL --extensions=php --ignore=vendor/* .
+          phpcs --standard=WordPress \
+            --sniffs=WordPress.Security.EscapeOutput,WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput,WordPress.Security.SafeRedirect,WordPress.DB.PreparedSQL \
+            --extensions=php \
+            --ignore=vendor/* .
 
   # 2. KATMAN: Derin PHP & WP Semantik Analiz (Semgrep)
   sast-semgrep:
@@ -48,22 +49,19 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run Semgrep with PHP & WordPress Rulesets
         run: |
-          semgrep scan --config p/php --config p/wordpress --sarif --output=semgrep.sarif
-      - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: semgrep.sarif
+          semgrep scan --config p/php --config p/wordpress --error
 
-  # 3. KATMAN: Koda Unutulmuş API Key / Token Taraması (Gitleaks)
+  # 3. KATMAN: Koda Unutulmuş API Key / Token Taraması (Açık Kaynak Gitleaks CLI)
   secret-scan-gitleaks:
-    name: Secret Scan (Gitleaks)
+    name: Secret Scan (Gitleaks CLI)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run Gitleaks CLI (License-Free)
+        run: |
+          GITLEAKS_VER="8.21.2"
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VER}/gitleaks_${GITLEAKS_VER}_linux_x64.tar.gz" -o gitleaks.tar.gz
+          tar -xzf gitleaks.tar.gz gitleaks
+          ./gitleaks detect --source . --verbose --redact

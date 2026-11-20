@@ -30,3 +30,52 @@
 .kt-slug-status.is-missing-page {
 	color: #b91c1c;
 }
+
+/* İstatistikler Tablosu Genişlik ve Düzen İyileştirmesi */
+.kt-stats-table-wrap {
+	width: 100%;
+	overflow-x: auto;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+}
+
+.kt-stats-table {
+	border: none !important;
+	table-layout: auto;
+	width: 100%;
+}
+
+.kt-stats-table th,
+.kt-stats-table td {
+	vertical-align: middle;
+	padding: 11px 12px;
+}
+
+.kt-stats-table th a {
+	text-decoration: none;
+	display: inline-block;
+}
+
+.kt-stats-table .kt-col-key {
+	width: 120px;
+	white-space: nowrap;
+}
+
+.kt-stats-table .kt-col-title {
+	min-width: 260px;
+	width: 30%;
+	white-space: normal;
+	word-break: break-word;
+	line-height: 1.45;
+}
+
+.kt-stats-table .kt-col-num {
+	white-space: nowrap;
+}
+
+.kt-stats-table .kt-col-action {
+	width: 65px;
+	text-align: center;
+	white-space: nowrap;
+}
