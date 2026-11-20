@@ -380,7 +380,9 @@ function kt_konser_admin_page() {
 			$raw_ticket_img = $defaults['ticket_btn_img'];
 		}
 
-		$raw_domains = isset( $_POST['ticket_domains'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_domains'] ) ) : $defaults['ticket_domains'];
+		$raw_domains      = isset( $_POST['ticket_domains'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_domains'] ) ) : $defaults['ticket_domains'];
+		$schema_enabled   = isset( $_POST['schema_enabled'] ) ? 1 : 0;
+		$schema_performer = isset( $_POST['schema_performer'] ) ? sanitize_text_field( wp_unslash( $_POST['schema_performer'] ) ) : '';
 
 		$weekly_on    = isset( $_POST['weekly_report_on'] ) ? 1 : 0;
 		$weekly_email = isset( $_POST['weekly_report_email'] ) ? sanitize_email( wp_unslash( $_POST['weekly_report_email'] ) ) : '';
@@ -419,6 +421,8 @@ function kt_konser_admin_page() {
 			'ticket_btn_url'      => $raw_ticket_url,
 			'ticket_btn_img'      => $raw_ticket_img,
 			'ticket_domains'      => $raw_domains,
+			'schema_enabled'      => $schema_enabled,
+			'schema_performer'    => $schema_performer,
 			'weekly_report_on'    => $weekly_on,
 			'weekly_report_email' => $weekly_email,
 			'weekly_report_day'   => $weekly_day,
@@ -619,17 +623,48 @@ function kt_konser_admin_page() {
 
 			$today_str = kt_get_istanbul_date_str( 0 );
 
+			$sort_by = isset( $_GET['sort_by'] ) ? sanitize_key( $_GET['sort_by'] ) : 'visitors';
+			if ( ! in_array( $sort_by, array( 'visitors', 'views', 'clicks', 'ctr', 'duration' ), true ) ) {
+				$sort_by = 'visitors';
+			}
+
 			uasort(
 				$stats,
-				function ( $a, $b ) {
-					$va = isset( $a['visitors'] ) ? intval( $a['visitors'] ) : ( isset( $a['views'] ) ? intval( $a['views'] ) : 0 );
-					$vb = isset( $b['visitors'] ) ? intval( $b['visitors'] ) : ( isset( $b['views'] ) ? intval( $b['views'] ) : 0 );
-					if ( $va === $vb ) {
-						$ca = isset( $a['clicks'] ) ? intval( $a['clicks'] ) : 0;
-						$cb = isset( $b['clicks'] ) ? intval( $b['clicks'] ) : 0;
+				function ( $a, $b ) use ( $sort_by ) {
+					$va = isset( $a['views'] ) ? intval( $a['views'] ) : 0;
+					$vb = isset( $b['views'] ) ? intval( $b['views'] ) : 0;
+					$visa = isset( $a['visitors'] ) ? intval( $a['visitors'] ) : $va;
+					$visb = isset( $b['visitors'] ) ? intval( $b['visitors'] ) : $vb;
+					$ca = isset( $a['clicks'] ) ? intval( $a['clicks'] ) : 0;
+					$cb = isset( $b['clicks'] ) ? intval( $b['clicks'] ) : 0;
+
+					if ( 'ctr' === $sort_by ) {
+						$ctra = $va > 0 ? ( $ca / $va ) : 0;
+						$ctrb = $vb > 0 ? ( $cb / $vb ) : 0;
+						if ( abs( $ctra - $ctrb ) > 0.00001 ) {
+							return ( $ctrb > $ctra ) ? 1 : -1;
+						}
 						return $cb - $ca;
 					}
-					return $vb - $va;
+					if ( 'clicks' === $sort_by ) {
+						return ( $cb !== $ca ) ? ( $cb - $ca ) : ( $visb - $visa );
+					}
+					if ( 'views' === $sort_by ) {
+						return ( $vb !== $va ) ? ( $vb - $va ) : ( $cb - $ca );
+					}
+					if ( 'duration' === $sort_by ) {
+						$dura = ( ! empty( $a['duration_count'] ) ) ? ( intval( $a['total_seconds'] ) / intval( $a['duration_count'] ) ) : 0;
+						$durb = ( ! empty( $b['duration_count'] ) ) ? ( intval( $b['total_seconds'] ) / intval( $b['duration_count'] ) ) : 0;
+						if ( abs( $dura - $durb ) > 0.01 ) {
+							return ( $durb > $dura ) ? 1 : -1;
+						}
+						return $visb - $visa;
+					}
+
+					if ( $visa === $visb ) {
+						return $cb - $ca;
+					}
+					return $visb - $visa;
 				}
 			);
 
@@ -783,6 +818,38 @@ function kt_konser_admin_page() {
 					</form>
 				</div>
 
+				<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px;">
+					<div style="font-size: 13px; color: #50575e;">
+						<strong>Sıralama Ölçütü:</strong>
+						<?php
+						$sort_options = array(
+							'visitors' => 'Tekil Ziyaretçi',
+							'ctr'      => 'Dönüşüm Oranı (CTR %)',
+							'clicks'   => 'Bilet Tıklaması',
+							'views'    => 'Sayfa Gösterimi',
+							'duration' => 'Ort. Kalma Süresi',
+						);
+						$sort_links = array();
+						foreach ( $sort_options as $s_key => $s_label ) {
+							$s_url = add_query_arg(
+								array(
+									'page'    => 'konser-takvimi',
+									'tab'     => 'stats',
+									'sort_by' => $s_key,
+								),
+								admin_url( 'admin.php' )
+							);
+							if ( $sort_by === $s_key ) {
+								$sort_links[] = '<strong style="color: #1d2327; background: #e2e8f0; padding: 3px 8px; border-radius: 4px;">' . esc_html( $s_label ) . ' &darr;</strong>';
+							} else {
+								$sort_links[] = '<a href="' . esc_url( $s_url ) . '" style="text-decoration: none; padding: 3px 6px;">' . esc_html( $s_label ) . '</a>';
+							}
+						}
+						echo implode( ' &bull; ', $sort_links );
+						?>
+					</div>
+				</div>
+
 				<form method="post" action="">
 					<?php wp_nonce_field( 'kt_stats_nonce_action', 'kt_stats_nonce' ); ?>
 					<table class="widefat fixed striped">
@@ -791,11 +858,11 @@ function kt_konser_admin_page() {
 								<th style="width: 140px;">İlçe Anahtarı</th>
 								<th>Sayfa Başlığı</th>
 								<th style="width: 105px;">Bugün (Tekil)</th>
-								<th style="width: 115px;">Toplam Ziyaretçi</th>
-								<th style="width: 105px;">Gösterim</th>
-								<th style="width: 110px;">Bilet Tıklaması</th>
-								<th style="width: 90px;">CTR</th>
-								<th style="width: 115px;">Ort. Süre</th>
+								<th style="width: 115px;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=visitors' ) ); ?>" style="text-decoration:none;">Toplam Ziyaretçi<?php echo 'visitors' === $sort_by ? ' &darr;' : ''; ?></a></th>
+								<th style="width: 105px;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=views' ) ); ?>" style="text-decoration:none;">Gösterim<?php echo 'views' === $sort_by ? ' &darr;' : ''; ?></a></th>
+								<th style="width: 110px;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=clicks' ) ); ?>" style="text-decoration:none;">Bilet Tıklaması<?php echo 'clicks' === $sort_by ? ' &darr;' : ''; ?></a></th>
+								<th style="width: 105px;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=ctr' ) ); ?>" style="text-decoration:none;">Dönüşüm (CTR)<?php echo 'ctr' === $sort_by ? ' &darr;' : ''; ?></a></th>
+								<th style="width: 115px;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=duration' ) ); ?>" style="text-decoration:none;">Ort. Süre<?php echo 'duration' === $sort_by ? ' &darr;' : ''; ?></a></th>
 								<th style="width: 65px;">İşlem</th>
 							</tr>
 						</thead>
@@ -814,7 +881,10 @@ function kt_konser_admin_page() {
 									$dur_cnt = isset( $row['duration_count'] ) ? intval( $row['duration_count'] ) : 0;
 									$avg_sec = $dur_cnt > 0 ? round( $tot_sec / $dur_cnt ) : 0;
 									$t_vis   = isset( $row['daily'][ $today_str ]['visitors'] ) ? intval( $row['daily'][ $today_str ]['visitors'] ) : 0;
-									$ctr     = $v > 0 ? number_format( ( $c / $v ) * 100, 1, ',', '.' ) : '0,0';
+									$ctr_num = $v > 0 ? ( ( $c / $v ) * 100 ) : 0.0;
+									$ctr     = number_format( $ctr_num, 1, ',', '.' );
+									$ctr_bg  = $ctr_num >= 15 ? '#dcfce7' : ( $ctr_num >= 5 ? '#fef9c3' : '#f1f5f9' );
+									$ctr_fg  = $ctr_num >= 15 ? '#166534' : ( $ctr_num >= 5 ? '#854d0e' : '#334155' );
 									?>
 									<tr>
 										<td><code><?php echo esc_html( $key ); ?></code></td>
@@ -826,7 +896,7 @@ function kt_konser_admin_page() {
 										<td><?php echo number_format_i18n( $vis ); ?></td>
 										<td><?php echo number_format_i18n( $v ); ?></td>
 										<td style="color: #15803d; font-weight: 600;"><?php echo number_format_i18n( $c ); ?></td>
-										<td><span style="display: inline-block; padding: 2px 7px; background: #f1f5f9; border-radius: 4px; font-weight: 600;">%<?php echo esc_html( $ctr ); ?></span></td>
+										<td><span style="display: inline-block; padding: 3px 8px; background: <?php echo esc_attr( $ctr_bg ); ?>; color: <?php echo esc_attr( $ctr_fg ); ?>; border-radius: 4px; font-weight: 700;">%<?php echo esc_html( $ctr ); ?></span></td>
 										<td><?php echo esc_html( kt_format_duration_human( $avg_sec ) ); ?></td>
 										<td>
 											<button type="submit" name="kt_delete_stat_key" value="<?php echo esc_attr( $key ); ?>" class="button button-small" style="color: #b32d2e;" onclick="return confirm('Bu ilçeye ait istatistik kaydını silmek istediğinize emin misiniz?');">Sil</button>
@@ -992,6 +1062,29 @@ function kt_konser_admin_page() {
 								<p class="description">
 									Sayfada <code>[konser_bilet_butonu]</code> kısa kodu <strong>olmasa bile</strong>, <code>[konser_ilce_yonlendir]</code> bulunan sayfalarda bu alan adlarına giden bağlantılara veya bilet görseli içeren linklere yapılan tıklamalar otomatik olarak ilgili ilçeye kaydedilir. Virgülle ayırarak alan adı ekleyebilirsiniz.
 								</p>
+							</td>
+						</tr>
+					</table>
+				</div>
+
+				<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #9333ea; border-radius: 4px; padding: 16px 20px; margin-bottom: 20px;">
+					<h2 style="margin-top: 0;">Google Arama Zengin Sonuçları — Schema (JSON-LD MusicEvent)</h2>
+					<table class="form-table" role="presentation" style="margin-top: 0;">
+						<tr>
+							<th scope="row">Otomatik MusicEvent Şeması</th>
+							<td>
+								<label>
+									<input type="checkbox" name="schema_enabled" value="1" <?php checked( ! empty( $styles['schema_enabled'] ) ); ?>>
+									<code>[konser_takvimi]</code> veya <code>[konser_ilce_yonlendir]</code> bulunan sayfalara otomatik Google <code>MusicEvent</code> JSON-LD yapılandırılmış verisi ekle.
+								</label>
+								<p class="description">Etkinlik tarihi, saati, ilçe konumu ve bilet bağlantısı Google arama sonuçlarında zengin etkinlik kartı olarak dizine eklenir.</p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="schema_performer">Sanatçı / Grup Adı (Performer)</label></th>
+							<td>
+								<input type="text" id="schema_performer" name="schema_performer" value="<?php echo esc_attr( $styles['schema_performer'] ); ?>" class="regular-text" placeholder="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>">
+								<p class="description">Boş bırakılırsa site başlığı (<code><?php echo esc_html( get_bloginfo( 'name' ) ); ?></code>) kullanılır.</p>
 							</td>
 						</tr>
 					</table>

@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Konser Takvimi
- * Description: Veritabanı tabanlı, çift seans destekli, geçmiş konserleri otomatik arşivleyen, ilçe sayfası yönlendirme, günlük ziyaretçi/süre analitiği, grafik ve indirilebilir/e-posta raporları sunan WordPress eklentisi.
- * Version: 3.4.1
+ * Description: Veritabanı tabanlı, çift seans destekli, Google Schema (MusicEvent) JSON-LD üreten, geçmiş konserleri otomatik arşivleyen, önbellek korumalı 302 ilçe yönlendirmesi, CTR dönüşüm sıralamalı analitik ve raporlama sunan WordPress eklentisi.
+ * Version: 3.5.0
  * Author: Şubadap Çocuk
  * License: GPL-3.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'KT_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'KT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'KT_PLUGIN_VER', '3.4.1' );
+define( 'KT_PLUGIN_VER', '3.5.0' );
 define( 'KT_EVENTS_OPT', 'subadap_konserler_list' );
 define( 'KT_STYLES_OPT', 'subadap_konserler_styles' );
 define( 'KT_STATS_OPT', 'subadap_konserler_stats' );
@@ -89,6 +89,8 @@ function kt_get_default_style_settings() {
 		'ticket_btn_url'      => '',
 		'ticket_btn_img'      => 'https://subadapcocuk.org/wp-content/uploads/2026/09/4-edited-1024x281.png',
 		'ticket_domains'      => 'biletinial.com, biletix.com, passo.com.tr, bubilet.com.tr, mobilet.com, biletino.com',
+		'schema_enabled'      => 1,
+		'schema_performer'    => '',
 		'weekly_report_on'    => 1,
 		'weekly_report_email' => '',
 		'weekly_report_day'   => 'monday',
@@ -135,6 +137,10 @@ function kt_get_style_settings() {
 
 	if ( ! isset( $merged['ticket_domains'] ) ) {
 		$merged['ticket_domains'] = $defaults['ticket_domains'];
+	}
+
+	if ( ! isset( $merged['schema_performer'] ) ) {
+		$merged['schema_performer'] = '';
 	}
 
 	$valid_days = array( 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' );
@@ -654,6 +660,211 @@ function kt_send_weekly_stats_email( $override_email = '' ) {
 	return wp_mail( $recipient, $subject, $bundle['html_card'], $headers );
 }
 
+
+/**
+ * Belirli bir ilçe / slug için yaklaşan tüm aktif konser kayıtlarını döndürür.
+ */
+function kt_get_upcoming_events_for_target( $target ) {
+	$target_slug = sanitize_title( $target );
+	if ( empty( $target_slug ) ) {
+		return array();
+	}
+
+	$base_target = preg_replace( '/-(konseri|konser)$/', '', $target_slug );
+	$all_events  = get_option( KT_EVENTS_OPT, array() );
+	if ( ! is_array( $all_events ) || empty( $all_events ) ) {
+		return array();
+	}
+
+	$now_ts  = kt_get_istanbul_timestamp();
+	$matched = array();
+
+	foreach ( $all_events as $event ) {
+		$end_ts = kt_get_event_end_timestamp( $event );
+		if ( false === $end_ts || $end_ts < $now_ts ) {
+			continue;
+		}
+
+		$ev_slug      = isset( $event['slug'] ) ? sanitize_title( $event['slug'] ) : '';
+		$ev_city_slug = isset( $event['city'] ) ? sanitize_title( $event['city'] ) : '';
+		$ev_base_slug = preg_replace( '/-(konseri|konser)$/', '', $ev_slug );
+
+		if (
+			$ev_slug === $target_slug ||
+			$ev_city_slug === $target_slug ||
+			( ! empty( $base_target ) && ( $ev_base_slug === $base_target || $ev_city_slug === $base_target ) )
+		) {
+			$matched[] = $event;
+		}
+	}
+
+	usort( $matched, 'kt_sort_events_asc' );
+	return $matched;
+}
+
+/**
+ * Tek bir konser kaydını Google MusicEvent JSON-LD nesnesine dönüştürür.
+ */
+function kt_build_music_event_schema_item( $event, $performer_name, $ticket_url = '', $image_url = '', $page_url = '' ) {
+	if ( empty( $event['datetime'] ) || empty( $event['city'] ) ) {
+		return null;
+	}
+
+	$city_name = sanitize_text_field( $event['city'] );
+	$ev_slug   = isset( $event['slug'] ) ? sanitize_title( $event['slug'] ) : sanitize_title( $city_name . '-konseri' );
+	$event_url = ! empty( $page_url ) ? $page_url : home_url( '/' . ltrim( $ev_slug, '/' ) . '/' );
+
+	$start_iso = sanitize_text_field( $event['datetime'] );
+	$dt_parts  = explode( 'T', $start_iso );
+	$end_iso   = $start_iso;
+
+	if ( ! empty( $event['time2'] ) && preg_match( '/^\d{2}:\d{2}$/', $event['time2'] ) && ! empty( $dt_parts[0] ) ) {
+		$end_iso = $dt_parts[0] . 'T' . sanitize_text_field( $event['time2'] ) . ':00+03:00';
+	}
+
+	$item = array(
+		'@context'            => 'https://schema.org',
+		'@type'               => 'MusicEvent',
+		'name'                => $performer_name . ' — ' . $city_name . ' Konseri',
+		'startDate'           => $start_iso,
+		'endDate'             => $end_iso,
+		'eventStatus'         => 'https://schema.org/EventScheduled',
+		'eventAttendanceMode' => 'https://schema.org/OfflineEventAttendanceMode',
+		'location'            => array(
+			'@type'   => 'Place',
+			'name'    => $city_name,
+			'address' => array(
+				'@type'           => 'PostalAddress',
+				'addressLocality' => $city_name,
+				'addressCountry'  => 'TR',
+			),
+		),
+		'performer'           => array(
+			'@type' => 'MusicGroup',
+			'name'  => $performer_name,
+		),
+		'organizer'           => array(
+			'@type' => 'Organization',
+			'name'  => $performer_name,
+			'url'   => home_url( '/' ),
+		),
+		'url'                 => esc_url_raw( $event_url ),
+	);
+
+	if ( ! empty( $image_url ) ) {
+		$item['image'] = array( esc_url_raw( $image_url ) );
+	}
+
+	$offer_url = ! empty( $ticket_url ) ? $ticket_url : $event_url;
+	$item['offers'] = array(
+		'@type'         => 'Offer',
+		'url'           => esc_url_raw( $offer_url ),
+		'availability'  => 'https://schema.org/InStock',
+		'priceCurrency' => 'TRY',
+	);
+
+	return $item;
+}
+
+/**
+ * [konser_takvimi] veya [konser_ilce_yonlendir] bulunan sayfalarda <head> içine Google MusicEvent JSON-LD ekler.
+ */
+add_action( 'wp_head', 'kt_output_music_event_json_ld', 20 );
+function kt_output_music_event_json_ld() {
+	if ( is_admin() || ! is_singular() ) {
+		return;
+	}
+
+	$styles = kt_get_style_settings();
+	if ( empty( $styles['schema_enabled'] ) ) {
+		return;
+	}
+
+	global $post;
+	if ( ! $post || empty( $post->post_content ) ) {
+		return;
+	}
+
+	$has_calendar = has_shortcode( $post->post_content, 'konser_takvimi' ) || has_shortcode( $post->post_content, 'subadap_konserler' );
+	$has_district = has_shortcode( $post->post_content, 'konser_ilce_yonlendir' );
+
+	if ( ! $has_calendar && ! $has_district ) {
+		return;
+	}
+
+	$performer_name = ! empty( $styles['schema_performer'] )
+		? sanitize_text_field( $styles['schema_performer'] )
+		: wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
+
+	$ticket_url = ! empty( $styles['ticket_btn_url'] ) ? $styles['ticket_btn_url'] : '';
+	$image_url  = get_the_post_thumbnail_url( $post->ID, 'full' );
+	if ( empty( $image_url ) && ! empty( $styles['ticket_btn_img'] ) ) {
+		$image_url = $styles['ticket_btn_img'];
+	}
+
+	$schema_items = array();
+	$seen_keys    = array();
+
+	if ( $has_district ) {
+		$pattern = get_shortcode_regex( array( 'konser_ilce_yonlendir' ) );
+		if ( preg_match_all( '/' . $pattern . '/s', $post->post_content, $matches, PREG_SET_ORDER ) ) {
+			foreach ( $matches as $match ) {
+				$atts       = shortcode_atts( array( 'ilce' => '' ), shortcode_parse_atts( $match[3] ), 'konser_ilce_yonlendir' );
+				$lookup_key = ! empty( $atts['ilce'] ) ? $atts['ilce'] : $post->post_name;
+				$events     = kt_get_upcoming_events_for_target( $lookup_key );
+				foreach ( $events as $ev ) {
+					$dedup = $ev['datetime'] . '|' . $ev['slug'];
+					if ( isset( $seen_keys[ $dedup ] ) ) {
+						continue;
+					}
+					$seen_keys[ $dedup ] = true;
+					$built               = kt_build_music_event_schema_item( $ev, $performer_name, $ticket_url, $image_url, get_permalink( $post->ID ) );
+					if ( $built ) {
+						$schema_items[] = $built;
+					}
+				}
+			}
+		}
+	}
+
+	if ( $has_calendar ) {
+		$all_events = get_option( KT_EVENTS_OPT, array() );
+		if ( is_array( $all_events ) ) {
+			$now_ts   = kt_get_istanbul_timestamp();
+			$upcoming = array();
+			foreach ( $all_events as $ev ) {
+				$end_ts = kt_get_event_end_timestamp( $ev );
+				if ( false !== $end_ts && $end_ts >= $now_ts ) {
+					$upcoming[] = $ev;
+				}
+			}
+			usort( $upcoming, 'kt_sort_events_asc' );
+			$max_items = max( 1, intval( $styles['max_items'] ) );
+			$upcoming  = array_slice( $upcoming, 0, $max_items );
+
+			foreach ( $upcoming as $ev ) {
+				$dedup = $ev['datetime'] . '|' . $ev['slug'];
+				if ( isset( $seen_keys[ $dedup ] ) ) {
+					continue;
+				}
+				$seen_keys[ $dedup ] = true;
+				$built               = kt_build_music_event_schema_item( $ev, $performer_name, $ticket_url, $image_url, '' );
+				if ( $built ) {
+					$schema_items[] = $built;
+				}
+			}
+		}
+	}
+
+	if ( empty( $schema_items ) ) {
+		return;
+	}
+
+	$payload = ( 1 === count( $schema_items ) ) ? $schema_items[0] : $schema_items;
+	echo "\n<!-- Konser Takvimi Google MusicEvent JSON-LD -->\n";
+	echo '<script type="application/ld+json">' . wp_json_encode( $payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . '</script>' . "\n";
+}
+
 /**
  * Belirli bir ilçe / slug için yaklaşan aktif konser olup olmadığını kontrol eder.
  */
@@ -728,6 +939,10 @@ function kt_handle_district_redirect_shortcode() {
 		return;
 	}
 
+	if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+		define( 'DONOTCACHEPAGE', true );
+	}
+
 	if ( current_user_can( 'edit_pages' ) ) {
 		return;
 	}
@@ -748,6 +963,10 @@ function kt_handle_district_redirect_shortcode() {
 			$lookup_key = ! empty( $atts['ilce'] ) ? $atts['ilce'] : $post->post_name;
 
 			if ( ! kt_has_upcoming_concert_for_target( $lookup_key ) ) {
+				if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+					define( 'DONOTCACHEPAGE', true );
+				}
+				nocache_headers();
 				$redirect_url = kt_resolve_redirect_url( $atts['hedef'] );
 				wp_safe_redirect( $redirect_url, 302 );
 				exit;

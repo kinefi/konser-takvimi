@@ -1,5 +1,11 @@
 # Değişiklik Günlüğü (Changelog)
 
+## [3.5.0] - 2026-11-20
+### Eklenenler & İyileştirilenler
+- **Google Schema (JSON-LD `MusicEvent`) Desteği:** `[konser_takvimi]` veya `[konser_ilce_yonlendir]` kısa kodlarının bulunduğu sayfalarda `<head>` içerisine otomatik olarak Google `MusicEvent` yapılandırılmış verisi (`startDate`, `endDate`, `location`, `performer`, `offers`) eklendi; Ayarlar sekmesine şema açma/kapama ve sanatçı/grup adı alanı eklendi.
+- **Dönüşüm Oranı (CTR %) Sıralaması & Renkli Performans Rozeti:** **İstatistikler & Grafik** tablosunda ilçeleri **Dönüşüm Oranı (CTR %)**, **Tekil Ziyaretçi**, **Bilet Tıklaması**, **Sayfa Gösterimi** veya **Ort. Kalma Süresi** ölçütlerine göre tek tıkla sıralama bağlantıları ve CTR performans renk rozetleri eklendi.
+- **Önbellek Korumalı `302 Found` İlçe Yönlendirmesi:** Süresi dolan ilçe sayfalarının arama motorlarınca kalıcı silinmiş (`301`) algılanmaması ve LiteSpeed / WP Rocket gibi önbellek eklentilerince yönlendirme kuralının önbelleğe alınmaması için `DONOTCACHEPAGE` sabiti, `nocache_headers()` ve `302` durum kodu güvencesi eklendi.
+
 ## [3.4.1] - 2026-11-19
 ### Eklenenler
 - **Dönem ve Biçim Seçenekli Rapor İndirme Düğmesi:** Yönetim panelindeki **İstatistikler & Grafik** sekmesine **Son 7 Gün (Haftalık)**, **Son 14 Gün**, **Son 30 Gün (Aylık)** veya **Tüm Zamanlar** dönemleri için yazdırılabilir/PDF kaydedilebilir **Görsel Rapor (HTML)** ve **Excel Tablosu (.csv)** indirme düğmesi eklendi.

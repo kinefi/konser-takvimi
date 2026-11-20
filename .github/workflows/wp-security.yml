@@ -1,0 +1,69 @@
+name: WordPress Plugin Security Scan
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  schedule:
+    - cron: '0 3 * * 1'
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  # 1. KATMAN: WordPress Güvenlik ve Kod Standartları (PHPCS + WPCS)
+  wp-security-standards:
+    name: WPCS & Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer, phpcs
+
+      - name: Install WordPress Coding Standards & Security Rules
+        run: |
+          composer global config allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
+          composer global require wp-coding-standards/wpcs:"^3.0" phpcompatibility/phpcompatibility-wp:"*"
+          phpcs --config-set installed_paths ~/.composer/vendor/wp-coding-standards/wpcs,~/.composer/vendor/phpcompatibility/phpcompatibility-wp,~/.composer/vendor/phpcompatibility/php-compatibility
+
+      - name: Run WP Security & Escaping Checks
+        run: |
+          # Sadece güvenlik (WordPress.Security) odaklı kuralları çalıştırır, stil/boşluk hatalarıyla boğmaz
+          phpcs --standard=WordPress --sniffs=WordPress.Security,WordPress.DB.PreparedSQL --extensions=php --ignore=vendor/* .
+
+  # 2. KATMAN: Derin PHP & WP Semantik Analiz (Semgrep)
+  sast-semgrep:
+    name: SAST (PHP & WordPress Rules)
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Semgrep with PHP & WordPress Rulesets
+        run: |
+          semgrep scan --config p/php --config p/wordpress --sarif --output=semgrep.sarif
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
+
+  # 3. KATMAN: Koda Unutulmuş API Key / Token Taraması (Gitleaks)
+  secret-scan-gitleaks:
+    name: Secret Scan (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
