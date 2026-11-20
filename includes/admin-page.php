@@ -852,20 +852,21 @@ function kt_konser_admin_page() {
 
 				<form method="post" action="">
 					<?php wp_nonce_field( 'kt_stats_nonce_action', 'kt_stats_nonce' ); ?>
-				<table class="widefat fixed striped">
-						<thead>
-							<tr>
-								<th style="width: 140px;">İlçe Anahtarı</th>
-								<th>Sayfa Başlığı</th>
-								<th style="width: 105px;">Bugün (Tekil)</th>
-								<th style="width: 115px;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=visitors' ) ); ?>" style="text-decoration:none;">Toplam Ziyaretçi<?php echo 'visitors' === $sort_by ? ' &darr;' : ''; ?></a></th>
-								<th style="width: 105px;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=views' ) ); ?>" style="text-decoration:none;">Gösterim<?php echo 'views' === $sort_by ? ' &darr;' : ''; ?></a></th>
-								<th style="width: 110px;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=clicks' ) ); ?>" style="text-decoration:none;">Bilet Tıklaması<?php echo 'clicks' === $sort_by ? ' &darr;' : ''; ?></a></th>
-								<th style="width: 105px;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=ctr' ) ); ?>" style="text-decoration:none;">Dönüşüm (CTR)<?php echo 'ctr' === $sort_by ? ' &darr;' : ''; ?></a></th>
-								<th style="width: 115px;"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=duration' ) ); ?>" style="text-decoration:none;">Ort. Süre<?php echo 'duration' === $sort_by ? ' &darr;' : ''; ?></a></th>
-								<th style="width: 65px;">İşlem</th>
-							</tr>
-						</thead>
+					<div class="kt-stats-table-wrap">
+						<table class="widefat striped kt-stats-table">
+							<thead>
+								<tr>
+									<th class="kt-col-key">İlçe Anahtarı</th>
+									<th class="kt-col-title">Sayfa Başlığı</th>
+									<th class="kt-col-num">Bugün (Tekil)</th>
+									<th class="kt-col-num"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=visitors' ) ); ?>">Toplam Ziyaretçi<?php echo 'visitors' === $sort_by ? ' &darr;' : ''; ?></a></th>
+									<th class="kt-col-num"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=views' ) ); ?>">Gösterim<?php echo 'views' === $sort_by ? ' &darr;' : ''; ?></a></th>
+									<th class="kt-col-num"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=clicks' ) ); ?>">Bilet Tıklaması<?php echo 'clicks' === $sort_by ? ' &darr;' : ''; ?></a></th>
+									<th class="kt-col-num"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=ctr' ) ); ?>">Dönüşüm (CTR)<?php echo 'ctr' === $sort_by ? ' &darr;' : ''; ?></a></th>
+									<th class="kt-col-num"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=duration' ) ); ?>">Ort. Süre<?php echo 'duration' === $sort_by ? ' &darr;' : ''; ?></a></th>
+									<th class="kt-col-action">İşlem</th>
+								</tr>
+							</thead>
 						<tbody>
 							<?php if ( empty( $stats ) ) : ?>
 								<tr>
