@@ -11,7 +11,6 @@
 
 		var formData = new FormData();
 		formData.append('action', 'kt_track_district_event');
-		formData.append('nonce', ktTrackerData.nonce || '');
 		formData.append('event_type', eventType);
 		formData.append('district', district);
 		formData.append('label', label || '');
@@ -39,6 +38,23 @@
 		}
 		try {
 			var storageKey = 'kt_vis_' + district + '_' + todayStr;
+			if (window.localStorage.getItem(storageKey) === '1') {
+				return '0';
+			}
+			window.localStorage.setItem(storageKey, '1');
+			return '1';
+		} catch (err) {
+			return '1';
+		}
+	}
+
+	// True the first time this browser clicks a ticket link for the district today (same daily window as unique visitors).
+	function checkDailyUniqueClicker(district, todayStr) {
+		if (!district || !todayStr) {
+			return '1';
+		}
+		try {
+			var storageKey = 'kt_clk_' + district + '_' + todayStr;
 			if (window.localStorage.getItem(storageKey) === '1') {
 				return '0';
 			}
@@ -220,7 +236,9 @@
 		var label = link.getAttribute('data-kt-label') || ktTrackerData.defaultLabel || '';
 
 		decorateTicketLink(link);
-		sendStatEvent('clicks', district, label, readIncomingUtm());
+		var clickParams = readIncomingUtm();
+		clickParams.is_unique = checkDailyUniqueClicker(district, ktTrackerData.todayStr);
+		sendStatEvent('clicks', district, label, clickParams);
 		flushActiveDuration();
 	});
 

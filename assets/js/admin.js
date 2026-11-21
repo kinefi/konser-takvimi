@@ -388,7 +388,12 @@ document.addEventListener('DOMContentLoaded', function () {
 				var chosenUrl = (attachment.sizes && attachment.sizes.large) ? attachment.sizes.large.url : attachment.url;
 				ticketImgInput.value = chosenUrl;
 				if (ticketImgPreview) {
-					ticketImgPreview.innerHTML = '<img src="' + chosenUrl + '" alt="Bilet Düğmesi Önizleme" style="max-width: 360px; height: auto; border: 1px solid #dcdcde; border-radius: 4px; padding: 4px; background: #f8fafc;">';
+					var previewImg = document.createElement('img');
+					previewImg.src = chosenUrl;
+					previewImg.alt = 'Bilet Düğmesi Önizleme';
+					previewImg.style.cssText = 'max-width: 360px; height: auto; border: 1px solid #dcdcde; border-radius: 4px; padding: 4px; background: #f8fafc;';
+					ticketImgPreview.textContent = '';
+					ticketImgPreview.appendChild(previewImg);
 				}
 			});
 			mediaFrame.open();

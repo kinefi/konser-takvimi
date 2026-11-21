@@ -16,7 +16,9 @@ Konser ve etkinlik takvimini yönetmek, yaklaşan etkinlikleri **BUGÜN / YARIN*
 - **Çift Seans Desteği (`12.00 ve 14.00`):** Aynı gün iki seans varsa 2. seans saati girilebilir; kartta `12.00 ve 14.00` olarak gösterilir ve Takvime Ekle menüsünde her iki seans ayrı seçenek olarak sunulur.
 - **Google Schema (JSON-LD `MusicEvent`) Desteği:** `<head>` bölümüne otomatik olarak `MusicEvent` (`description`, `startDate`, `endDate`, `location`, `performer`, `offers.validFrom`) yapılandırılmış verisi ekler.
 - **UTM Etiketleme ve Takibi (4.0.0 ile geldi):** Giden bilet bağlantılarına ve takvim etkinliklerindeki sayfa bağlantısına `utm_*` parametreleri ekler, gelen `utm_*` trafiğini ilçe bazında kaydeder. Bkz. [UTM Parametreleri](#utm-parametreleri).
-- **Günlük Ziyaretçi, Dönüşüm Oranı (CTR) Sıralaması & Grafik:** Çerez kullanmadan (`localStorage`) günlük tekil ziyaretçileri, aktif kalma süresini ve bilet tıklamalarını ölçer; 14 günlük grafik ve HTML/CSV rapor sunar.
+- **Günlük Ziyaretçi, CTR, Dönüşüm Oranı & Grafik:** Çerez kullanmadan (`localStorage`) günlük tekil ziyaretçileri, aktif kalma süresini ve bilet tıklamalarını ölçer; 14 günlük grafik ve HTML/CSV rapor sunar. İki oran yan yana gösterilir:
+  - **CTR** = bilet tıklaması / sayfa gösterimi.
+  - **Dönüşüm** = bilet bağlantısına tıklayan tekil kişi / tekil ziyaretçi (günlük, ilçe bazında; en çok %100). "Ziyaretçilerin kaçı gerçekten bilete gitti" sorusunun cevabıdır. Sıralama ölçütü, özet kartlar, ilçe tablosu, UTM tablosu, HTML/CSV raporlar ve haftalık e-posta içinde yer alır. 4.1.0 öncesi kayıtlarda tekil tıklayan sayısı tutulmadığı için eski satırlarda dönüşüm düşük görünür.
 
 ## UTM Parametreleri
 
@@ -59,6 +61,12 @@ Ziyaretçi adreste `utm_source`, `utm_medium` veya `utm_campaign` bulunan bir sa
 - `MusicEvent` JSON-LD içindeki adresler bilerek **etiketlenmez**; yapılandırılmış veri kanonik adresleri göstermelidir.
 - Gelen UTM verisi tüm zamanları kapsar ve henüz HTML/CSV/e-posta raporlarına dahil değildir.
 
+## Gizlilik
+
+- İstatistikler çerez kullanmaz. Tarayıcının `localStorage` alanına yalnızca ilçe başına günlük bir "sayıldı" işareti (ziyaret ve bilet tıklaması için) yazılır.
+- Quicksand yazı tipi varsayılan olarak Google Fonts'tan yüklenir. Google'a hiç bağlanılmaması için **Ayarlar → Gizlilik & Yazı Tipi** bölümünden kapatın; kartlar sistem yazı tipiyle gösterilir.
+- Onay politikanızın (KVKK/GDPR) `localStorage` işaretlerini ve UTM istatistiklerini kapsayıp kapsamadığını ayrıca değerlendirin.
+
 ## Kurulum
 
 1. Eski sürüm yüklüyse WordPress **Eklentiler** sayfasından önce etkisizleştirip silin (ayarlarda silme seçeneği işaretli değilse veritabanı kayıtlarınız korunur).
@@ -88,6 +96,8 @@ Ziyaretçi adreste `utm_source`, `utm_medium` veya `utm_campaign` bulunan bir sa
 
 Örnek: `[konser_ilce_yonlendir district="urla" redirect_target="/konserler"]`
 
+**Yönlendirme hedefleri:** Blok veya kısa kodda verilen `redirect_target` bu siteye ya da ayarlardaki varsayılan hedefin alan adına gidebilir. Başka bir alan adı yok sayılır ve varsayılan hedef kullanılır; böylece içerik yazarları açık yönlendirme (open redirect) oluşturamaz. Başka bir alan adına yönlendirmek için o alan adını ayarlarda varsayılan hedef olarak girin.
+
 ## 3.x Sürümünden Yükseltme
 
 4.0.0 sürümü Türkçe öznitelik adlarını İngilizce adlarla değiştirir. **Otomatik bir geri dönüş yoktur**, bu yüzden yükselttikten sonra mevcut içeriği güncelleyin:
@@ -106,6 +116,16 @@ Ziyaretçi adreste `utm_source`, `utm_medium` veya `utm_campaign` bulunan bir sa
 - Blok adları (`konser-takvimi/...`), kısa kod adları, `subadap_konserler_*` veritabanı seçenekleri ve `{sehir}-konseri` slug biçimi değişmedi; kayıtlı konserleriniz ve istatistikleriniz etkilenmez.
 - Yükseltmeden sonra UTM etiketleme **varsayılan olarak açıktır**. Giden bağlantıların değişmesini istemiyorsanız ayarlardan kapatın.
 
+## Geliştirme ve Testler
+
+Eklenti mantığı, ihtiyaç duyduğu WordPress fonksiyonlarını taklit eden (`tests/wp_stubs.php`), bağımlılıksız testlerle kapsanır; WordPress kurulumu gerekmez:
+
+```sh
+./tests/run.sh   # PHP lint, JS sözdizimi, PHP testleri ve tracker.js testleri
+```
+
+GitHub Actions aynı kontrolleri PHP 8.1 – 8.3 ve Node 20 üzerinde çalıştırır (`.github/workflows/tests.yml`); güvenlik workflow'u (`security.yml`) ayrıca çalışır. Taklit fonksiyonlar WordPress'i yalnızca yaklaşık olarak temsil eder; bir deneme sitesinde elle kontrolün yerini tutmaz.
+
 ## Dosya Yapısı
 
 ```text
@@ -116,6 +136,10 @@ konser-takvimi/
 ├── README.md                    # Proje dokümantasyonu (İngilizce)
 ├── README.tr.md                 # Proje dokümantasyonu (Türkçe)
 ├── CHANGELOG.md                 # Sürüm geçmişi
+├── .github/workflows/
+│   ├── tests.yml                # Lint + birim testleri (PHP 8.1-8.3, Node 20)
+│   └── security.yml             # WPCS güvenlik kuralları, Semgrep ve Gitleaks
+├── tests/                       # WordPress taklitli birim testleri ve tracker.js testleri (./tests/run.sh)
 ├── includes/
 │   ├── admin-page.php           # Yönetim paneli, CTR sıralamalı istatistikler, UTM kaynakları, grafik, dışa aktarma ve ayar sekmeleri
 │   └── blocks.php               # Gutenberg blok kaydı ve sunucu taraflı önizleme/render işleyicileri

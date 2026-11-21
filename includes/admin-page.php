@@ -91,7 +91,9 @@ function kt_handle_stats_export() {
 				'Tekil Ziyaretçi',
 				'Sayfa Gösterimi',
 				'Bilet Tıklaması',
-				'Tıklama Oranı (%)',
+				'Tıklama Oranı - CTR (%)',
+				'Tıklayan Tekil Kişi',
+				'Dönüşüm: Tıklayan Kişi / Tekil Ziyaretçi (%)',
 				'Ort. Kalma Süresi (sn)',
 				'Genel Toplam Ziyaretçi',
 				'Genel Toplam Tıklama',
@@ -102,6 +104,7 @@ function kt_handle_stats_export() {
 		foreach ( $bundle['rows'] as $row ) {
 			$label = preg_replace( '/^[=+\-@]/', "'$0", $row['label'] );
 			$ctr   = number_format( $row['ctr'], 1, ',', '' );
+			$conv  = number_format( $row['conversion'], 1, ',', '' );
 			fputcsv(
 				$output,
 				array(
@@ -111,6 +114,8 @@ function kt_handle_stats_export() {
 					$row['views'],
 					$row['clicks'],
 					$ctr,
+					$row['click_visitors'],
+					$conv,
 					$row['avg_sec'],
 					$row['total_vis'],
 					$row['total_clicks'],
@@ -384,6 +389,7 @@ function kt_render_admin_page() {
 		$schema_enabled   = isset( $_POST['schema_enabled'] ) ? 1 : 0;
 		$schema_performer = isset( $_POST['schema_performer'] ) ? sanitize_text_field( wp_unslash( $_POST['schema_performer'] ) ) : '';
 
+		$load_font       = isset( $_POST['load_google_font'] ) ? 1 : 0;
 		$utm_ticket_on   = isset( $_POST['utm_ticket_enabled'] ) ? 1 : 0;
 		$utm_calendar_on = isset( $_POST['utm_calendar_enabled'] ) ? 1 : 0;
 		$utm_capture_on  = isset( $_POST['utm_capture_enabled'] ) ? 1 : 0;
@@ -433,6 +439,7 @@ function kt_render_admin_page() {
 			'ticket_domains'      => $raw_domains,
 			'schema_enabled'      => $schema_enabled,
 			'schema_performer'    => $schema_performer,
+			'load_google_font'     => $load_font,
 			'utm_ticket_enabled'   => $utm_ticket_on,
 			'utm_calendar_enabled' => $utm_calendar_on,
 			'utm_capture_enabled'  => $utm_capture_on,
@@ -640,7 +647,7 @@ function kt_render_admin_page() {
 			$today_str = kt_get_istanbul_date_str( 0 );
 
 			$sort_by = isset( $_GET['sort_by'] ) ? sanitize_key( $_GET['sort_by'] ) : 'visitors';
-			if ( ! in_array( $sort_by, array( 'visitors', 'views', 'clicks', 'ctr', 'duration' ), true ) ) {
+			if ( ! in_array( $sort_by, array( 'visitors', 'views', 'clicks', 'ctr', 'conversion', 'duration' ), true ) ) {
 				$sort_by = 'visitors';
 			}
 
@@ -661,6 +668,16 @@ function kt_render_admin_page() {
 							return ( $ctrb > $ctra ) ? 1 : -1;
 						}
 						return $cb - $ca;
+					}
+					if ( 'conversion' === $sort_by ) {
+						$cva   = isset( $a['click_visitors'] ) ? intval( $a['click_visitors'] ) : 0;
+						$cvb   = isset( $b['click_visitors'] ) ? intval( $b['click_visitors'] ) : 0;
+						$conva = $visa > 0 ? ( $cva / $visa ) : 0;
+						$convb = $visb > 0 ? ( $cvb / $visb ) : 0;
+						if ( abs( $conva - $convb ) > 0.00001 ) {
+							return ( $convb > $conva ) ? 1 : -1;
+						}
+						return $cvb - $cva;
 					}
 					if ( 'clicks' === $sort_by ) {
 						return ( $cb !== $ca ) ? ( $cb - $ca ) : ( $visb - $visa );
@@ -688,6 +705,7 @@ function kt_render_admin_page() {
 			$total_visitors = 0;
 			$total_views    = 0;
 			$total_clicks   = 0;
+			$total_click_visitors = 0;
 			$total_seconds  = 0;
 			$duration_count = 0;
 
@@ -695,6 +713,7 @@ function kt_render_admin_page() {
 				$total_views    += isset( $st['views'] ) ? intval( $st['views'] ) : 0;
 				$total_visitors += isset( $st['visitors'] ) ? intval( $st['visitors'] ) : 0;
 				$total_clicks   += isset( $st['clicks'] ) ? intval( $st['clicks'] ) : 0;
+				$total_click_visitors += isset( $st['click_visitors'] ) ? intval( $st['click_visitors'] ) : 0;
 				$total_seconds  += isset( $st['total_seconds'] ) ? intval( $st['total_seconds'] ) : 0;
 				$duration_count += isset( $st['duration_count'] ) ? intval( $st['duration_count'] ) : 0;
 				if ( isset( $st['daily'][ $today_str ]['visitors'] ) ) {
@@ -703,6 +722,7 @@ function kt_render_admin_page() {
 			}
 
 			$overall_ctr     = $total_views > 0 ? number_format( ( $total_clicks / $total_views ) * 100, 1, ',', '.' ) : '0,0';
+			$overall_conversion = number_format( kt_conversion_rate( $total_click_visitors, $total_visitors ), 1, ',', '.' );
 			$overall_avg_sec = $duration_count > 0 ? round( $total_seconds / $duration_count ) : 0;
 
 			$chart_days = array();
@@ -776,6 +796,12 @@ function kt_render_admin_page() {
 							<?php echo esc_html( number_format_i18n( $total_clicks ) ); ?> <span style="font-size: 14px; font-weight: 600; color: #16a34a;">(%<?php echo esc_html( $overall_ctr ); ?>)</span>
 						</div>
 					</div>
+					<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #0d9488; border-radius: 4px; padding: 14px 16px;">
+						<div style="font-size: 12px; color: #50575e; font-weight: 600;">Bilet Tıklayan Kişi / Tekil Ziyaretçi</div>
+						<div style="font-size: 24px; font-weight: 700; color: #1d2327; margin-top: 4px;">
+							<?php echo esc_html( number_format_i18n( $total_click_visitors ) ); ?> <span style="font-size: 14px; font-weight: 500; color: #64748b;">/ <?php echo esc_html( number_format_i18n( $total_visitors ) ); ?></span> <span style="font-size: 14px; font-weight: 600; color: #0d9488;">(%<?php echo esc_html( $overall_conversion ); ?>)</span>
+						</div>
+					</div>
 					<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #9333ea; border-radius: 4px; padding: 14px 16px;">
 						<div style="font-size: 12px; color: #50575e; font-weight: 600;">Ort. Sayfada Kalma Süresi</div>
 						<div style="font-size: 24px; font-weight: 700; color: #1d2327; margin-top: 4px;"><?php echo esc_html( kt_format_duration_human( $overall_avg_sec ) ); ?></div>
@@ -837,7 +863,8 @@ function kt_render_admin_page() {
 						<?php
 						$sort_options = array(
 							'visitors' => 'Tekil Ziyaretçi',
-							'ctr'      => 'Dönüşüm Oranı (CTR %)',
+							'ctr'      => 'CTR % (Tıklama / Gösterim)',
+							'conversion' => 'Dönüşüm % (Tıklayan Kişi / Ziyaretçi)',
 							'clicks'   => 'Bilet Tıklaması',
 							'views'    => 'Sayfa Gösterimi',
 							'duration' => 'Ort. Kalma Süresi',
@@ -875,7 +902,9 @@ function kt_render_admin_page() {
 									<th class="kt-col-num"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=visitors' ) ); ?>">Toplam Ziyaretçi<?php echo 'visitors' === $sort_by ? ' &darr;' : ''; ?></a></th>
 									<th class="kt-col-num"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=views' ) ); ?>">Gösterim<?php echo 'views' === $sort_by ? ' &darr;' : ''; ?></a></th>
 									<th class="kt-col-num"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=clicks' ) ); ?>">Bilet Tıklaması<?php echo 'clicks' === $sort_by ? ' &darr;' : ''; ?></a></th>
-									<th class="kt-col-num"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=ctr' ) ); ?>">Dönüşüm (CTR)<?php echo 'ctr' === $sort_by ? ' &darr;' : ''; ?></a></th>
+									<th class="kt-col-num"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=ctr' ) ); ?>">CTR<?php echo 'ctr' === $sort_by ? ' &darr;' : ''; ?></a></th>
+									<th class="kt-col-num">Tıklayan Kişi</th>
+									<th class="kt-col-num"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=conversion' ) ); ?>">Dönüşüm<?php echo 'conversion' === $sort_by ? ' &darr;' : ''; ?></a></th>
 									<th class="kt-col-num"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=duration' ) ); ?>">Ort. Süre<?php echo 'duration' === $sort_by ? ' &darr;' : ''; ?></a></th>
 									<th class="kt-col-action">İşlem</th>
 								</tr>
@@ -883,7 +912,7 @@ function kt_render_admin_page() {
 						<tbody>
 							<?php if ( empty( $stats ) ) : ?>
 								<tr>
-									<td colspan="9" style="text-align: center; color: #666; padding: 20px;">Henüz kaydedilmiş ziyaret veya bilet tıklama verisi bulunmuyor.</td>
+									<td colspan="11" style="text-align: center; color: #666; padding: 20px;">Henüz kaydedilmiş ziyaret veya bilet tıklama verisi bulunmuyor.</td>
 								</tr>
 							<?php else : ?>
 								<?php
@@ -899,6 +928,11 @@ function kt_render_admin_page() {
 									$ctr     = number_format( $ctr_num, 1, ',', '.' );
 									$ctr_bg  = $ctr_num >= 15 ? '#dcfce7' : ( $ctr_num >= 5 ? '#fef9c3' : '#f1f5f9' );
 									$ctr_fg  = $ctr_num >= 15 ? '#166534' : ( $ctr_num >= 5 ? '#854d0e' : '#334155' );
+									$cv_count = isset( $row['click_visitors'] ) ? intval( $row['click_visitors'] ) : 0;
+									$conv_num = kt_conversion_rate( $cv_count, $vis );
+									$conv     = number_format( $conv_num, 1, ',', '.' );
+									$conv_bg  = $conv_num >= 15 ? '#dcfce7' : ( $conv_num >= 5 ? '#fef9c3' : '#f1f5f9' );
+									$conv_fg  = $conv_num >= 15 ? '#166534' : ( $conv_num >= 5 ? '#854d0e' : '#334155' );
 									?>
 									<tr>
 										<td><code><?php echo esc_html( $key ); ?></code></td>
@@ -911,6 +945,8 @@ function kt_render_admin_page() {
 										<td><?php echo esc_html( number_format_i18n( $v ) ); ?></td>
 										<td style="color: #15803d; font-weight: 600;"><?php echo esc_html( number_format_i18n( $c ) ); ?></td>
 										<td><span style="display: inline-block; padding: 3px 8px; background: <?php echo esc_attr( $ctr_bg ); ?>; color: <?php echo esc_attr( $ctr_fg ); ?>; border-radius: 4px; font-weight: 700;">%<?php echo esc_html( $ctr ); ?></span></td>
+										<td style="color: #0f766e; font-weight: 600;"><?php echo esc_html( number_format_i18n( $cv_count ) ); ?></td>
+										<td><span style="display: inline-block; padding: 3px 8px; background: <?php echo esc_attr( $conv_bg ); ?>; color: <?php echo esc_attr( $conv_fg ); ?>; border-radius: 4px; font-weight: 700;">%<?php echo esc_html( $conv ); ?></span></td>
 										<td><?php echo esc_html( kt_format_duration_human( $avg_sec ) ); ?></td>
 										<td>
 											<button type="submit" name="kt_delete_stat_key" value="<?php echo esc_attr( $key ); ?>" class="button button-small" style="color: #b32d2e;" onclick="return confirm('Bu ilçeye ait istatistik kaydını silmek istediğinize emin misiniz?');">Sil</button>
@@ -938,6 +974,7 @@ function kt_render_admin_page() {
 							'visitors' => isset( $utm_item['visitors'] ) ? intval( $utm_item['visitors'] ) : 0,
 							'views'    => isset( $utm_item['views'] ) ? intval( $utm_item['views'] ) : 0,
 							'clicks'   => isset( $utm_item['clicks'] ) ? intval( $utm_item['clicks'] ) : 0,
+			'click_visitors' => isset( $utm_item['click_visitors'] ) ? intval( $utm_item['click_visitors'] ) : 0,
 						);
 					}
 				}
@@ -974,12 +1011,14 @@ function kt_render_admin_page() {
 									<th class="kt-col-num">Gösterim</th>
 									<th class="kt-col-num">Bilet Tıklaması</th>
 									<th class="kt-col-num">CTR</th>
+									<th class="kt-col-num">Tıklayan Kişi</th>
+									<th class="kt-col-num">Dönüşüm</th>
 								</tr>
 							</thead>
 							<tbody>
 								<?php if ( empty( $utm_rows ) ) : ?>
 									<tr>
-										<td colspan="8" style="text-align: center; color: #666; padding: 20px;">Henüz UTM parametreli ziyaret kaydedilmedi. Örnek: <code><?php echo esc_html( home_url( '/urla-konseri/?utm_source=instagram&utm_medium=social&utm_campaign=urla' ) ); ?></code></td>
+										<td colspan="10" style="text-align: center; color: #666; padding: 20px;">Henüz UTM parametreli ziyaret kaydedilmedi. Örnek: <code><?php echo esc_html( home_url( '/urla-konseri/?utm_source=instagram&utm_medium=social&utm_campaign=urla' ) ); ?></code></td>
 									</tr>
 								<?php else : ?>
 									<?php foreach ( $utm_rows as $utm_row ) : ?>
@@ -993,6 +1032,8 @@ function kt_render_admin_page() {
 											<td><?php echo esc_html( number_format_i18n( $utm_row['views'] ) ); ?></td>
 											<td style="color: #15803d; font-weight: 600;"><?php echo esc_html( number_format_i18n( $utm_row['clicks'] ) ); ?></td>
 											<td>%<?php echo esc_html( $utm_ctr ); ?></td>
+							<td><?php echo esc_html( number_format_i18n( $utm_row['click_visitors'] ) ); ?></td>
+							<td>%<?php echo esc_html( number_format( kt_conversion_rate( $utm_row['click_visitors'], $utm_row['visitors'] ), 1, ',', '.' ) ); ?></td>
 										</tr>
 									<?php endforeach; ?>
 								<?php endif; ?>
@@ -1275,6 +1316,17 @@ function kt_render_admin_page() {
 							</td>
 						</tr>
 					</table>
+				</div>
+
+				<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #64748b; border-radius: 4px; padding: 16px 20px; margin-bottom: 20px;">
+					<h2 style="margin-top: 0;">Gizlilik & Yazı Tipi</h2>
+					<label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer;">
+						<input type="checkbox" name="load_google_font" value="1" <?php checked( ! empty( $styles['load_google_font'] ) ); ?> style="margin-top: 3px;">
+						<span>
+							<strong>Quicksand yazı tipini Google Fonts'tan yükle.</strong><br>
+							<span class="description">Kapatırsanız ziyaretçilerin tarayıcısı Google'a bağlanmaz ve kartlar sistem yazı tipiyle gösterilir. İstatistikler çerez kullanmaz; yalnızca tarayıcının <code>localStorage</code> alanına günlük bir "ziyaret edildi" işareti yazar. Sitenizin onay (KVKK/GDPR) politikasına uygunluğunu ayrıca değerlendirin.</span>
+						</span>
+					</label>
 				</div>
 
 				<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #d63638; border-radius: 4px; padding: 16px 20px; margin-bottom: 20px;">

@@ -1,0 +1,56 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+permissions:
+  contents: read
+
+jobs:
+  php-tests:
+    name: PHP ${{ matrix.php }} (lint + unit tests)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [ '8.1', '8.2', '8.3' ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+
+      - name: Lint PHP files
+        run: find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
+
+      - name: Run PHP tests (WordPress functions are stubbed in tests/wp_stubs.php)
+        run: |
+          for f in tests/test_*.php; do
+            echo "-- $f"
+            php "$f"
+          done
+
+  js-tests:
+    name: JavaScript (syntax + tracker tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check JS syntax
+        run: |
+          for f in assets/js/*.js tests/*.js; do
+            node --check "$f"
+          done
+
+      - name: Run tracker tests
+        run: node tests/tracker.test.js

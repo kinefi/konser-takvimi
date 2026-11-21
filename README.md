@@ -16,7 +16,9 @@ A database-backed WordPress plugin for managing a concert and event calendar. It
 - **Double-session support (`12.00 ve 14.00`):** If there are two sessions on the same day, enter the second session time; the card shows both times and the Add to Calendar menu offers each session separately.
 - **Google structured data (JSON-LD `MusicEvent`):** Automatically adds `MusicEvent` data (`description`, `startDate`, `endDate`, `location`, `performer`, `offers.validFrom`) to `<head>`.
 - **UTM tagging and tracking (new in 4.0.0):** Adds `utm_*` parameters to outbound ticket links and to the page link inside calendar events, and records incoming `utm_*` traffic per district. See [UTM parameters](#utm-parameters).
-- **Daily unique visitors, CTR ranking & chart:** Measures daily unique visitors, active time on page and ticket clicks without cookies (`localStorage`), with a 14-day chart and HTML/CSV reports.
+- **Daily unique visitors, CTR, conversion rate & chart:** Measures daily unique visitors, active time on page and ticket clicks without cookies (`localStorage`), with a 14-day chart and HTML/CSV reports. Two ratios are shown side by side:
+  - **CTR** = ticket clicks / page views.
+  - **Conversion** = unique people who clicked a ticket link / unique visitors (per day, per district; capped at 100%). This is the "how many visitors actually went to buy" number. It is available as a sort option, in the summary cards, the district table, the UTM table, the HTML/CSV reports and the weekly e-mail. Data recorded before 4.1.0 has no unique-clicker counts, so older rows understate the conversion rate.
 
 ## UTM parameters
 
@@ -59,6 +61,12 @@ When a visitor lands on a page with `utm_source`, `utm_medium` or `utm_campaign`
 - The `MusicEvent` JSON-LD URLs are intentionally **not** tagged, because structured data should point at canonical URLs.
 - Incoming UTM data is all-time and is not part of the HTML/CSV/e-mail reports yet.
 
+## Privacy
+
+- Statistics use no cookies. The browser's `localStorage` only stores a per-day "already counted" marker per district (visits and ticket clicks).
+- The Quicksand font is loaded from Google Fonts by default. Turn it off in **Settings → Gizlilik & Yazı Tipi** to avoid any connection to Google; cards then use the system font.
+- Decide separately whether your consent policy (GDPR/KVKK) covers `localStorage` markers and UTM statistics.
+
 ## Installation
 
 1. If an older version is installed, deactivate and delete it on the WordPress **Plugins** page first (your database records are kept unless the delete-on-uninstall option is ticked in the settings).
@@ -88,6 +96,8 @@ When a visitor lands on a page with `utm_source`, `utm_medium` or `utm_campaign`
 
 Example: `[konser_ilce_yonlendir district="urla" redirect_target="/konserler"]`
 
+**Redirect targets:** a `redirect_target` set in a block or shortcode may point to this site or to the host chosen as the default target in the settings. Any other host is ignored and the default target is used, so content authors cannot create open redirects. To redirect to another domain, set that domain as the default target in the settings.
+
 ## Upgrading from 3.x
 
 Version 4.0.0 replaces the Turkish attribute names with English ones. **There is no automatic fallback**, so update existing content after upgrading:
@@ -106,6 +116,16 @@ Version 4.0.0 replaces the Turkish attribute names with English ones. **There is
 - Block names (`konser-takvimi/...`), shortcode names, the `subadap_konserler_*` database options and the `{city}-konseri` slug format are unchanged, so stored concerts and statistics are untouched.
 - UTM tagging is **on by default** after the upgrade. Switch it off in the settings if you do not want outbound links to change.
 
+## Development & Tests
+
+The plugin logic is covered by dependency-free tests that stub the WordPress functions they need (`tests/wp_stubs.php`), so they run without a WordPress install:
+
+```sh
+./tests/run.sh   # PHP lint, JS syntax, PHP tests and tracker.js tests
+```
+
+GitHub Actions runs the same checks on PHP 8.1 – 8.3 and Node 20 (`.github/workflows/tests.yml`), next to the security workflow (`security.yml`). The stubs only approximate WordPress, so they do not replace a manual check on a staging site.
+
 ## File Structure
 
 ```text
@@ -116,6 +136,10 @@ konser-takvimi/
 ├── README.md                    # Project documentation (English)
 ├── README.tr.md                 # Project documentation (Turkish)
 ├── CHANGELOG.md                 # Release history
+├── .github/workflows/
+│   ├── tests.yml                # Lint + unit tests (PHP 8.1-8.3, Node 20)
+│   └── security.yml             # WPCS security sniffs, Semgrep and Gitleaks
+├── tests/                       # Stubbed-WordPress unit tests and tracker.js tests (run with ./tests/run.sh)
 ├── includes/
 │   ├── admin-page.php           # Admin screens: CTR-ranked statistics, UTM sources, chart, export and settings tabs
 │   └── blocks.php               # Gutenberg block registration and server-side render/preview handlers

@@ -32,7 +32,7 @@ jobs:
 
       - name: Run WP Security & Escaping Checks
         run: |
-          ~/.composer/vendor/bin/phpcs --standard=WordPress \
+          "$(composer global config bin-dir --absolute --quiet)/phpcs" --standard=WordPress \
             --sniffs=WordPress.Security.EscapeOutput,WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput,WordPress.Security.SafeRedirect,WordPress.DB.PreparedSQL \
             --extensions=php \
             --ignore=vendor/* .

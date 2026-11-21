@@ -1,5 +1,20 @@
 # Changelog
 
+## [4.1.0] - 2026-11-21
+### Added
+- **Conversion rate next to CTR:** The plugin now counts the unique people who clicked a ticket link (once per browser, per district, per day) and shows **conversion = unique ticket clickers / unique visitors** next to the existing CTR. It appears in a new summary card, the district table (with a new sort option), the UTM sources table, the HTML and CSV reports and the weekly e-mail report. Data recorded before this version has no unique-clicker counts, so older rows understate the rate.
+- **Privacy setting:** New option to turn off loading the Quicksand font from Google Fonts. The README documents what the tracker stores in `localStorage`.
+- **Automated tests:** Dependency-free PHP and JavaScript tests in `tests/` (run with `./tests/run.sh`) and a GitHub Actions workflow, `tests.yml`, that lints and tests on PHP 8.1 - 8.3 and Node 20.
+
+### Fixed
+- **External redirect targets:** `wp_safe_redirect()` sent visitors to `wp-admin` when the redirect target was on another host. The host chosen as the default target in the settings is now allowed, and a target set in a block or shortcode is only accepted for this site or that host (otherwise the default target is used), so content authors cannot create open redirects.
+- **Statistics growth and lost updates:** The statistics option is now written under a short-lived atomic lock, at most 300 districts are stored, district keys are limited to 80 characters and labels to 120 characters. Forged requests can no longer bloat the option, and concurrent visits no longer overwrite each other's counters.
+- **Tracking stopping on cached pages:** The tracking endpoint no longer requires a nonce. For anonymous visitors the nonce was identical for everyone (no CSRF protection) and it expired inside cached pages, which silently stopped tracking.
+- **JavaScript fallback redirect:** The URL is no longer HTML-escaped (`&#038;`), so redirect targets with query strings work.
+- **Schema `endDate`:** `endDate` is now one hour after the start of the last session instead of equal to `startDate`, matching the calendar entries.
+- **Admin media picker preview:** The selected image preview is built with DOM APIs instead of `innerHTML`.
+- **CI:** The security workflow now locates `phpcs` through Composer instead of a hard-coded path.
+
 ## [4.0.0] - 2026-11-21
 ### Added
 - **UTM tagging for outbound ticket links:** The ticket button and links to tracked ticket domains get `utm_source`, `utm_medium`, `utm_campaign` and `utm_content` (`ticket-button` / `ticket-link`). The source defaults to the site host and the campaign defaults to the district key unless a fixed value is configured. Existing `utm_*` parameters on a link are never overwritten, and internal links are never tagged.

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Konser Takvimi
  * Description: Database-backed concert calendar with double-session support, Google MusicEvent JSON-LD, automatic archiving of past concerts, cache-safe 302 district redirects, Add to Calendar buttons, Gutenberg blocks, UTM tagging and CTR-ranked analytics.
- * Version: 4.0.0
+ * Version: 4.1.0
  * Author: Şubadap Çocuk
  * License: GPL-3.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -19,7 +19,7 @@ if ( ! defined( 'KT_PLUGIN_URL' ) ) {
 	define( 'KT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 }
 if ( ! defined( 'KT_PLUGIN_VER' ) ) {
-	define( 'KT_PLUGIN_VER', '4.0.0' );
+	define( 'KT_PLUGIN_VER', '4.1.0' );
 }
 if ( ! defined( 'KT_EVENTS_OPT' ) ) {
 	define( 'KT_EVENTS_OPT', 'subadap_konserler_list' );
@@ -32,6 +32,14 @@ if ( ! defined( 'KT_STATS_OPT' ) ) {
 }
 if ( ! defined( 'KT_CRON_HOOK' ) ) {
 	define( 'KT_CRON_HOOK', 'kt_weekly_stats_report_event' );
+}
+// Maximum number of districts kept in the statistics option (protects against bloat from forged requests).
+if ( ! defined( 'KT_STATS_MAX_DISTRICTS' ) ) {
+	define( 'KT_STATS_MAX_DISTRICTS', 300 );
+}
+// Option name used as a short-lived lock while the statistics option is read-modified-written.
+if ( ! defined( 'KT_STATS_LOCK_OPT' ) ) {
+	define( 'KT_STATS_LOCK_OPT', 'kt_stats_write_lock' );
 }
 // Maximum number of distinct source/medium/campaign combinations stored per district.
 if ( ! defined( 'KT_UTM_MAX_COMBOS' ) ) {
@@ -117,6 +125,7 @@ function kt_get_default_style_settings() {
 		'ticket_domains'      => 'biletinial.com, biletix.com, passo.com.tr, bubilet.com.tr, mobilet.com, biletino.com',
 		'schema_enabled'      => 1,
 		'schema_performer'    => '',
+		'load_google_font'     => 1,
 		'utm_ticket_enabled'   => 1,
 		'utm_calendar_enabled' => 1,
 		'utm_capture_enabled'  => 1,
@@ -386,17 +395,24 @@ if ( is_admin() ) {
 
 add_action( 'wp_enqueue_scripts', 'kt_register_frontend_assets' );
 function kt_register_frontend_assets() {
-	wp_register_style(
-		'kt-quicksand-font',
-		'https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700;900&display=swap',
-		array(),
-		null
-	);
+	$style_deps = array();
+
+	// The Quicksand web font is loaded from Google Fonts; sites with strict privacy requirements can turn it off.
+	$font_settings = kt_get_style_settings();
+	if ( ! empty( $font_settings['load_google_font'] ) ) {
+		wp_register_style(
+			'kt-quicksand-font',
+			'https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700;900&display=swap',
+			array(),
+			null
+		);
+		$style_deps[] = 'kt-quicksand-font';
+	}
 
 	wp_register_style(
 		'kt-frontend-css',
 		KT_PLUGIN_URL . 'assets/css/frontend.css',
-		array( 'kt-quicksand-font' ),
+		$style_deps,
 		KT_PLUGIN_VER
 	);
 
@@ -448,7 +464,6 @@ function kt_enqueue_tracker_script( $district_key = '', $page_label = '', $track
 		'ktTrackerData',
 		array(
 			'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
-			'nonce'           => wp_create_nonce( 'kt_track_nonce' ),
 			'defaultDistrict' => kt_normalize_district_key( $district_key ),
 			'defaultLabel'    => sanitize_text_field( $page_label ),
 			'trackView'       => $track_page_view ? 1 : 0,
@@ -475,7 +490,8 @@ function kt_normalize_district_key( $raw_key ) {
 		return '';
 	}
 	$base = preg_replace( '/-(konseri|konser)$/', '', $slug );
-	return ! empty( $base ) ? $base : $slug;
+	$key  = ! empty( $base ) ? $base : $slug;
+	return substr( $key, 0, 80 );
 }
 
 /**
@@ -492,6 +508,17 @@ function kt_format_duration_human( $seconds ) {
 		return $mins . ' dk ' . $rem . ' sn';
 	}
 	return $rem . ' sn';
+}
+
+/**
+ * Conversion rate in percent: unique people who clicked a ticket link / unique visitors (capped at 100).
+ */
+function kt_conversion_rate( $click_visitors, $visitors ) {
+	$visitors = intval( $visitors );
+	if ( $visitors <= 0 ) {
+		return 0.0;
+	}
+	return round( min( 100, ( intval( $click_visitors ) / $visitors ) * 100 ), 1 );
 }
 
 /**
@@ -531,6 +558,7 @@ function kt_add_utm_hit( $utm_rows, $utm, $type, $is_unique ) {
 			'views'    => 0,
 			'visitors' => 0,
 			'clicks'   => 0,
+			'click_visitors' => 0,
 		);
 	}
 
@@ -541,6 +569,9 @@ function kt_add_utm_hit( $utm_rows, $utm, $type, $is_unique ) {
 		}
 	} elseif ( 'clicks' === $type ) {
 		$utm_rows[ $combo_key ]['clicks'] = intval( $utm_rows[ $combo_key ]['clicks'] ) + 1;
+		if ( $is_unique ) {
+			$utm_rows[ $combo_key ]['click_visitors'] = ( isset( $utm_rows[ $combo_key ]['click_visitors'] ) ? intval( $utm_rows[ $combo_key ]['click_visitors'] ) : 0 ) + 1;
+		}
 	}
 
 	return $utm_rows;
@@ -550,6 +581,42 @@ function kt_add_utm_hit( $utm_rows, $utm, $type, $is_unique ) {
  * Safely updates the stats counters (views, visitors, clicks, duration), the UTM breakdown and the last 90 days of daily data.
  */
 function kt_record_district_stat( $raw_key, $type = 'views', $page_title = '', $extra = array() ) {
+	if ( ! kt_acquire_stats_lock() ) {
+		return;
+	}
+	kt_record_district_stat_unlocked( $raw_key, $type, $page_title, $extra );
+	kt_release_stats_lock();
+}
+
+/**
+ * Acquires a short-lived write lock for the statistics option. add_option() is atomic (unique option_name),
+ * so concurrent requests cannot overwrite each other's read-modify-write cycle. A stale lock expires after 5 seconds.
+ */
+function kt_acquire_stats_lock() {
+	for ( $attempt = 0; $attempt < 20; $attempt++ ) {
+		if ( add_option( KT_STATS_LOCK_OPT, time(), '', 'no' ) ) {
+			return true;
+		}
+
+		$started = intval( get_option( KT_STATS_LOCK_OPT, 0 ) );
+		if ( $started > 0 && ( time() - $started ) > 5 ) {
+			delete_option( KT_STATS_LOCK_OPT );
+			continue;
+		}
+
+		usleep( 50000 );
+	}
+	return false;
+}
+
+function kt_release_stats_lock() {
+	delete_option( KT_STATS_LOCK_OPT );
+}
+
+/**
+ * Applies one event to the statistics option. Callers must hold the stats lock.
+ */
+function kt_record_district_stat_unlocked( $raw_key, $type = 'views', $page_title = '', $extra = array() ) {
 	$key = kt_normalize_district_key( $raw_key );
 	if ( empty( $key ) || ! in_array( $type, array( 'views', 'clicks', 'duration' ), true ) ) {
 		return;
@@ -563,12 +630,17 @@ function kt_record_district_stat( $raw_key, $type = 'views', $page_title = '', $
 	$today_str = kt_get_istanbul_date_str( 0 );
 	$cutoff    = kt_get_istanbul_date_str( -90 );
 
+	if ( ( ! isset( $stats[ $key ] ) || ! is_array( $stats[ $key ] ) ) && count( $stats ) >= KT_STATS_MAX_DISTRICTS ) {
+		return;
+	}
+
 	if ( ! isset( $stats[ $key ] ) || ! is_array( $stats[ $key ] ) ) {
 		$stats[ $key ] = array(
 			'label'          => ! empty( $page_title ) ? sanitize_text_field( $page_title ) : ucfirst( str_replace( '-', ' ', $key ) ),
 			'views'          => 0,
 			'visitors'       => 0,
 			'clicks'         => 0,
+			'click_visitors' => 0,
 			'total_seconds'  => 0,
 			'duration_count' => 0,
 			'daily'          => array(),
@@ -601,6 +673,7 @@ function kt_record_district_stat( $raw_key, $type = 'views', $page_title = '', $
 			'views'    => 0,
 			'visitors' => 0,
 			'clicks'   => 0,
+			'click_visitors' => 0,
 			'seconds'  => 0,
 			'sessions' => 0,
 		);
@@ -619,8 +692,14 @@ function kt_record_district_stat( $raw_key, $type = 'views', $page_title = '', $
 			$stats[ $key ]['daily'][ $today_str ]['visitors'] = intval( $stats[ $key ]['daily'][ $today_str ]['visitors'] ) + 1;
 		}
 	} elseif ( 'clicks' === $type ) {
+		$is_unique_click = ! empty( $extra['is_unique'] );
 		if ( ! empty( $extra['utm'] ) && kt_get_utm_settings()['capture_enabled'] ) {
-			$stats[ $key ]['utm'] = kt_add_utm_hit( $stats[ $key ]['utm'], $extra['utm'], 'clicks', false );
+			$stats[ $key ]['utm'] = kt_add_utm_hit( $stats[ $key ]['utm'], $extra['utm'], 'clicks', $is_unique_click );
+		}
+		if ( $is_unique_click ) {
+			// Unique people who clicked a ticket link today (rows created before 4.1.0 may lack these counters).
+			$stats[ $key ]['click_visitors']                        = ( isset( $stats[ $key ]['click_visitors'] ) ? intval( $stats[ $key ]['click_visitors'] ) : 0 ) + 1;
+			$stats[ $key ]['daily'][ $today_str ]['click_visitors'] = ( isset( $stats[ $key ]['daily'][ $today_str ]['click_visitors'] ) ? intval( $stats[ $key ]['daily'][ $today_str ]['click_visitors'] ) : 0 ) + 1;
 		}
 		$stats[ $key ]['clicks']                        = intval( $stats[ $key ]['clicks'] ) + 1;
 		$stats[ $key ]['daily'][ $today_str ]['clicks'] = intval( $stats[ $key ]['daily'][ $today_str ]['clicks'] ) + 1;
@@ -657,10 +736,11 @@ function kt_ajax_track_district_event() {
 		wp_send_json_success( array( 'ignored' => 'admin' ) );
 	}
 
-	check_ajax_referer( 'kt_track_nonce', 'nonce' );
+	// No nonce on purpose: for anonymous visitors a nonce is identical for everyone (no CSRF protection)
+	// and it expires inside cached pages, which silently stopped tracking. Input is validated and capped instead.
 
 	$district = isset( $_POST['district'] ) ? sanitize_text_field( wp_unslash( $_POST['district'] ) ) : '';
-	$label    = isset( $_POST['label'] ) ? sanitize_text_field( wp_unslash( $_POST['label'] ) ) : '';
+	$label    = isset( $_POST['label'] ) ? substr( sanitize_text_field( wp_unslash( $_POST['label'] ) ), 0, 120 ) : '';
 	$ev_type  = isset( $_POST['event_type'] ) ? sanitize_key( wp_unslash( $_POST['event_type'] ) ) : 'clicks';
 
 	if ( ! in_array( $ev_type, array( 'views', 'clicks', 'duration' ), true ) ) {
@@ -715,6 +795,7 @@ function kt_build_stats_report_bundle( $days_span = 7, $render_direct = false ) 
 	$sum_views    = 0;
 	$sum_visitors = 0;
 	$sum_clicks   = 0;
+	$sum_click_visitors = 0;
 	$sum_seconds  = 0;
 	$sum_sessions = 0;
 
@@ -722,6 +803,7 @@ function kt_build_stats_report_bundle( $days_span = 7, $render_direct = false ) 
 		$all_v   = isset( $item['views'] ) ? intval( $item['views'] ) : 0;
 		$all_vis = isset( $item['visitors'] ) ? intval( $item['visitors'] ) : 0;
 		$all_c   = isset( $item['clicks'] ) ? intval( $item['clicks'] ) : 0;
+		$all_cv  = isset( $item['click_visitors'] ) ? intval( $item['click_visitors'] ) : 0;
 		$all_sec = isset( $item['total_seconds'] ) ? intval( $item['total_seconds'] ) : 0;
 		$all_ses = isset( $item['duration_count'] ) ? intval( $item['duration_count'] ) : 0;
 
@@ -729,12 +811,14 @@ function kt_build_stats_report_bundle( $days_span = 7, $render_direct = false ) 
 			$p_v   = $all_v;
 			$p_vis = $all_vis;
 			$p_c   = $all_c;
+			$p_cv  = $all_cv;
 			$p_sec = $all_sec;
 			$p_ses = $all_ses;
 		} else {
 			$p_v   = 0;
 			$p_vis = 0;
 			$p_c   = 0;
+			$p_cv  = 0;
 			$p_sec = 0;
 			$p_ses = 0;
 
@@ -745,6 +829,7 @@ function kt_build_stats_report_bundle( $days_span = 7, $render_direct = false ) 
 						$p_v   += isset( $d_row['views'] ) ? intval( $d_row['views'] ) : 0;
 						$p_vis += isset( $d_row['visitors'] ) ? intval( $d_row['visitors'] ) : 0;
 						$p_c   += isset( $d_row['clicks'] ) ? intval( $d_row['clicks'] ) : 0;
+						$p_cv  += isset( $d_row['click_visitors'] ) ? intval( $d_row['click_visitors'] ) : 0;
 						$p_sec += isset( $d_row['seconds'] ) ? intval( $d_row['seconds'] ) : 0;
 						$p_ses += isset( $d_row['sessions'] ) ? intval( $d_row['sessions'] ) : 0;
 					}
@@ -760,6 +845,8 @@ function kt_build_stats_report_bundle( $days_span = 7, $render_direct = false ) 
 				'visitors'     => $p_vis,
 				'clicks'       => $p_c,
 				'ctr'          => $p_v > 0 ? round( ( $p_c / $p_v ) * 100, 1 ) : 0.0,
+				'click_visitors' => $p_cv,
+				'conversion'   => kt_conversion_rate( $p_cv, $p_vis ),
 				'avg_sec'      => $p_ses > 0 ? round( $p_sec / $p_ses ) : 0,
 				'total_views'  => $all_v,
 				'total_vis'    => $all_vis,
@@ -770,6 +857,7 @@ function kt_build_stats_report_bundle( $days_span = 7, $render_direct = false ) 
 		$sum_views    += $p_v;
 		$sum_visitors += $p_vis;
 		$sum_clicks   += $p_c;
+		$sum_click_visitors += $p_cv;
 		$sum_seconds  += $p_sec;
 		$sum_sessions += $p_ses;
 	}
@@ -785,7 +873,8 @@ function kt_build_stats_report_bundle( $days_span = 7, $render_direct = false ) 
 	);
 
 	$overall_avg_sec = $sum_sessions > 0 ? round( $sum_seconds / $sum_sessions ) : 0;
-	$overall_ctr     = $sum_views > 0 ? number_format( ( $sum_clicks / $sum_views ) * 100, 1, ',', '.' ) : '0,0';
+	$overall_ctr        = $sum_views > 0 ? number_format( ( $sum_clicks / $sum_views ) * 100, 1, ',', '.' ) : '0,0';
+	$overall_conversion = number_format( kt_conversion_rate( $sum_click_visitors, $sum_visitors ), 1, ',', '.' );
 	$site_name       = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
 	$generated_at    = kt_get_istanbul_datetime_str();
 
@@ -811,8 +900,9 @@ function kt_build_stats_report_bundle( $days_span = 7, $render_direct = false ) 
 						<div style="font-size: 20px; font-weight: 700; color: #0f172a; margin-top: 4px;"><?php echo esc_html( number_format_i18n( $sum_views ) ); ?></div>
 					</td>
 					<td style="width: 25%; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center;">
-						<div style="font-size: 11px; color: #64748b; font-weight: 600;">Bilet Tıklaması</div>
+						<div style="font-size: 11px; color: #64748b; font-weight: 600;">Bilet Tıklaması (CTR)</div>
 						<div style="font-size: 20px; font-weight: 700; color: #16a34a; margin-top: 4px;"><?php echo esc_html( number_format_i18n( $sum_clicks ) ); ?> (%<?php echo esc_html( $overall_ctr ); ?>)</div>
+						<div style="font-size: 11px; color: #64748b; margin-top: 6px;">Tıklayan kişi / ziyaretçi: <strong><?php echo esc_html( number_format_i18n( $sum_click_visitors ) ); ?> / <?php echo esc_html( number_format_i18n( $sum_visitors ) ); ?> (%<?php echo esc_html( $overall_conversion ); ?>)</strong></div>
 					</td>
 					<td style="width: 25%; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center;">
 						<div style="font-size: 11px; color: #64748b; font-weight: 600;">Ort. Kalma Süresi</div>
@@ -833,6 +923,8 @@ function kt_build_stats_report_bundle( $days_span = 7, $render_direct = false ) 
 							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Gösterim</th>
 							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Bilet Tık</th>
 							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">CTR</th>
+							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Tıklayan Kişi</th>
+							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Dönüşüm</th>
 							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Ort. Süre</th>
 							<?php if ( ! $is_alltime ) : ?>
 								<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Genel Tık</th>
@@ -847,6 +939,8 @@ function kt_build_stats_report_bundle( $days_span = 7, $render_direct = false ) 
 								<td style="border-bottom: 1px solid #e2e8f0; text-align: right;"><?php echo esc_html( number_format_i18n( $r['views'] ) ); ?></td>
 								<td style="border-bottom: 1px solid #e2e8f0; text-align: right; color: #16a34a; font-weight: 600;"><?php echo esc_html( number_format_i18n( $r['clicks'] ) ); ?></td>
 								<td style="border-bottom: 1px solid #e2e8f0; text-align: right;">%<?php echo esc_html( number_format( $r['ctr'], 1, ',', '.' ) ); ?></td>
+								<td style="border-bottom: 1px solid #e2e8f0; text-align: right;"><?php echo esc_html( number_format_i18n( $r['click_visitors'] ) ); ?></td>
+								<td style="border-bottom: 1px solid #e2e8f0; text-align: right;">%<?php echo esc_html( number_format( $r['conversion'], 1, ',', '.' ) ); ?></td>
 								<td style="border-bottom: 1px solid #e2e8f0; text-align: right;"><?php echo esc_html( kt_format_duration_human( $r['avg_sec'] ) ); ?></td>
 								<?php if ( ! $is_alltime ) : ?>
 									<td style="border-bottom: 1px solid #e2e8f0; text-align: right; color: #64748b;"><?php echo esc_html( number_format_i18n( $r['total_clicks'] ) ); ?></td>
@@ -873,6 +967,8 @@ function kt_build_stats_report_bundle( $days_span = 7, $render_direct = false ) 
 		'sum_views'       => $sum_views,
 		'sum_clicks'      => $sum_clicks,
 		'overall_ctr'     => $overall_ctr,
+		'sum_click_visitors' => $sum_click_visitors,
+		'overall_conversion' => $overall_conversion,
 		'overall_avg_sec' => $overall_avg_sec,
 		'rows'            => $rows,
 		'html_card'       => $html_card,
@@ -957,10 +1053,20 @@ function kt_build_music_event_schema_item( $event, $performer_name, $ticket_url 
 
 	$start_iso = sanitize_text_field( $event['datetime'] );
 	$dt_parts  = explode( 'T', $start_iso );
-	$end_iso   = $start_iso;
+	$last_start = $start_iso;
 
 	if ( ! empty( $event['time2'] ) && preg_match( '/^\d{2}:\d{2}$/', $event['time2'] ) && ! empty( $dt_parts[0] ) ) {
-		$end_iso = $dt_parts[0] . 'T' . sanitize_text_field( $event['time2'] ) . ':00+03:00';
+		$last_start = $dt_parts[0] . 'T' . sanitize_text_field( $event['time2'] ) . ':00+03:00';
+	}
+
+	// Google expects endDate after startDate: assume one hour after the start of the last session (same as the calendar entries).
+	$end_iso = $last_start;
+	try {
+		$end_dt = new DateTime( $last_start );
+		$end_dt->modify( '+1 hour' );
+		$end_iso = $end_dt->format( 'Y-m-d\TH:i:sP' );
+	} catch ( Exception $e ) {
+		$end_iso = $last_start;
 	}
 
 	$item = array(
@@ -1139,13 +1245,32 @@ function kt_has_upcoming_concert_for_target( $target ) {
 function kt_resolve_redirect_url( $custom_target = '' ) {
 	$styles         = kt_get_style_settings();
 	$default_target = ! empty( $styles['redirect_target'] ) ? $styles['redirect_target'] : '/konserler';
-	$redirect_path  = ! empty( $custom_target ) ? $custom_target : $default_target;
+	$default_url    = kt_redirect_path_to_url( $default_target );
 
-	if ( 0 === strpos( $redirect_path, 'http://' ) || 0 === strpos( $redirect_path, 'https://' ) ) {
-		return esc_url_raw( $redirect_path );
+	if ( empty( $custom_target ) ) {
+		return $default_url;
 	}
 
-	return home_url( '/' . ltrim( $redirect_path, '/' ) );
+	// A target set in a block/shortcode may only point to this site or to the host chosen in the plugin settings.
+	// Anything else falls back to the default target, so content authors cannot create open redirects.
+	$custom_url   = kt_redirect_path_to_url( $custom_target );
+	$custom_host  = strtolower( (string) wp_parse_url( $custom_url, PHP_URL_HOST ) );
+	$allowed_host = array(
+		strtolower( (string) wp_parse_url( home_url(), PHP_URL_HOST ) ),
+		strtolower( (string) wp_parse_url( $default_url, PHP_URL_HOST ) ),
+	);
+
+	return in_array( $custom_host, $allowed_host, true ) ? $custom_url : $default_url;
+}
+
+/**
+ * Converts a redirect path (or absolute http/https URL) into an absolute URL.
+ */
+function kt_redirect_path_to_url( $path ) {
+	if ( 0 === strpos( $path, 'http://' ) || 0 === strpos( $path, 'https://' ) ) {
+		return esc_url_raw( $path );
+	}
+	return home_url( '/' . ltrim( $path, '/' ) );
 }
 
 /**
@@ -1216,6 +1341,17 @@ function kt_handle_district_redirect_shortcode() {
 		if ( ! kt_has_upcoming_concert_for_target( $lookup_key ) ) {
 			nocache_headers();
 			$redirect_url = kt_resolve_redirect_url( $item_atts['redirect_target'] );
+
+			// wp_safe_redirect() only accepts the site's own host by default; allow the (already validated) target host.
+			$target_host = wp_parse_url( $redirect_url, PHP_URL_HOST );
+			add_filter(
+				'allowed_redirect_hosts',
+				function ( $hosts ) use ( $target_host ) {
+					$hosts[] = $target_host;
+					return $hosts;
+				}
+			);
+
 			wp_safe_redirect( $redirect_url, 302 );
 			exit;
 		}
@@ -1409,7 +1545,7 @@ function kt_district_redirect_shortcode_output( $atts ) {
 	}
 
 	if ( ! $has_event ) {
-		return '<script>window.location.replace(' . wp_json_encode( esc_url( $redirect_url ) ) . ');</script>';
+		return '<script>window.location.replace(' . wp_json_encode( esc_url_raw( $redirect_url ) ) . ');</script>';
 	}
 
 	kt_enqueue_tracker_script( $lookup_key, $page_label, true );
