@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.2.0] - 2026-11-21
+### Added
+- **Incoming UTM data in reports:** The HTML report and the weekly e-mail now include a **UTM traffic sources** table (top 15 rows: source / medium / campaign, district, unique visitors, unique ticket clickers and conversion). The CSV export contains all UTM rows in a second block, with spreadsheet-formula characters neutralised.
+- **Database size section** in the README with worst-case figures.
+
+### Changed
+- The admin statistics tab and the reports share one UTM row builder (`kt_get_utm_report_rows()`), and every UTM row now includes both CTR and conversion.
+
 ## [4.1.0] - 2026-11-21
 ### Added
 - **Conversion rate next to CTR:** The plugin now counts the unique people who clicked a ticket link (once per browser, per district, per day) and shows **conversion = unique ticket clickers / unique visitors** next to the existing CTR. It appears in a new summary card, the district table (with a new sort option), the UTM sources table, the HTML and CSV reports and the weekly e-mail report. Data recorded before this version has no unique-clicker counts, so older rows understate the rate.

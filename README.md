@@ -59,13 +59,17 @@ When a visitor lands on a page with `utm_source`, `utm_medium` or `utm_campaign`
 - UTM values are normalised to lowercase `[a-z0-9._-]` and at most 64 characters (Turkish letters are transliterated).
 - At most **40** distinct source/medium/campaign combinations are stored per district; anything beyond that is merged into an `(other)` bucket so arbitrary URL values cannot bloat the database.
 - The `MusicEvent` JSON-LD URLs are intentionally **not** tagged, because structured data should point at canonical URLs.
-- Incoming UTM data is all-time and is not part of the HTML/CSV/e-mail reports yet.
+- Incoming UTM data is all-time (it is not split by report period). The HTML report and the weekly e-mail list the top 15 rows; the CSV export contains all of them in a second block.
 
 ## Privacy
 
 - Statistics use no cookies. The browser's `localStorage` only stores a per-day "already counted" marker per district (visits and ticket clicks).
 - The Quicksand font is loaded from Google Fonts by default. Turn it off in **Settings → Gizlilik & Yazı Tipi** to avoid any connection to Google; cards then use the system font.
 - Decide separately whether your consent policy (GDPR/KVKK) covers `localStorage` markers and UTM statistics.
+
+## Database size
+
+All data lives in three `wp_options` rows (autoload off): concerts, statistics and settings. A concert record is about 130 bytes. Statistics keep 90 days of daily numbers per district plus all-time totals and at most 40 UTM combinations per district. One district takes roughly 15-25 KB at most and at most 300 districts are stored, so the statistics row stays below about 8 MB even in the worst case (around 200 KB for a dozen districts). Archived concerts are kept until you remove them.
 
 ## Installation
 

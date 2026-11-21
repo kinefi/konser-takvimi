@@ -86,5 +86,23 @@ t( 'font default on', 1 === kt_get_style_settings()['load_google_font'] );
 update_option( KT_STYLES_OPT, array( 'load_google_font' => 0 ) );
 t( 'font can be disabled', 0 === kt_get_style_settings()['load_google_font'] );
 
+// ---- UTM in reports (4.2.0) ----
+reset_state();
+kt_record_district_stat( 'urla', 'views', 'Urla', array( 'is_unique' => true, 'utm' => array( 'source' => 'ig', 'medium' => 'social', 'campaign' => 'urla' ) ) );
+kt_record_district_stat( 'urla', 'views', 'Urla', array( 'is_unique' => true, 'utm' => array( 'source' => '=cmd', 'medium' => '', 'campaign' => '' ) ) );
+kt_record_district_stat( 'urla', 'clicks', 'Urla', array( 'is_unique' => true, 'utm' => array( 'source' => 'ig', 'medium' => 'social', 'campaign' => 'urla' ) ) );
+$b = kt_build_stats_report_bundle( 7 );
+t( 'bundle has utm rows', 2 === count( $b['utm_rows'] ) && 100.0 === $b['utm_rows'][0]['conversion'] && 'ig' === $b['utm_rows'][0]['source'], json_encode( $b['utm_rows'] ) );
+t( 'report html has utm section', false !== strpos( $b['html_card'], 'Trafik Kaynakları (UTM)' ) && false !== strpos( $b['html_card'], 'ig / social / urla' ) );
+t( 'report html utm cell with empty parts', false !== strpos( $b['html_card'], '=cmd / — / —' ) );
+reset_state();
+kt_record_district_stat( 'urla', 'views', 'Urla', array( 'is_unique' => true ) );
+$b = kt_build_stats_report_bundle( 7 );
+t( 'no utm -> no utm section', array() === $b['utm_rows'] && false === strpos( $b['html_card'], 'Trafik Kaynakları (UTM)' ) );
+$many = array(); for ( $i = 0; $i < 30; $i++ ) { $many[ "s$i|m|c" ] = array( 'source' => "s$i", 'medium' => 'm', 'campaign' => 'c', 'views' => $i, 'visitors' => $i, 'clicks' => 0, 'click_visitors' => 0 ); }
+update_option( KT_STATS_OPT, array( 'urla' => array( 'label' => 'Urla', 'views' => 5, 'visitors' => 5, 'clicks' => 0, 'daily' => array(), 'utm' => $many ) ) );
+$b = kt_build_stats_report_bundle( 7 );
+t( 'email table limited to 15 utm rows', 15 === substr_count( $b['html_card'], '/ m / c' ) && 30 === count( $b['utm_rows'] ) );
+
 echo "\n$n assertions, $fail failed\n";
 exit( $fail ? 1 : 0 );

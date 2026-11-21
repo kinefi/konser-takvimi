@@ -59,13 +59,17 @@ Ziyaretçi adreste `utm_source`, `utm_medium` veya `utm_campaign` bulunan bir sa
 - UTM değerleri küçük harfli `[a-z0-9._-]` karakterlerine ve en çok 64 karaktere indirgenir (Türkçe harfler karşılıklarına çevrilir).
 - Her ilçe için en fazla **40** farklı kaynak/ortam/kampanya kombinasyonu saklanır; fazlası `(other)` altında toplanır, böylece rastgele adres değerleri veritabanını şişiremez.
 - `MusicEvent` JSON-LD içindeki adresler bilerek **etiketlenmez**; yapılandırılmış veri kanonik adresleri göstermelidir.
-- Gelen UTM verisi tüm zamanları kapsar ve henüz HTML/CSV/e-posta raporlarına dahil değildir.
+- Gelen UTM verisi tüm zamanları kapsar (rapor dönemine göre bölünmez). HTML rapor ve haftalık e-posta ilk 15 satırı listeler; CSV dışa aktarma hepsini ikinci bir blokta içerir.
 
 ## Gizlilik
 
 - İstatistikler çerez kullanmaz. Tarayıcının `localStorage` alanına yalnızca ilçe başına günlük bir "sayıldı" işareti (ziyaret ve bilet tıklaması için) yazılır.
 - Quicksand yazı tipi varsayılan olarak Google Fonts'tan yüklenir. Google'a hiç bağlanılmaması için **Ayarlar → Gizlilik & Yazı Tipi** bölümünden kapatın; kartlar sistem yazı tipiyle gösterilir.
 - Onay politikanızın (KVKK/GDPR) `localStorage` işaretlerini ve UTM istatistiklerini kapsayıp kapsamadığını ayrıca değerlendirin.
+
+## Veritabanı Boyutu
+
+Tüm veri `wp_options` tablosundaki üç satırda tutulur (autoload kapalı): konserler, istatistikler ve ayarlar. Bir konser kaydı yaklaşık 130 bayttır. İstatistikler her ilçe için 90 günlük günlük değerleri, tüm zaman toplamlarını ve en çok 40 UTM kombinasyonunu saklar. Bir ilçe en çok 15-25 KB yer kaplar ve en fazla 300 ilçe saklanır; bu yüzden istatistik satırı en kötü durumda bile yaklaşık 8 MB'ın altında kalır (bir düzine ilçe için yaklaşık 200 KB). Arşivlenmiş konserler siz silene kadar tutulur.
 
 ## Kurulum
 

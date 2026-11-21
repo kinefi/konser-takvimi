@@ -124,6 +124,35 @@ function kt_handle_stats_export() {
 			);
 		}
 
+		// Second block: UTM traffic sources (all time, not limited to the selected period).
+		if ( ! empty( $bundle['utm_rows'] ) ) {
+			fputcsv( $output, array(), ';' );
+			fputcsv( $output, array( 'UTM Trafik Kaynakları (tüm zamanlar)' ), ';' );
+			fputcsv(
+				$output,
+				array( 'Kaynak', 'Ortam', 'Kampanya', 'İlçe / Anahtar', 'Tekil Ziyaretçi', 'Sayfa Gösterimi', 'Bilet Tıklaması', 'Tıklama Oranı - CTR (%)', 'Tıklayan Tekil Kişi', 'Dönüşüm (%)' ),
+				';'
+			);
+			foreach ( $bundle['utm_rows'] as $u ) {
+				fputcsv(
+					$output,
+					array(
+						preg_replace( '/^[=+\-@]/', "'$0", $u['source'] ),
+						preg_replace( '/^[=+\-@]/', "'$0", $u['medium'] ),
+						preg_replace( '/^[=+\-@]/', "'$0", $u['campaign'] ),
+						$u['district_key'],
+						$u['visitors'],
+						$u['views'],
+						$u['clicks'],
+						number_format( $u['ctr'], 1, ',', '' ),
+						$u['click_visitors'],
+						number_format( $u['conversion'], 1, ',', '' ),
+					),
+					';'
+				);
+			}
+		}
+
 		fclose( $output );
 		exit;
 	}
@@ -960,34 +989,7 @@ function kt_render_admin_page() {
 				</form>
 
 				<?php
-				$utm_rows = array();
-				foreach ( $stats as $utm_district_key => $utm_stat_row ) {
-					if ( empty( $utm_stat_row['utm'] ) || ! is_array( $utm_stat_row['utm'] ) ) {
-						continue;
-					}
-					foreach ( $utm_stat_row['utm'] as $utm_item ) {
-						$utm_rows[] = array(
-							'district' => isset( $utm_stat_row['label'] ) ? $utm_stat_row['label'] : $utm_district_key,
-							'source'   => isset( $utm_item['source'] ) ? $utm_item['source'] : '',
-							'medium'   => isset( $utm_item['medium'] ) ? $utm_item['medium'] : '',
-							'campaign' => isset( $utm_item['campaign'] ) ? $utm_item['campaign'] : '',
-							'visitors' => isset( $utm_item['visitors'] ) ? intval( $utm_item['visitors'] ) : 0,
-							'views'    => isset( $utm_item['views'] ) ? intval( $utm_item['views'] ) : 0,
-							'clicks'   => isset( $utm_item['clicks'] ) ? intval( $utm_item['clicks'] ) : 0,
-			'click_visitors' => isset( $utm_item['click_visitors'] ) ? intval( $utm_item['click_visitors'] ) : 0,
-						);
-					}
-				}
-
-				usort(
-					$utm_rows,
-					function ( $a, $b ) {
-						if ( $a['visitors'] === $b['visitors'] ) {
-							return $b['views'] - $a['views'];
-						}
-						return $b['visitors'] - $a['visitors'];
-					}
-				);
+				$utm_rows = kt_get_utm_report_rows( $stats );
 				$utm_row_total = count( $utm_rows );
 				$utm_rows      = array_slice( $utm_rows, 0, 200 );
 				?>

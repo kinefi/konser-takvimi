@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Konser Takvimi
  * Description: Database-backed concert calendar with double-session support, Google MusicEvent JSON-LD, automatic archiving of past concerts, cache-safe 302 district redirects, Add to Calendar buttons, Gutenberg blocks, UTM tagging and CTR-ranked analytics.
- * Version: 4.1.0
+ * Version: 4.2.0
  * Author: Şubadap Çocuk
  * License: GPL-3.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -19,7 +19,7 @@ if ( ! defined( 'KT_PLUGIN_URL' ) ) {
 	define( 'KT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 }
 if ( ! defined( 'KT_PLUGIN_VER' ) ) {
-	define( 'KT_PLUGIN_VER', '4.1.0' );
+	define( 'KT_PLUGIN_VER', '4.2.0' );
 }
 if ( ! defined( 'KT_EVENTS_OPT' ) ) {
 	define( 'KT_EVENTS_OPT', 'subadap_konserler_list' );
@@ -770,6 +770,56 @@ function kt_ajax_track_district_event() {
 }
 
 /**
+ * Flattens the per-district UTM breakdown into rows (all time), sorted by unique visitors then page views.
+ * Used by the admin statistics tab and by the HTML/CSV/e-mail reports.
+ */
+function kt_get_utm_report_rows( $stats ) {
+	$utm_rows = array();
+
+	if ( ! is_array( $stats ) ) {
+		return $utm_rows;
+	}
+
+	foreach ( $stats as $district_key => $stat_row ) {
+		if ( empty( $stat_row['utm'] ) || ! is_array( $stat_row['utm'] ) ) {
+			continue;
+		}
+		foreach ( $stat_row['utm'] as $utm_item ) {
+			$visitors       = isset( $utm_item['visitors'] ) ? intval( $utm_item['visitors'] ) : 0;
+			$views          = isset( $utm_item['views'] ) ? intval( $utm_item['views'] ) : 0;
+			$clicks         = isset( $utm_item['clicks'] ) ? intval( $utm_item['clicks'] ) : 0;
+			$click_visitors = isset( $utm_item['click_visitors'] ) ? intval( $utm_item['click_visitors'] ) : 0;
+
+			$utm_rows[] = array(
+				'district'       => isset( $stat_row['label'] ) ? $stat_row['label'] : $district_key,
+				'district_key'   => $district_key,
+				'source'         => isset( $utm_item['source'] ) ? $utm_item['source'] : '',
+				'medium'         => isset( $utm_item['medium'] ) ? $utm_item['medium'] : '',
+				'campaign'       => isset( $utm_item['campaign'] ) ? $utm_item['campaign'] : '',
+				'visitors'       => $visitors,
+				'views'          => $views,
+				'clicks'         => $clicks,
+				'click_visitors' => $click_visitors,
+				'ctr'            => $views > 0 ? round( ( $clicks / $views ) * 100, 1 ) : 0.0,
+				'conversion'     => kt_conversion_rate( $click_visitors, $visitors ),
+			);
+		}
+	}
+
+	usort(
+		$utm_rows,
+		function ( $a, $b ) {
+			if ( $a['visitors'] === $b['visitors'] ) {
+				return $b['views'] - $a['views'];
+			}
+			return $b['visitors'] - $a['visitors'];
+		}
+	);
+
+	return $utm_rows;
+}
+
+/**
  * Builds the summary statistics report data and its HTML output for the given number of days (e.g. 7, 14, 30, or all time).
  */
 function kt_build_stats_report_bundle( $days_span = 7, $render_direct = false ) {
@@ -872,6 +922,9 @@ function kt_build_stats_report_bundle( $days_span = 7, $render_direct = false ) 
 		}
 	);
 
+	$utm_report_rows = kt_get_utm_report_rows( $stats );
+	$utm_top_rows    = array_slice( $utm_report_rows, 0, 15 );
+
 	$overall_avg_sec = $sum_sessions > 0 ? round( $sum_seconds / $sum_sessions ) : 0;
 	$overall_ctr        = $sum_views > 0 ? number_format( ( $sum_clicks / $sum_views ) * 100, 1, ',', '.' ) : '0,0';
 	$overall_conversion = number_format( kt_conversion_rate( $sum_click_visitors, $sum_visitors ), 1, ',', '.' );
@@ -951,6 +1004,33 @@ function kt_build_stats_report_bundle( $days_span = 7, $render_direct = false ) 
 				</table>
 			<?php endif; ?>
 
+			<?php if ( ! empty( $utm_top_rows ) ) : ?>
+				<h3 style="font-size: 15px; margin: 24px 0 4px 0; color: #0f172a;">Trafik Kaynakları (UTM)</h3>
+				<p style="margin: 0 0 10px 0; font-size: 12px; color: #64748b;">Tüm zamanlar; yalnızca UTM parametreli ziyaretler<?php echo count( $utm_report_rows ) > count( $utm_top_rows ) ? ' (ilk ' . intval( count( $utm_top_rows ) ) . ' satır)' : ''; ?>.</p>
+				<table width="100%" cellpadding="8" cellspacing="0" style="border-collapse: collapse; font-size: 13px; border: 1px solid #e2e8f0;">
+					<thead>
+						<tr style="background: #f1f5f9; text-align: left;">
+							<th style="border-bottom: 1px solid #cbd5e1;">Kaynak / Ortam / Kampanya</th>
+							<th style="border-bottom: 1px solid #cbd5e1;">İlçe</th>
+							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Ziyaretçi</th>
+							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Tıklayan</th>
+							<th style="border-bottom: 1px solid #cbd5e1; text-align: right;">Dönüşüm</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $utm_top_rows as $u ) : ?>
+							<tr>
+								<td style="border-bottom: 1px solid #e2e8f0;"><?php echo esc_html( implode( ' / ', array_map( function ( $part ) { return '' !== $part ? $part : '—'; }, array( $u['source'], $u['medium'], $u['campaign'] ) ) ) ); ?></td>
+								<td style="border-bottom: 1px solid #e2e8f0;"><?php echo esc_html( $u['district'] ); ?></td>
+								<td style="border-bottom: 1px solid #e2e8f0; text-align: right;"><?php echo esc_html( number_format_i18n( $u['visitors'] ) ); ?></td>
+								<td style="border-bottom: 1px solid #e2e8f0; text-align: right; color: #16a34a; font-weight: 600;"><?php echo esc_html( number_format_i18n( $u['click_visitors'] ) ); ?></td>
+								<td style="border-bottom: 1px solid #e2e8f0; text-align: right;">%<?php echo esc_html( number_format( $u['conversion'], 1, ',', '.' ) ); ?></td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php endif; ?>
+
 			<p style="margin-top: 20px; font-size: 12px; color: #64748b;">
 				Detaylı günlük grafikler için WordPress yönetim panelindeki <a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats' ) ); ?>">Konser Takvimi &rarr; İstatistikler &amp; Grafik</a> sayfasını ziyaret edebilirsiniz.
 			</p>
@@ -971,6 +1051,7 @@ function kt_build_stats_report_bundle( $days_span = 7, $render_direct = false ) 
 		'overall_conversion' => $overall_conversion,
 		'overall_avg_sec' => $overall_avg_sec,
 		'rows'            => $rows,
+		'utm_rows'        => $utm_report_rows,
 		'html_card'       => $html_card,
 	);
 }
