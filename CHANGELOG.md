@@ -1,90 +1,108 @@
-# Değişiklik Günlüğü (Changelog)
+# Changelog
+
+## [4.0.0] - 2026-11-21
+### Added
+- **UTM tagging for outbound ticket links:** The ticket button and links to tracked ticket domains get `utm_source`, `utm_medium`, `utm_campaign` and `utm_content` (`ticket-button` / `ticket-link`). The source defaults to the site host and the campaign defaults to the district key unless a fixed value is configured. Existing `utm_*` parameters on a link are never overwritten, and internal links are never tagged.
+- **UTM tagging for Add to Calendar links:** The page link inside each Google Calendar / `.ics` event description is tagged per channel (`utm_source=google-calendar` or `ics-file`, `utm_medium=calendar`) and per session (`utm_content=session-1` / `session-2`).
+- **Incoming UTM capture:** Visits (and the ticket clicks made during those visits) that arrive with `utm_source`, `utm_medium` or `utm_campaign` are recorded per district and shown in a new **UTM traffic sources** table on the statistics tab, with visitors, page views, ticket clicks and CTR. At most 40 distinct combinations are stored per district; the rest are merged into an `(other)` bucket.
+- **UTM settings card:** New settings section with switches for outbound ticket links, calendar links and incoming capture, plus fields for source, medium and campaign.
+- **English documentation:** `README.md` is now in English and `README.tr.md` provides the Turkish version.
+
+### Changed
+- **BREAKING: English shortcode and block attribute names.** There is no automatic fallback; update existing content after upgrading (see the README for details).
+  - District redirector (block and `[konser_ilce_yonlendir]`): `ilce` → `district`, `hedef` → `redirect_target`, `takvime_ekle` → `show_calendar_button`.
+  - Ticket button (block and `[konser_bilet_butonu]`): `ilce` → `district`, `resim` → `image`, `hedef` → `link_target`.
+- Internal rename: the admin page callback is now `kt_render_admin_page`, and the concert form nonce is now `kt_concerts_nonce` / `kt_concerts_nonce_action`.
+- The fallback district key for a ticket button rendered outside a post changed from `genel` to `general`.
+- All code comments, the plugin header description and internal identifiers are now in English. Block names, shortcode names, the `subadap_konserler_*` options and the `{city}-konseri` slug format are unchanged, so stored concerts and statistics are not affected.
+- The tracker script now also decorates ticket links on page load, so links opened in a new tab or copied carry the UTM parameters too.
+- The UTM sanitizer transliterates Turkish letters (for example `İstanbul` becomes `istanbul`) instead of dropping them.
 
 ## [3.6.0] - 2026-11-21
-### Eklenenler & İyileştirilenler
-- **Bugün & Yarın Rozetleri:** Konser kartlarının sağ üst köşesine İstanbul saat dilimine (`Europe/Istanbul`) göre önbellek dostu **BUGÜN** ve **YARIN** rozetleri eklendi.
-- **Takvime Ekle Düğmesi (Google Takvim & Apple/Outlook `.ics`):** İlçe konser sayfalarına aktif konser bulunduğunda tek tıkla **Google Takvim** açan veya tarayıcıda anında standart `.ics` takvim dosyası indiren **Takvime Ekle** açılır düğmesi entegre edildi (çift seanslı konserlerde her iki seans ayrı seçenek olarak sunulur).
-- **Gutenberg Blokları & Geriye Dönük Uyumluluk:** `konser-takvimi/takvim`, `konser-takvimi/ilce-yonlendir` ve `konser-takvimi/bilet-butonu` Gutenberg blokları eklendi; mevcut kısa kodlar (`[konser_takvimi]`, `[konser_ilce_yonlendir]`, `[konser_bilet_butonu]`) geriye dönük uyumlu (`@deprecated`) olarak korundu.
-- **Google Schema (`MusicEvent`) Alan Tamamlama:** Google Search Console zengin sonuç doğrulaması için `MusicEvent` şemasına `description` ve `offers.validFrom` alanları eklendi.
+### Added & Improved
+- **Today & Tomorrow badges:** Cache-friendly **TODAY** and **TOMORROW** badges based on the Istanbul time zone (`Europe/Istanbul`) are shown in the top-right corner of concert cards.
+- **Add to Calendar button (Google Calendar & Apple/Outlook `.ics`):** District concert pages with an active concert now include an **Add to Calendar** dropdown that opens Google Calendar or instantly downloads a standard `.ics` file in the browser. Double-session concerts offer each session as a separate option.
+- **Gutenberg blocks & backward compatibility:** Added the `konser-takvimi/takvim`, `konser-takvimi/ilce-yonlendir` and `konser-takvimi/bilet-butonu` blocks. The existing shortcodes (`[konser_takvimi]`, `[konser_ilce_yonlendir]`, `[konser_bilet_butonu]`) remain supported and are marked `@deprecated`.
+- **Google schema (`MusicEvent`) completeness:** Added the `description` and `offers.validFrom` fields to the `MusicEvent` schema for Google Search Console rich result validation.
 
 ## [3.5.0] - 2026-11-20
-### Eklenenler & İyileştirilenler
-- **Google Schema (JSON-LD `MusicEvent`) Desteği:** `[konser_takvimi]` veya `[konser_ilce_yonlendir]` kısa kodlarının bulunduğu sayfalarda `<head>` içerisine otomatik olarak Google `MusicEvent` yapılandırılmış verisi (`startDate`, `endDate`, `location`, `performer`, `offers`) eklendi; Ayarlar sekmesine şema açma/kapama ve sanatçı/grup adı alanı eklendi.
-- **Dönüşüm Oranı (CTR %) Sıralaması & Renkli Performans Rozeti:** **İstatistikler & Grafik** tablosunda ilçeleri **Dönüşüm Oranı (CTR %)**, **Tekil Ziyaretçi**, **Bilet Tıklaması**, **Sayfa Gösterimi** veya **Ort. Kalma Süresi** ölçütlerine göre tek tıkla sıralama bağlantıları ve CTR performans renk rozetleri eklendi.
-- **Önbellek Korumalı `302 Found` İlçe Yönlendirmesi:** Süresi dolan ilçe sayfalarının arama motorlarınca kalıcı silinmiş (`301`) algılanmaması ve LiteSpeed / WP Rocket gibi önbellek eklentilerince yönlendirme kuralının önbelleğe alınmaması için `DONOTCACHEPAGE` sabiti, `nocache_headers()` ve `302` durum kodu güvencesi eklendi.
+### Added & Improved
+- **Google schema (JSON-LD `MusicEvent`) support:** Pages containing the `[konser_takvimi]` or `[konser_ilce_yonlendir]` shortcodes now get Google `MusicEvent` structured data (`startDate`, `endDate`, `location`, `performer`, `offers`) in `<head>`. The settings tab gained a schema on/off switch and a performer/band name field.
+- **Click-through rate (CTR %) sorting & coloured performance badge:** The statistics table now offers one-click sorting links by **CTR %**, **unique visitors**, **ticket clicks**, **page views** or **average time on page**, plus coloured CTR performance badges.
+- **Cache-safe `302 Found` district redirect:** Added the `DONOTCACHEPAGE` constant, `nocache_headers()` and an explicit `302` status so that search engines do not treat expired district pages as permanently removed (`301`) and caching plugins such as LiteSpeed or WP Rocket do not cache the redirect rule.
 
 ## [3.4.1] - 2026-11-19
-### Eklenenler
-- **Dönem ve Biçim Seçenekli Rapor İndirme Düğmesi:** Yönetim panelindeki **İstatistikler & Grafik** sekmesine **Son 7 Gün (Haftalık)**, **Son 14 Gün**, **Son 30 Gün (Aylık)** veya **Tüm Zamanlar** dönemleri için yazdırılabilir/PDF kaydedilebilir **Görsel Rapor (HTML)** ve **Excel Tablosu (.csv)** indirme düğmesi eklendi.
+### Added
+- **Report download button with period and format options:** The statistics tab gained a download button for a printable / save-as-PDF **visual report (HTML)** and an **Excel table (.csv)** covering the **last 7 days (weekly)**, **last 14 days**, **last 30 days (monthly)** or **all time**.
 
 ## [3.4.0] - 2026-11-19
-### Eklenenler
-- **Günlük Tekil Ziyaretçi Takibi:** Çerez (cookie) gerektirmeden `localStorage` üzerinden aynı gün içindeki tekrar sayfa yenilemelerini ayırarak **Bugünkü Tekil Ziyaretçi** ve **Toplam Tekil Ziyaretçi** metrikleri eklendi.
-- **Sayfada Kalma Süresi Ölçümü:** Ziyaretçinin sekmede aktif kaldığı süre (`visibilitychange` / `pagehide` / bilet tıklaması anında) `navigator.sendBeacon()` ile kaydedilerek ilçe bazında **Ortalama Kalma Süresi** hesaplandı.
-- **Son 14 Günlük İnteraktif Grafik:** Yönetim panelindeki **İstatistikler & Grafik** sekmesine harici kütüphane gerektirmeyen hafif HTML5 Canvas çubuk grafiği ve ilçe filtresi eklendi.
-- **Haftalık Yönetici E-Posta Raporu:** `wp_cron` altyapısıyla her hafta seçilen günde son 7 günün performans özetini HTML tablo olarak yönetici e-posta adresine gönderen otomatik rapor sistemi ve **Şimdi Örnek Rapor E-Postası Gönder** butonu eklendi.
+### Added
+- **Daily unique visitor tracking:** Repeated reloads on the same day are filtered out via `localStorage` (no cookies), adding **unique visitors today** and **total unique visitors** metrics.
+- **Time on page measurement:** The time a visitor stays active in the tab (on `visibilitychange`, `pagehide` or a ticket click) is recorded with `navigator.sendBeacon()` and used to calculate the **average time on page** per district.
+- **Interactive 14-day chart:** The statistics tab gained a lightweight HTML5 Canvas bar chart, with no external library, and a district filter.
+- **Weekly administrator e-mail report:** An automated report built on `wp_cron` sends a 7-day performance summary as an HTML table to the administrator's e-mail address on a chosen weekday. A **Send a sample report now** button was added as well.
 
 ## [3.3.0] - 2026-11-16
-### Eklenenler & İyileştirilenler
-- **Varsayılan Bilet Satış URL'si Ayarı:** Ayarlar sekmesine **Varsayılan Bilet Satış URL'si** alanı eklendi.
-- **Önbellek (Cache) Uyumlu Sayfa Görüntülenme Sayacı:** İlçe sayfası görüntülenmeleri (`views`) `tracker.js` üzerinden AJAX ile kaydedilecek şekilde güncellendi.
+### Added & Improved
+- **Default ticket sales URL setting:** Added a **Default Ticket Sales URL** field to the settings tab.
+- **Cache-compatible page view counter:** District page views (`views`) are now recorded through AJAX from `tracker.js`.
 
 ## [3.2.1] - 2026-11-16
-### Eklenenler
-- **Kısa Kodsuz Otomatik Bilet Tıklama Takibi:** `[konser_ilce_yonlendir]` bulunan sayfalarda bilet alan adlarına veya varsayılan bilet görseline yapılan tıklamalar otomatik yakalanır.
+### Added
+- **Automatic ticket click tracking without a shortcode:** On pages containing `[konser_ilce_yonlendir]`, clicks on ticket domain links or on the default ticket image are captured automatically.
 
 ## [3.2.0] - 2026-11-16
-### Eklenenler
-- **Bilet Düğmesi Kısa Kodu (`[konser_bilet_butonu]`):** `<figure class="wp-block-image size-large">` yapısında bilet düğmesi kısa kodu ve **İstatistikler** sekmesi eklendi.
+### Added
+- **Ticket button shortcode (`[konser_bilet_butonu]`):** Added a ticket button shortcode that renders a `<figure class="wp-block-image size-large">` structure, together with a **Statistics** tab.
 
 ## [3.1.0] - 2026-11-16
-### Eklenenler & Değiştirilenler
-- **Ayarlanabilir Yönlendirme Hedefi:** Varsayılan yönlendirme adresini (varsayılan `/konserler`) belirleme alanı eklendi.
+### Added & Changed
+- **Configurable redirect target:** Added a field for the default redirect address (default `/konserler`).
 
 ## [3.0.0] - 2026-11-16
-### Eklenenler & Değiştirilenler
-- **Çift Seans Desteği (`12.00 ve 14.00`)** ve **İlçe Sayfası Yönlendirme Kısa Kodu (`[konser_ilce_yonlendir]`)** eklendi.
+### Added & Changed
+- Added **double-session support (`12.00 ve 14.00`)** and the **district page redirect shortcode (`[konser_ilce_yonlendir]`)**.
 
 ## [2.9.0] - 2026-11-16
-### Değiştirilenler
-- **Genel Dosya ve Klasör Yapısı:** Eklenti klasörü ve dosyaları yeniden kullanılabilir genel isimlere dönüştürüldü.
-- **Modüler Panel Stili:** Yönetim paneli satır içi CSS kuralları `assets/css/admin.css` dosyasına ayrıldı.
-- **Dinamik Site URL Desteği:** Rozet bağlantılarındaki kök adres WordPress `home_url()` fonksiyonundan dinamik alınacak şekilde güncellendi.
+### Changed
+- **General file and folder structure:** The plugin folder and files were renamed to reusable generic names.
+- **Modular admin styling:** Inline admin CSS rules were moved to `assets/css/admin.css`.
+- **Dynamic site URL support:** The base address in badge links is now taken dynamically from WordPress `home_url()`.
 
 ## [2.8.1] - 2026-11-15
-### Eklenenler & Değiştirilenler
-- **Otomatik `ilce-konseri` Slug Formatı:** Yeni konser eklerken ilçe/şehir girildiğinde link uzantısı otomatik olarak `ilce-konseri` biçiminde oluşturulur.
-- **Canlı Sayfa / Yazı Varlık Kontrolü:** Girilen veya otomatik oluşan uzantı sitenizde yayımlanmış bir sayfa/yazı ile eşleşiyorsa kutu yeşil, eşleşmiyorsa kırmızı çerçeve ve bilgi etiketiyle gösterilir.
+### Added & Changed
+- **Automatic `ilce-konseri` slug format:** When a district/city is entered for a new concert, the link slug is generated automatically in the `{city}-konseri` format.
+- **Live page / post existence check:** If the entered or generated slug matches a published page or post on your site, the field gets a green border; otherwise it gets a red border and an info label.
 
 ## [2.7.0] - 2026-11-15
-### Eklenenler
-- **Mevcut Yazılardan Slug Filtreleme ve Seçme:** Link uzantısı kutusuna sitenizdeki yayımlanmış yazı ve sayfaları başlık/slug üzerinden filtreleyip seçme özelliği (`datalist`) eklendi.
+### Added
+- **Filter and pick from existing posts:** The slug field can now filter and select published posts and pages by title or slug (`datalist`).
 
 ## [2.6.0] - 2026-11-15
-### Eklenenler
-- **GitHub Dokümantasyonu & Lisans (`README.md`, `LICENSE`):** Kurulum, kullanım, özellikler ve dosya yapısını açıklayan `README.md` ile GNU GPLv3 (`GPL-3.0-or-later`) lisans bilgileri eklendi.
-- **Yapılandırılabilir Kaldırma (`uninstall.php`):** Ayarlar sekmesine isteğe bağlı veritabanı temizleme seçeneği eklendi.
+### Added
+- **GitHub documentation & licence (`README.md`, `LICENSE`):** Added a `README.md` describing installation, usage, features and file structure, plus GNU GPLv3 (`GPL-3.0-or-later`) licence information.
+- **Configurable uninstall (`uninstall.php`):** Added an optional database cleanup setting to the settings tab.
 
 ## [2.5.0] - 2026-11-15
-### Eklenenler & Değiştirilenler
-- **Düğme Biçimleri & Renkler Sekmesi:** Düğmelerin boyut, köşe yuvarlaklığı ve 12'li renk paleti döngüsünü canlı önizleme ile ayarlama sekmesi eklendi.
+### Added & Changed
+- **Button styles & colours tab:** Added a tab for adjusting button size, corner radius and the 12-colour palette cycle with a live preview.
 
 ## [2.4.0] - 2026-11-15
-### Eklenenler
-- **JSON ve CSV Dışa Aktarma (Export):** Aktif, arşivlenmiş veya tüm konser kayıtlarını `.json` ve `.csv` formatında indirme özelliği eklendi.
+### Added
+- **JSON and CSV export:** Active, archived or all concert records can now be downloaded as `.json` and `.csv`.
 
 ## [2.3.0] - 2026-11-15
-### Eklenenler
-- **Açılır-Kapanır Arşiv (Accordion) & Sayfalama:** Arşivlenen konserler bölümü açılır-kapanır hale getirildi ve sayfalandırıldı.
+### Added
+- **Collapsible archive (accordion) & pagination:** The archived concerts section is now collapsible and paginated.
 
 ## [2.2.0] - 2026-11-15
-### Eklenenler
-- **Otomatik Slug Önerisi:** Yeni konser eklerken canlı link uzantısı önerisi eklendi.
+### Added
+- **Automatic slug suggestion:** A live link slug suggestion was added when creating a new concert.
 
 ## [2.1.0] - 2026-11-15
-### Değiştirilenler
-- **Veritabanı Depolaması & Güvenlik:** Konser kayıtları WordPress `wp_options` tablosuna taşındı; otomatik arşivleme ve güvenlik korumaları eklendi.
+### Changed
+- **Database storage & security:** Concert records moved to the WordPress `wp_options` table; automatic archiving and security protections were added.
 
 ## [1.0.0]
-### Başlangıç
-- İlk sürüm ve 12 renkli rozet ızgarası oluşturuldu.
+### Initial release
+- First release with a 12-colour badge grid.

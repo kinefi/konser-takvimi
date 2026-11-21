@@ -1,55 +1,135 @@
-# Konser Takvimi (WordPress Eklentisi)
+# Konser Takvimi (WordPress Plugin)
 
-Konser ve etkinlik takvimini yönetmek, yaklaşan etkinlikleri **BUGÜN / YARIN** rozetli renkli kartlar halinde sayfada göstermek, çift seanslı konserleri tek düğmede listelemek, ilçe konser sayfalarına **Takvime Ekle (Google Takvim & Apple/Outlook .ics)** düğmesi sunmak, Google arama zengin sonuçları için otomatik `MusicEvent` JSON-LD şeması üretmek, ilçe sayfalarını önbellek korumalı `302` ile yönlendirmek ve günlük tekil ziyaretçi, dönüşüm oranı (CTR) ile sayfada kalma süresi analitiğini grafiklerle izlemek için geliştirilmiş veritabanı tabanlı WordPress eklentisidir.
+**English** | [Türkçe](README.tr.md)
 
-## Özellikler
+A database-backed WordPress plugin for managing a concert and event calendar. It shows upcoming events as colourful cards with **TODAY / TOMORROW** badges (rendered as `BUGÜN` / `YARIN` on the site), lists double-session concerts on a single card, offers an **Add to Calendar** button (Google Calendar and Apple/Outlook `.ics`) on district concert pages, generates `MusicEvent` JSON-LD for Google rich results, redirects expired district pages with a cache-safe `302`, tags outbound ticket links and calendar links with **UTM parameters**, and tracks daily unique visitors, click-through rate (CTR), time on page and incoming UTM sources with charts.
 
-- **Gutenberg Blokları (ve Geriye Dönük Uyumlu Kısa Kodlar):**
-  - **Konser Takvimi (`konser-takvimi/takvim`):** Yalnızca tarihi ve son seans saati henüz geçmemiş konserleri (İstanbul saat dilimine göre) kronolojik olarak listeler. *(Eski `[konser_takvimi]` kısa kodu geriye dönük uyumludur.)*
-  - **Konser İlçe Yönlendirici & Takvime Ekle (`konser-takvimi/ilce-yonlendir`):** İlçede aktif konser varsa sayfa istatistiklerini toplar ve tek tıkla **Google Takvim** veya **Apple / Outlook (.ics)** dosyası indiren **Takvime Ekle** düğmesini gösterir; aktif konser yoksa `DONOTCACHEPAGE` ve `nocache_headers()` korumasıyla `302 Found` yönlendirmesi yapar. *(Eski `[konser_ilce_yonlendir]` kısa kodu geriye dönük uyumludur.)*
-  - **Konser Bilet Butonu (`konser-takvimi/bilet-butonu`):** CTR analitiği ile entegre bilet satın alma görsel butonu ekler. *(Eski `[konser_bilet_butonu]` kısa kodu geriye dönük uyumludur.)*
-- **Bugün & Yarın Rozetleri:** Önbellek (cache) dostu biçimde İstanbul saat dilimine göre konser gününde kırmızı **BUGÜN**, bir gün öncesinde amber **YARIN** rozetlerini otomatik gösterir.
-- **Çift Seans Desteği (`12.00 ve 14.00`):** Aynı gün iki seans varsa 2. seans saati girilebilir; kartta `12.00 ve 14.00` olarak gösterilir ve Takvime Ekle menüsünde her iki seans ayrı seçenek olarak sunulur.
-- **Google Schema (JSON-LD `MusicEvent`) Desteği:** `<head>` bölümüne otomatik olarak `MusicEvent` (`description`, `startDate`, `endDate`, `location`, `performer`, `offers.validFrom`) yapılandırılmış verisi ekler.
-- **Günlük Ziyaretçi, Dönüşüm Oranı (CTR) Sıralaması & Grafik:** Çerez kullanmadan (`localStorage`) günlük tekil ziyaretçileri, aktif kalma süresini ve bilet tıklamalarını ölçer; 14 günlük grafik ve HTML/CSV rapor sunar.
+> **Upgrading from 3.x?** Version 4.0.0 renames the shortcode and block attributes to English. See [Upgrading from 3.x](#upgrading-from-3x) before updating a live site.
 
-## Kurulum
+## Features
 
-1. Eski sürüm yüklüyse WordPress **Eklentiler** sayfasından önce etkisizleştirip silin (ayarlarda silme seçeneği işaretli değilse veritabanı kayıtlarınız korunur).
-2. `konser-takvimi-3.6.0.zip` arşivini indirin.
-3. WordPress yönetim panelinde **Eklentiler > Yeni Eklenti Ekle > Eklenti Yükle** yolunu izleyin.
-4. `.zip` dosyasını seçip yükleyin ve eklentiyi etkinleştirin.
+- **Gutenberg blocks (with backward-compatible shortcodes):**
+  - **Concert Calendar (`konser-takvimi/takvim`):** Lists only concerts whose date and last session time have not passed yet (Istanbul time zone), in chronological order. *(The legacy `[konser_takvimi]` shortcode still works.)*
+  - **District Redirector & Add to Calendar (`konser-takvimi/ilce-yonlendir`):** When the district has an active concert, it collects page statistics and shows an **Add to Calendar** button that opens Google Calendar or downloads an Apple/Outlook (`.ics`) file with one click. When there is no active concert, it sends a `302 Found` redirect protected by `DONOTCACHEPAGE` and `nocache_headers()`. *(The legacy `[konser_ilce_yonlendir]` shortcode still works.)*
+  - **Concert Ticket Button (`konser-takvimi/bilet-butonu`):** Adds an image button for buying tickets, integrated with CTR analytics and UTM tagging. *(The legacy `[konser_bilet_butonu]` shortcode still works.)*
+- **Today & Tomorrow badges:** Cache-friendly red **TODAY** badge on the day of the concert and amber **TOMORROW** badge one day before, calculated in the Istanbul time zone.
+- **Double-session support (`12.00 ve 14.00`):** If there are two sessions on the same day, enter the second session time; the card shows both times and the Add to Calendar menu offers each session separately.
+- **Google structured data (JSON-LD `MusicEvent`):** Automatically adds `MusicEvent` data (`description`, `startDate`, `endDate`, `location`, `performer`, `offers.validFrom`) to `<head>`.
+- **UTM tagging and tracking (new in 4.0.0):** Adds `utm_*` parameters to outbound ticket links and to the page link inside calendar events, and records incoming `utm_*` traffic per district. See [UTM parameters](#utm-parameters).
+- **Daily unique visitors, CTR ranking & chart:** Measures daily unique visitors, active time on page and ticket clicks without cookies (`localStorage`), with a 14-day chart and HTML/CSV reports.
 
-## Kullanım
+## UTM parameters
 
-1. Sol menüdeki **Konser Takvimi** sekmesinden yaklaşan konserlerinizi (tek veya çift seans olarak) ekleyin ve kaydedin.
-2. Takvimi göstermek istediğiniz sayfaya `[konser_takvimi]` kısa kodunu yerleştirin.
-3. URL'sinde ilçe adı geçen konser sayfalarının başına `[konser_ilce_yonlendir]` kısa kodunu yerleştirin. Ayarlar sekmesinde varsayılan bilet URL'sini tanımladıysanız bilet düğmesini göstermek istediğiniz yere sadece `[konser_bilet_butonu]` yazmanız yeterlidir.
-4. İlçe ziyaret, CTR dönüşüm sıralaması ve bilet tıklama verilerini **İstatistikler & Grafik** sekmesinden takip edin (yönetici girişleri sayılmadığından test için gizli sekme kullanın).
+All UTM features can be switched on or off in **Konser Takvimi → Düğme Biçimleri, Renkler & Ayarlar → UTM Parametreleri**.
 
-## Dosya Yapısı
+### Outbound ticket links
+
+The ticket button, and any link to one of the tracked ticket domains on a page that loads the tracker, gets these parameters:
+
+| Parameter | Value |
+|---|---|
+| `utm_source` | Your setting, or the site host when empty (e.g. `example.org`) |
+| `utm_medium` | Your setting (default `referral`) |
+| `utm_campaign` | Your fixed campaign, or the district key when empty (e.g. `urla`) |
+| `utm_content` | `ticket-button` for the block/shortcode button, `ticket-link` for auto-detected links |
+
+Example: `https://biletinial.com/e/1?utm_source=example.org&utm_medium=referral&utm_campaign=urla&utm_content=ticket-button`
+
+### Add to Calendar links
+
+The page link inside the event description of each calendar entry is tagged per channel and per session:
+
+| Parameter | Value |
+|---|---|
+| `utm_source` | `google-calendar` or `ics-file` |
+| `utm_medium` | `calendar` |
+| `utm_campaign` | Your fixed campaign, or the district key |
+| `utm_content` | `session-1` or `session-2` |
+
+### Incoming UTM traffic
+
+When a visitor lands on a page with `utm_source`, `utm_medium` or `utm_campaign` in the URL, the visit (and any ticket click made during that visit) is recorded and shown in **İstatistikler & Grafik → Trafik Kaynakları (UTM)**: visitors, page views, ticket clicks and CTR per source / medium / campaign / district.
+
+### Rules and limits
+
+- Existing `utm_*` parameters on a link are **never overwritten**, so manually tagged links keep their values.
+- Only external `http(s)` links are tagged by the tracker script; internal links are never tagged, so a visitor's original traffic source is not overwritten in your analytics tool.
+- UTM values are normalised to lowercase `[a-z0-9._-]` and at most 64 characters (Turkish letters are transliterated).
+- At most **40** distinct source/medium/campaign combinations are stored per district; anything beyond that is merged into an `(other)` bucket so arbitrary URL values cannot bloat the database.
+- The `MusicEvent` JSON-LD URLs are intentionally **not** tagged, because structured data should point at canonical URLs.
+- Incoming UTM data is all-time and is not part of the HTML/CSV/e-mail reports yet.
+
+## Installation
+
+1. If an older version is installed, deactivate and delete it on the WordPress **Plugins** page first (your database records are kept unless the delete-on-uninstall option is ticked in the settings).
+2. Download the plugin `.zip` archive.
+3. In the WordPress admin, go to **Plugins > Add New Plugin > Upload Plugin**.
+4. Select the `.zip` file, upload it and activate the plugin.
+
+## Usage
+
+1. Add your upcoming concerts (single or double session) in the **Konser Takvimi** menu and save.
+2. Place the **Concert Calendar** block (or the `[konser_takvimi]` shortcode) on the page where the calendar should appear.
+3. At the top of each district concert page, place the **District Redirector** block (or `[konser_ilce_yonlendir]`). If you set a default ticket URL in the settings, you only need to add the **Concert Ticket Button** block (or `[konser_bilet_butonu]`) wherever the button should appear.
+4. Follow district visits, CTR ranking, UTM sources and ticket clicks in the **İstatistikler & Grafik** tab (admin visits are not counted, so use a private window for testing).
+
+### Shortcode and block attributes
+
+| Block / shortcode | Attribute | Description |
+|---|---|---|
+| District Redirector (`[konser_ilce_yonlendir]`) | `district` | District slug. Defaults to the slug of the current page. |
+| | `redirect_target` | Redirect path or URL. Defaults to the value in the settings. |
+| | `show_calendar_button` | `1` (default) or `0` to hide the Add to Calendar button. |
+| Ticket Button (`[konser_bilet_butonu]`) | `url` | Ticket URL. Defaults to the value in the settings. |
+| | `image` | Button image URL. Defaults to the value in the settings. |
+| | `district` | District key used for analytics and as the default `utm_campaign`. Defaults to the page slug. |
+| | `alt` | Image alt text. |
+| | `link_target` | HTML link target, e.g. `_blank`. |
+
+Example: `[konser_ilce_yonlendir district="urla" redirect_target="/konserler"]`
+
+## Upgrading from 3.x
+
+Version 4.0.0 replaces the Turkish attribute names with English ones. **There is no automatic fallback**, so update existing content after upgrading:
+
+| Where | Old (3.x) | New (4.0.0) |
+|---|---|---|
+| District Redirector block / shortcode | `ilce` | `district` |
+| District Redirector block / shortcode | `hedef` | `redirect_target` |
+| District Redirector block / shortcode | `takvime_ekle` | `show_calendar_button` |
+| Ticket Button block / shortcode | `ilce` | `district` |
+| Ticket Button block / shortcode | `resim` | `image` |
+| Ticket Button block / shortcode | `hedef` | `link_target` |
+
+- **Shortcodes:** edit the pages and rename the attributes, e.g. `[konser_ilce_yonlendir ilce="urla"]` → `[konser_ilce_yonlendir district="urla"]`.
+- **Blocks:** WordPress silently ignores unknown block attributes, so a block that had `ilce` set falls back to the page slug until you re-enter the value in the block sidebar.
+- Block names (`konser-takvimi/...`), shortcode names, the `subadap_konserler_*` database options and the `{city}-konseri` slug format are unchanged, so stored concerts and statistics are untouched.
+- UTM tagging is **on by default** after the upgrade. Switch it off in the settings if you do not want outbound links to change.
+
+## File Structure
 
 ```text
 konser-takvimi/
-├── konser-takvimi.php           # Ana eklenti dosyası, JSON-LD MusicEvent, 302 yönlendirme, Takvime Ekle ve analitik
-├── uninstall.php                # İsteğe bağlı veritabanı ve zamanlanmış görev temizleme betiği
-├── LICENSE                      # GNU GPLv3 lisans metni
-├── README.md                    # Proje dokümantasyonu
-├── CHANGELOG.md                 # Sürüm geçmişi
+├── konser-takvimi.php           # Main plugin file: MusicEvent JSON-LD, 302 redirect, Add to Calendar, UTM and analytics
+├── uninstall.php                # Optional database and scheduled-task cleanup script
+├── LICENSE                      # GNU GPLv3 licence text
+├── README.md                    # Project documentation (English)
+├── README.tr.md                 # Project documentation (Turkish)
+├── CHANGELOG.md                 # Release history
 ├── includes/
-│   ├── admin-page.php           # Yönetim paneli, CTR sıralamalı istatistikler, grafik, dışa aktarma ve ayar sekmeleri
-│   └── blocks.php               # Gutenberg blok kaydı ve sunucu taraflı önizleme/render işleyicileri
+│   ├── admin-page.php           # Admin screens: CTR-ranked statistics, UTM sources, chart, export and settings tabs
+│   └── blocks.php               # Gutenberg block registration and server-side render/preview handlers
 └── assets/
     ├── css/
-    │   ├── admin.css            # Yönetim paneli stilleri
-    │   └── frontend.css         # Ön yüz kartları, Bugün/Yarın rozetleri ve Takvime Ekle stilleri
+    │   ├── admin.css            # Admin styles
+    │   └── frontend.css         # Front-end cards, Today/Tomorrow badges and Add to Calendar styles
     └── js/
-        ├── admin.js             # Otomatik slug, sayfa kontrolü, medya seçici, önizleme ve Canvas grafik çizimi
-        ├── blocks-editor.js     # Gutenberg blok editör arayüzü
-        ├── frontend.js          # Ön yüz filtreleme, Bugün/Yarın rozetleri ve .ics takvim dosyası üretimi
-        └── tracker.js           # Tekil ziyaretçi, aktif kalma süresi ve bilet tıklama izleme betiği
+        ├── admin.js             # Auto slug, page check, media picker, preview and Canvas chart drawing
+        ├── blocks-editor.js     # Gutenberg block editor UI
+        ├── frontend.js          # Front-end filtering, Today/Tomorrow badges and .ics file generation
+        └── tracker.js           # Unique visitor, time on page, ticket click tracking and UTM capture/tagging
 ```
 
-## Lisans
+## License
 
-Bu proje [GNU General Public License v3.0](LICENSE) altında lisanslanmıştır.
+This project is licensed under the [GNU General Public License v3.0](LICENSE).

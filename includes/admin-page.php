@@ -10,7 +10,7 @@ function kt_register_concert_menu() {
 		'Konser Takvimi',
 		'manage_options',
 		'konser-takvimi',
-		'kt_konser_admin_page',
+		'kt_render_admin_page',
 		'dashicons-calendar-alt',
 		25
 	);
@@ -37,7 +37,7 @@ function kt_enqueue_admin_assets( $hook ) {
 	);
 }
 
-// İstatistik Rapor İndirme (HTML Yazdırılabilir Rapor veya CSV) İşleyicisi
+// Statistics report download handler (printable HTML report or CSV).
 add_action( 'admin_init', 'kt_handle_stats_export' );
 function kt_handle_stats_export() {
 	if ( ! isset( $_POST['kt_download_report_action'] ) && ! isset( $_POST['kt_export_stats_action'] ) ) {
@@ -123,7 +123,7 @@ function kt_handle_stats_export() {
 		exit;
 	}
 
-	// Yazdırılabilir / PDF Kaydedilebilir Görsel HTML Rapor Dosyası
+	// Printable / save-as-PDF visual HTML report file.
 	$filename = "konser-performans-raporu-{$scope}-{$date_stamp}.html";
 	nocache_headers();
 	header( 'Content-Type: text/html; charset=utf-8' );
@@ -157,7 +157,7 @@ function kt_handle_stats_export() {
 	exit;
 }
 
-// JSON ve CSV Konser Dışa Aktarma (Export) İşleyicisi
+// JSON and CSV concert export handler.
 add_action( 'admin_init', 'kt_handle_concert_export' );
 function kt_handle_concert_export() {
 	if ( ! isset( $_POST['kt_export_action'] ) ) {
@@ -247,7 +247,7 @@ function kt_handle_concert_export() {
 	exit;
 }
 
-function kt_konser_admin_page() {
+function kt_render_admin_page() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
@@ -265,8 +265,8 @@ function kt_konser_admin_page() {
 		$existing_events = array();
 	}
 
-	// 1. Sekme: Konserleri Kaydetme
-	if ( isset( $_POST['kt_save_concerts'] ) && check_admin_referer( 'kt_conser_nonce_action', 'kt_conser_nonce' ) ) {
+	// Tab 1: save concerts.
+	if ( isset( $_POST['kt_save_concerts'] ) && check_admin_referer( 'kt_concerts_nonce_action', 'kt_concerts_nonce' ) ) {
 		$archived_events = array();
 
 		foreach ( $existing_events as $ev ) {
@@ -323,7 +323,7 @@ function kt_konser_admin_page() {
 		$message         = '<div class="notice notice-success is-dismissible"><p>Konser listesi veritabanına kaydedildi.</p></div>';
 	}
 
-	// İstatistik Sıfırlama / Tek Satır Silme
+	// Reset all statistics / delete a single row.
 	if ( isset( $_POST['kt_reset_stats'] ) && check_admin_referer( 'kt_stats_nonce_action', 'kt_stats_nonce' ) ) {
 		update_option( KT_STATS_OPT, array(), false );
 		$message = '<div class="notice notice-info is-dismissible"><p>Tüm ilçe ziyaret ve tıklama istatistikleri sıfırlandı.</p></div>';
@@ -337,7 +337,7 @@ function kt_konser_admin_page() {
 		}
 	}
 
-	// Test Haftalık E-Posta Raporu Gönderme
+	// Send a test weekly email report.
 	if ( isset( $_POST['kt_send_test_report'] ) && check_admin_referer( 'kt_styles_nonce_action', 'kt_styles_nonce' ) ) {
 		$test_to = isset( $_POST['weekly_report_email'] ) ? sanitize_email( wp_unslash( $_POST['weekly_report_email'] ) ) : '';
 		if ( empty( $test_to ) ) {
@@ -351,7 +351,7 @@ function kt_konser_admin_page() {
 		}
 	}
 
-	// Ayarlar Sekmesi Kaydetme veya Sıfırlama
+	// Save or reset the settings tab.
 	if ( isset( $_POST['kt_reset_styles'] ) && check_admin_referer( 'kt_styles_nonce_action', 'kt_styles_nonce' ) ) {
 		delete_option( KT_STYLES_OPT );
 		kt_sync_weekly_cron_schedule( true );
@@ -383,6 +383,16 @@ function kt_konser_admin_page() {
 		$raw_domains      = isset( $_POST['ticket_domains'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_domains'] ) ) : $defaults['ticket_domains'];
 		$schema_enabled   = isset( $_POST['schema_enabled'] ) ? 1 : 0;
 		$schema_performer = isset( $_POST['schema_performer'] ) ? sanitize_text_field( wp_unslash( $_POST['schema_performer'] ) ) : '';
+
+		$utm_ticket_on   = isset( $_POST['utm_ticket_enabled'] ) ? 1 : 0;
+		$utm_calendar_on = isset( $_POST['utm_calendar_enabled'] ) ? 1 : 0;
+		$utm_capture_on  = isset( $_POST['utm_capture_enabled'] ) ? 1 : 0;
+		$utm_source      = isset( $_POST['utm_source'] ) ? kt_sanitize_utm_value( sanitize_text_field( wp_unslash( $_POST['utm_source'] ) ) ) : '';
+		$utm_medium      = isset( $_POST['utm_medium'] ) ? kt_sanitize_utm_value( sanitize_text_field( wp_unslash( $_POST['utm_medium'] ) ) ) : '';
+		$utm_campaign    = isset( $_POST['utm_campaign'] ) ? kt_sanitize_utm_value( sanitize_text_field( wp_unslash( $_POST['utm_campaign'] ) ) ) : '';
+		if ( '' === $utm_medium ) {
+			$utm_medium = $defaults['utm_medium'];
+		}
 
 		$weekly_on    = isset( $_POST['weekly_report_on'] ) ? 1 : 0;
 		$weekly_email = isset( $_POST['weekly_report_email'] ) ? sanitize_email( wp_unslash( $_POST['weekly_report_email'] ) ) : '';
@@ -423,6 +433,12 @@ function kt_konser_admin_page() {
 			'ticket_domains'      => $raw_domains,
 			'schema_enabled'      => $schema_enabled,
 			'schema_performer'    => $schema_performer,
+			'utm_ticket_enabled'   => $utm_ticket_on,
+			'utm_calendar_enabled' => $utm_calendar_on,
+			'utm_capture_enabled'  => $utm_capture_on,
+			'utm_source'           => $utm_source,
+			'utm_medium'           => $utm_medium,
+			'utm_campaign'         => $utm_campaign,
 			'weekly_report_on'    => $weekly_on,
 			'weekly_report_email' => $weekly_email,
 			'weekly_report_day'   => $weekly_day,
@@ -500,7 +516,7 @@ function kt_konser_admin_page() {
 			<p class="description">Aynı gün iki seans varsa <strong>2. Seans</strong> alanını doldurun; düğmede <code>12.00 ve 14.00</code> olarak gösterilir. Tek seans için 2. seansı boş bırakabilirsiniz.</p>
 
 			<form method="post" action="">
-				<?php wp_nonce_field( 'kt_conser_nonce_action', 'kt_conser_nonce' ); ?>
+				<?php wp_nonce_field( 'kt_concerts_nonce_action', 'kt_concerts_nonce' ); ?>
 
 				<table class="widefat fixed striped" id="kt-concerts-table" style="max-width: 1060px; margin-top: 10px;">
 					<thead>
@@ -906,6 +922,87 @@ function kt_konser_admin_page() {
 						</table>
 					</div>
 				</form>
+
+				<?php
+				$utm_rows = array();
+				foreach ( $stats as $utm_district_key => $utm_stat_row ) {
+					if ( empty( $utm_stat_row['utm'] ) || ! is_array( $utm_stat_row['utm'] ) ) {
+						continue;
+					}
+					foreach ( $utm_stat_row['utm'] as $utm_item ) {
+						$utm_rows[] = array(
+							'district' => isset( $utm_stat_row['label'] ) ? $utm_stat_row['label'] : $utm_district_key,
+							'source'   => isset( $utm_item['source'] ) ? $utm_item['source'] : '',
+							'medium'   => isset( $utm_item['medium'] ) ? $utm_item['medium'] : '',
+							'campaign' => isset( $utm_item['campaign'] ) ? $utm_item['campaign'] : '',
+							'visitors' => isset( $utm_item['visitors'] ) ? intval( $utm_item['visitors'] ) : 0,
+							'views'    => isset( $utm_item['views'] ) ? intval( $utm_item['views'] ) : 0,
+							'clicks'   => isset( $utm_item['clicks'] ) ? intval( $utm_item['clicks'] ) : 0,
+						);
+					}
+				}
+
+				usort(
+					$utm_rows,
+					function ( $a, $b ) {
+						if ( $a['visitors'] === $b['visitors'] ) {
+							return $b['views'] - $a['views'];
+						}
+						return $b['visitors'] - $a['visitors'];
+					}
+				);
+				$utm_row_total = count( $utm_rows );
+				$utm_rows      = array_slice( $utm_rows, 0, 200 );
+				?>
+				<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #0891b2; border-radius: 4px; padding: 16px 20px; margin-top: 20px;">
+					<h2 style="margin: 0 0 4px 0; font-size: 16px;">Trafik Kaynakları (UTM)</h2>
+					<p class="description" style="margin-top: 0;">
+						Yalnızca adreste <code>utm_source</code>, <code>utm_medium</code> veya <code>utm_campaign</code> bulunan ziyaretler listelenir (tüm zamanlar). Bilet tıklaması, aynı sayfa görüntülemesi sırasında yapılan tıklamadır.
+						<?php if ( empty( $styles['utm_capture_enabled'] ) ) : ?>
+							<strong style="color: #b32d2e;">Gelen UTM kaydı Ayarlar sekmesinde kapalı; yeni veri toplanmıyor.</strong>
+						<?php endif; ?>
+					</p>
+					<div class="kt-stats-table-wrap">
+						<table class="widefat striped kt-stats-table">
+							<thead>
+								<tr>
+									<th>Kaynak</th>
+									<th>Ortam</th>
+									<th>Kampanya</th>
+									<th>İlçe / Sayfa</th>
+									<th class="kt-col-num">Ziyaretçi</th>
+									<th class="kt-col-num">Gösterim</th>
+									<th class="kt-col-num">Bilet Tıklaması</th>
+									<th class="kt-col-num">CTR</th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php if ( empty( $utm_rows ) ) : ?>
+									<tr>
+										<td colspan="8" style="text-align: center; color: #666; padding: 20px;">Henüz UTM parametreli ziyaret kaydedilmedi. Örnek: <code><?php echo esc_html( home_url( '/urla-konseri/?utm_source=instagram&utm_medium=social&utm_campaign=urla' ) ); ?></code></td>
+									</tr>
+								<?php else : ?>
+									<?php foreach ( $utm_rows as $utm_row ) : ?>
+										<?php $utm_ctr = $utm_row['views'] > 0 ? number_format( ( $utm_row['clicks'] / $utm_row['views'] ) * 100, 1, ',', '.' ) : '0,0'; ?>
+										<tr>
+											<td><code><?php echo esc_html( '' !== $utm_row['source'] ? $utm_row['source'] : '—' ); ?></code></td>
+											<td><code><?php echo esc_html( '' !== $utm_row['medium'] ? $utm_row['medium'] : '—' ); ?></code></td>
+											<td><code><?php echo esc_html( '' !== $utm_row['campaign'] ? $utm_row['campaign'] : '—' ); ?></code></td>
+											<td><?php echo esc_html( $utm_row['district'] ); ?></td>
+											<td><?php echo esc_html( number_format_i18n( $utm_row['visitors'] ) ); ?></td>
+											<td><?php echo esc_html( number_format_i18n( $utm_row['views'] ) ); ?></td>
+											<td style="color: #15803d; font-weight: 600;"><?php echo esc_html( number_format_i18n( $utm_row['clicks'] ) ); ?></td>
+											<td>%<?php echo esc_html( $utm_ctr ); ?></td>
+										</tr>
+									<?php endforeach; ?>
+								<?php endif; ?>
+							</tbody>
+						</table>
+					</div>
+					<?php if ( $utm_row_total > count( $utm_rows ) ) : ?>
+						<p class="description">İlk <?php echo intval( count( $utm_rows ) ); ?> satır gösteriliyor (toplam <?php echo intval( $utm_row_total ); ?>).</p>
+					<?php endif; ?>
+				</div>
 			</div>
 
 		<?php else : ?>
@@ -1081,6 +1178,56 @@ function kt_konser_admin_page() {
 							<td>
 								<input type="text" id="schema_performer" name="schema_performer" value="<?php echo esc_attr( $styles['schema_performer'] ); ?>" class="regular-text" placeholder="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>">
 								<p class="description">Boş bırakılırsa site başlığı (<code><?php echo esc_html( get_bloginfo( 'name' ) ); ?></code>) kullanılır.</p>
+							</td>
+						</tr>
+					</table>
+				</div>
+
+				<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #0891b2; border-radius: 4px; padding: 16px 20px; margin-bottom: 20px;">
+					<h2 style="margin-top: 0;">UTM Parametreleri</h2>
+					<table class="form-table" role="presentation" style="margin-top: 0;">
+						<tr>
+							<th scope="row">Giden Bağlantılar</th>
+							<td>
+								<label style="display: block; margin-bottom: 6px;">
+									<input type="checkbox" name="utm_ticket_enabled" value="1" <?php checked( ! empty( $styles['utm_ticket_enabled'] ) ); ?>>
+									Bilet düğmesine ve otomatik takip edilen bilet alan adlarına giden bağlantılara UTM parametreleri ekle.
+								</label>
+								<label style="display: block;">
+									<input type="checkbox" name="utm_calendar_enabled" value="1" <?php checked( ! empty( $styles['utm_calendar_enabled'] ) ); ?>>
+									Takvime Ekle (Google Takvim / .ics) etkinlik açıklamasındaki sayfa bağlantısına UTM parametreleri ekle.
+								</label>
+								<p class="description">Bağlantıda zaten bir <code>utm_*</code> parametresi varsa değiştirilmez. Bilet bağlantıları şu biçimi alır: <code>?utm_source=<em>kaynak</em>&amp;utm_medium=<em>ortam</em>&amp;utm_campaign=<em>kampanya</em>&amp;utm_content=ticket-button</code>. Takvim bağlantıları için kaynak <code>google-calendar</code> veya <code>ics-file</code>, ortam <code>calendar</code> olur.</p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="utm_source">Kaynak (utm_source)</label></th>
+							<td>
+								<input type="text" id="utm_source" name="utm_source" value="<?php echo esc_attr( $styles['utm_source'] ); ?>" class="regular-text" placeholder="<?php echo esc_attr( kt_get_utm_settings()['source'] ); ?>">
+								<p class="description">Boş bırakılırsa site alan adı kullanılır. Yalnızca küçük harf, rakam, <code>.</code>, <code>_</code> ve <code>-</code> kabul edilir.</p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="utm_medium">Ortam (utm_medium)</label></th>
+							<td>
+								<input type="text" id="utm_medium" name="utm_medium" value="<?php echo esc_attr( $styles['utm_medium'] ); ?>" class="regular-text" placeholder="referral">
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="utm_campaign">Kampanya (utm_campaign)</label></th>
+							<td>
+								<input type="text" id="utm_campaign" name="utm_campaign" value="<?php echo esc_attr( $styles['utm_campaign'] ); ?>" class="regular-text" placeholder="(ilçe anahtarı)">
+								<p class="description">Boş bırakılırsa her bağlantı için ilgili ilçe anahtarı (örn. <code>urla</code>) kullanılır. Tüm turneyi tek kampanya altında toplamak için sabit bir değer girin (örn. <code>sonbahar-turnesi-2026</code>).</p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row">Gelen Bağlantılar</th>
+							<td>
+								<label>
+									<input type="checkbox" name="utm_capture_enabled" value="1" <?php checked( ! empty( $styles['utm_capture_enabled'] ) ); ?>>
+									Sayfaya <code>utm_source</code>, <code>utm_medium</code> ve <code>utm_campaign</code> ile gelen ziyaretleri ve bilet tıklamalarını <strong>İstatistikler &amp; Grafik</strong> sekmesinde kaynak bazında göster.
+								</label>
+								<p class="description">Her ilçe için en fazla <?php echo intval( KT_UTM_MAX_COMBOS ); ?> farklı kaynak/ortam/kampanya kombinasyonu saklanır; fazlası "(other)" altında toplanır.</p>
 							</td>
 						</tr>
 					</table>

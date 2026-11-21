@@ -1,6 +1,6 @@
 <?php
 /**
- * Konser Takvimi — Gutenberg Blokları (Shortcode'ların modern karşılıkları)
+ * Konser Takvimi — Gutenberg blocks (modern counterparts of the shortcodes).
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -21,7 +21,7 @@ function kt_register_gutenberg_blocks() {
 		true
 	);
 
-	// 1. Konser Takvimi Bloğu
+	// 1. Concert Calendar block
 	register_block_type(
 		'konser-takvimi/takvim',
 		array(
@@ -32,7 +32,7 @@ function kt_register_gutenberg_blocks() {
 		)
 	);
 
-	// 2. İlçe Yönlendirici & Takvime Ekle Bloğu
+	// 2. District Redirector & Add to Calendar block
 	register_block_type(
 		'konser-takvimi/ilce-yonlendir',
 		array(
@@ -41,15 +41,15 @@ function kt_register_gutenberg_blocks() {
 			'style'           => 'kt-frontend-css',
 			'render_callback' => 'kt_render_district_redirect_block',
 			'attributes'      => array(
-				'ilce'         => array(
+				'district'             => array(
 					'type'    => 'string',
 					'default' => '',
 				),
-				'hedef'        => array(
+				'redirect_target'      => array(
 					'type'    => 'string',
 					'default' => '',
 				),
-				'takvime_ekle' => array(
+				'show_calendar_button' => array(
 					'type'    => 'boolean',
 					'default' => true,
 				),
@@ -57,7 +57,7 @@ function kt_register_gutenberg_blocks() {
 		)
 	);
 
-	// 3. Bilet Butonu Bloğu
+	// 3. Ticket Button block
 	register_block_type(
 		'konser-takvimi/bilet-butonu',
 		array(
@@ -65,23 +65,23 @@ function kt_register_gutenberg_blocks() {
 			'editor_script'   => 'kt-blocks-editor-js',
 			'render_callback' => 'kt_render_ticket_button_block',
 			'attributes'      => array(
-				'url'   => array(
+				'url'         => array(
 					'type'    => 'string',
 					'default' => '',
 				),
-				'resim' => array(
+				'image'       => array(
 					'type'    => 'string',
 					'default' => '',
 				),
-				'ilce'  => array(
+				'district'    => array(
 					'type'    => 'string',
 					'default' => '',
 				),
-				'alt'   => array(
+				'alt'         => array(
 					'type'    => 'string',
 					'default' => 'Bilet Al',
 				),
-				'hedef' => array(
+				'link_target' => array(
 					'type'    => 'string',
 					'default' => '',
 				),
@@ -98,22 +98,22 @@ function kt_render_calendar_block( $attributes ) {
 }
 
 function kt_render_district_redirect_block( $attributes ) {
-	$show_cal = ! isset( $attributes['takvime_ekle'] ) || ! empty( $attributes['takvime_ekle'] );
+	$show_cal = ! isset( $attributes['show_calendar_button'] ) || ! empty( $attributes['show_calendar_button'] );
 	$atts     = array(
-		'ilce'         => isset( $attributes['ilce'] ) ? sanitize_text_field( $attributes['ilce'] ) : '',
-		'hedef'        => isset( $attributes['hedef'] ) ? sanitize_text_field( $attributes['hedef'] ) : '',
-		'takvime_ekle' => $show_cal ? '1' : '0',
+		'district'             => isset( $attributes['district'] ) ? sanitize_text_field( $attributes['district'] ) : '',
+		'redirect_target'      => isset( $attributes['redirect_target'] ) ? sanitize_text_field( $attributes['redirect_target'] ) : '',
+		'show_calendar_button' => $show_cal ? '1' : '0',
 	);
 	return kt_district_redirect_shortcode_output( $atts );
 }
 
 function kt_render_ticket_button_block( $attributes ) {
 	$atts = array(
-		'url'   => isset( $attributes['url'] ) ? esc_url_raw( $attributes['url'] ) : '',
-		'resim' => isset( $attributes['resim'] ) ? esc_url_raw( $attributes['resim'] ) : '',
-		'ilce'  => isset( $attributes['ilce'] ) ? sanitize_text_field( $attributes['ilce'] ) : '',
-		'alt'   => isset( $attributes['alt'] ) ? sanitize_text_field( $attributes['alt'] ) : 'Bilet Al',
-		'hedef' => isset( $attributes['hedef'] ) ? sanitize_text_field( $attributes['hedef'] ) : '',
+		'url'         => isset( $attributes['url'] ) ? esc_url_raw( $attributes['url'] ) : '',
+		'image'       => isset( $attributes['image'] ) ? esc_url_raw( $attributes['image'] ) : '',
+		'district'    => isset( $attributes['district'] ) ? sanitize_text_field( $attributes['district'] ) : '',
+		'alt'         => isset( $attributes['alt'] ) ? sanitize_text_field( $attributes['alt'] ) : 'Bilet Al',
+		'link_target' => isset( $attributes['link_target'] ) ? sanitize_text_field( $attributes['link_target'] ) : '',
 	);
 
 	$html = kt_ticket_button_shortcode( $atts );
@@ -124,7 +124,7 @@ function kt_render_ticket_button_block( $attributes ) {
 }
 
 /**
- * Gutenberg editör içinde ServerSideRender ile kartların statik önizlemesini oluşturur.
+ * Builds a static preview of the concert cards for the Gutenberg editor (used by ServerSideRender).
  */
 function kt_render_calendar_editor_preview() {
 	$all_events = get_option( KT_EVENTS_OPT, array() );

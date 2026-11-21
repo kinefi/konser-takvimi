@@ -1,6 +1,6 @@
 <?php
 /**
- * Konser Takvimi — Eklenti Kaldırma (Uninstall) Betiği
+ * Konser Takvimi — plugin uninstall script.
  */
 
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {

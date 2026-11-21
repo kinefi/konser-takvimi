@@ -133,15 +133,15 @@
 		upcomingEvents.forEach(function (event, index) {
 			var eventDate = new Date(event.datetime);
 			var eventYMD = getIstanbulYMD(eventDate);
-			var trDate = new Date(
+			var istanbulDate = new Date(
 				eventDate.toLocaleString('en-US', { timeZone: 'Europe/Istanbul' })
 			);
 
-			var day = trDate.getDate();
-			var month = monthNames[trDate.getMonth()];
-			var dayName = dayNames[trDate.getDay()];
-			var hours = String(trDate.getHours()).padStart(2, '0');
-			var minutes = String(trDate.getMinutes()).padStart(2, '0');
+			var day = istanbulDate.getDate();
+			var month = monthNames[istanbulDate.getMonth()];
+			var dayName = dayNames[istanbulDate.getDay()];
+			var hours = String(istanbulDate.getHours()).padStart(2, '0');
+			var minutes = String(istanbulDate.getMinutes()).padStart(2, '0');
 
 			var formattedTime1 = hours + '.' + minutes;
 			var timeText = formattedTime1;

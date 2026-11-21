@@ -9,7 +9,7 @@
 	var ToggleControl = wp.components.ToggleControl;
 	var ServerSideRender = wp.serverSideRender;
 
-	// 1. Blok: Konser Takvimi
+	// Block 1: Concert Calendar
 	registerBlockType('konser-takvimi/takvim', {
 		title: 'Konser Takvimi',
 		description: 'Aktif ve yaklaşan tüm konserleri Bugün/Yarın rozetleriyle renkli kart ızgarası halinde listeler.',
@@ -31,7 +31,7 @@
 		}
 	});
 
-	// 2. Blok: İlçe Konser Kontrolü, Takvime Ekle & Yönlendirme
+	// Block 2: District concert check, Add to Calendar & redirect
 	registerBlockType('konser-takvimi/ilce-yonlendir', {
 		title: 'Konser İlçe Yönlendirici & Takvime Ekle',
 		description: 'İlçede aktif konser varsa Takvime Ekle düğmesini ve analitiği çalıştırır; yoksa ziyaretçiyi hedef sayfaya yönlendirir.',
@@ -39,15 +39,15 @@
 		category: 'widgets',
 		keywords: ['ilçe', 'yönlendir', 'takvime ekle', 'konser', 'analitik'],
 		attributes: {
-			ilce: {
+			district: {
 				type: 'string',
 				default: ''
 			},
-			hedef: {
+			redirect_target: {
 				type: 'string',
 				default: ''
 			},
-			takvime_ekle: {
+			show_calendar_button: {
 				type: 'boolean',
 				default: true
 			}
@@ -68,25 +68,25 @@
 						{ title: 'İlçe Sayfası & Takvime Ekle Ayarları', initialOpen: true },
 						el(TextControl, {
 							label: 'İlçe Slug (Boş bırakılırsa sayfa slug kullanılır)',
-							value: attributes.ilce,
+							value: attributes.district,
 							placeholder: 'orn: kadikoy',
 							onChange: function (val) {
-								setAttributes({ ilce: val });
+								setAttributes({ district: val });
 							}
 						}),
 						el(TextControl, {
 							label: 'Yönlendirme Hedefi (Boş bırakılırsa genel ayar kullanılır)',
-							value: attributes.hedef,
+							value: attributes.redirect_target,
 							placeholder: '/konserler',
 							onChange: function (val) {
-								setAttributes({ hedef: val });
+								setAttributes({ redirect_target: val });
 							}
 						}),
 						el(ToggleControl, {
 							label: 'Takvime Ekle düğmesini göster (Google & .ics)',
-							checked: attributes.takvime_ekle !== false,
+							checked: attributes.show_calendar_button !== false,
 							onChange: function (checked) {
-								setAttributes({ takvime_ekle: checked });
+								setAttributes({ show_calendar_button: checked });
 							}
 						})
 					)
@@ -106,7 +106,7 @@
 		}
 	});
 
-	// 3. Blok: Konser Bilet Butonu
+	// Block 3: Concert Ticket Button
 	registerBlockType('konser-takvimi/bilet-butonu', {
 		title: 'Konser Bilet Butonu',
 		description: 'CTR tıklama analitiği ile entegre bilet satın alma görsel butonu.',
@@ -118,11 +118,11 @@
 				type: 'string',
 				default: ''
 			},
-			resim: {
+			image: {
 				type: 'string',
 				default: ''
 			},
-			ilce: {
+			district: {
 				type: 'string',
 				default: ''
 			},
@@ -130,7 +130,7 @@
 				type: 'string',
 				default: 'Bilet Al'
 			},
-			hedef: {
+			link_target: {
 				type: 'string',
 				default: ''
 			}
@@ -139,7 +139,7 @@
 			var attributes = props.attributes;
 			var setAttributes = props.setAttributes;
 			var blockProps = useBlockProps();
-			var openInNewTab = attributes.hedef === '_blank';
+			var openInNewTab = attributes.link_target === '_blank';
 
 			return el(
 				Fragment,
@@ -160,18 +160,18 @@
 						}),
 						el(TextControl, {
 							label: 'Buton Görsel URL (Boş bırakılırsa varsayılan görsel)',
-							value: attributes.resim,
+							value: attributes.image,
 							placeholder: 'https://...',
 							onChange: function (val) {
-								setAttributes({ resim: val });
+								setAttributes({ image: val });
 							}
 						}),
 						el(TextControl, {
 							label: 'İlçe Analitik Anahtarı (Boş bırakılırsa sayfa slug)',
-							value: attributes.ilce,
+							value: attributes.district,
 							placeholder: 'orn: bornova',
 							onChange: function (val) {
-								setAttributes({ ilce: val });
+								setAttributes({ district: val });
 							}
 						}),
 						el(TextControl, {
@@ -185,7 +185,7 @@
 							label: 'Bağlantıyı yeni sekmede aç (_blank)',
 							checked: openInNewTab,
 							onChange: function (checked) {
-								setAttributes({ hedef: checked ? '_blank' : '' });
+								setAttributes({ link_target: checked ? '_blank' : '' });
 							}
 						})
 					)

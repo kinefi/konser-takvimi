@@ -166,7 +166,7 @@
 #ktConcertGridContainer .style-12 .date-part { background-color: #efabd4; }
 #ktConcertGridContainer .style-12 .city-part { background-color: #ffeef8; }
 
-/* Takvime Ekle Düğmesi */
+/* Add to Calendar button */
 .kt-add-calendar-wrap {
 	display: inline-block;
 	margin: 10px 0 14px 0;

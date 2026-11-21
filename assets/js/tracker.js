@@ -49,6 +49,79 @@
 		}
 	}
 
+	// Reads utm_source / utm_medium / utm_campaign from the current page URL (only when capturing is enabled).
+	function readIncomingUtm() {
+		var found = {};
+		if (typeof ktTrackerData === 'undefined' || parseInt(ktTrackerData.captureUtm, 10) !== 1) {
+			return found;
+		}
+
+		try {
+			var params = new URLSearchParams(window.location.search);
+			['utm_source', 'utm_medium', 'utm_campaign'].forEach(function (name) {
+				var value = params.get(name);
+				if (value) {
+					found[name] = value.slice(0, 100);
+				}
+			});
+		} catch (err) {
+			// URLSearchParams is unavailable: skip UTM capture silently.
+		}
+
+		return found;
+	}
+
+	// Adds utm_* parameters to an external ticket link. Existing utm_* values on the link are never overwritten.
+	function decorateTicketLink(link) {
+		var cfg = (typeof ktTrackerData !== 'undefined') ? ktTrackerData.utm : null;
+		if (!cfg || parseInt(cfg.enabled, 10) !== 1 || !cfg.source || !link || !link.href) {
+			return;
+		}
+
+		var url;
+		try {
+			url = new URL(link.href, window.location.href);
+		} catch (err) {
+			return;
+		}
+
+		// Only external http(s) links are tagged; internal links must keep the visitor's original traffic source.
+		if ((url.protocol !== 'http:' && url.protocol !== 'https:') || url.hostname === window.location.hostname) {
+			return;
+		}
+
+		var district = link.getAttribute('data-kt-district') || ktTrackerData.defaultDistrict || '';
+		var values = {
+			utm_source: cfg.source,
+			utm_medium: cfg.medium,
+			utm_campaign: cfg.campaign || district,
+			utm_content: link.classList.contains('kt-ticket-btn-link') ? 'ticket-button' : 'ticket-link'
+		};
+
+		var changed = false;
+		Object.keys(values).forEach(function (name) {
+			if (values[name] && !url.searchParams.has(name)) {
+				url.searchParams.set(name, values[name]);
+				changed = true;
+			}
+		});
+
+		if (changed) {
+			link.href = url.toString();
+		}
+	}
+
+	function decorateAllTicketLinks() {
+		if (typeof ktTrackerData === 'undefined') {
+			return;
+		}
+		Array.prototype.forEach.call(document.querySelectorAll('a[href]'), function (link) {
+			if (isTicketLink(link)) {
+				decorateTicketLink(link);
+			}
+		});
+	}
+
 	function flushActiveDuration() {
 		if (durationSent || typeof ktTrackerData === 'undefined' || parseInt(ktTrackerData.trackView, 10) !== 1) {
 			return;
@@ -107,9 +180,9 @@
 	if (typeof ktTrackerData !== 'undefined' && parseInt(ktTrackerData.trackView, 10) === 1 && ktTrackerData.defaultDistrict) {
 		var recordViewOnce = function () {
 			var isUnique = checkDailyUniqueVisitor(ktTrackerData.defaultDistrict, ktTrackerData.todayStr);
-			sendStatEvent('views', ktTrackerData.defaultDistrict, ktTrackerData.defaultLabel, {
-				is_unique: isUnique
-			});
+			var viewParams = readIncomingUtm();
+			viewParams.is_unique = isUnique;
+			sendStatEvent('views', ktTrackerData.defaultDistrict, ktTrackerData.defaultLabel, viewParams);
 		};
 
 		if (document.readyState === 'loading') {
@@ -146,7 +219,15 @@
 		var district = link.getAttribute('data-kt-district') || ktTrackerData.defaultDistrict || '';
 		var label = link.getAttribute('data-kt-label') || ktTrackerData.defaultLabel || '';
 
-		sendStatEvent('clicks', district, label);
+		decorateTicketLink(link);
+		sendStatEvent('clicks', district, label, readIncomingUtm());
 		flushActiveDuration();
 	});
+
+	// Tag ticket links on load so that "open in new tab" and copied links carry the UTM parameters too.
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', decorateAllTicketLinks);
+	} else {
+		decorateAllTicketLinks();
+	}
 })();
