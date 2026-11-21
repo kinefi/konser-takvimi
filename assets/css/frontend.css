@@ -80,6 +80,46 @@
 	align-items: center;
 	padding: 10px;
 	text-align: center;
+	position: relative;
+}
+
+#ktConcertGridContainer .concert-badge .kt-day-ribbon {
+	position: absolute;
+	top: 6px;
+	right: 8px;
+	font-size: 0.65rem;
+	font-weight: 800;
+	letter-spacing: 0.6px;
+	padding: 2px 8px;
+	border-radius: 999px;
+	line-height: 1.3;
+	text-transform: uppercase;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.14);
+	pointer-events: none;
+}
+
+#ktConcertGridContainer .concert-badge .kt-day-ribbon.is-today {
+	background-color: #dc2626;
+	color: #ffffff;
+	animation: ktPulseBadge 2s infinite;
+}
+
+#ktConcertGridContainer .concert-badge .kt-day-ribbon.is-tomorrow {
+	background-color: #d97706;
+	color: #ffffff;
+}
+
+#ktConcertGridContainer .concert-badge.has-day-ribbon .city-part {
+	padding-top: 20px;
+}
+
+@keyframes ktPulseBadge {
+	0%, 100% {
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(1.06);
+	}
 }
 
 #ktConcertGridContainer .concert-badge .city-part .city-name {
@@ -125,6 +165,98 @@
 #ktConcertGridContainer .style-11 .city-part { background-color: #d8efd9; }
 #ktConcertGridContainer .style-12 .date-part { background-color: #efabd4; }
 #ktConcertGridContainer .style-12 .city-part { background-color: #ffeef8; }
+
+/* Takvime Ekle Düğmesi */
+.kt-add-calendar-wrap {
+	display: inline-block;
+	margin: 10px 0 14px 0;
+	font-family: 'Quicksand', system-ui, -apple-system, sans-serif;
+	position: relative;
+}
+
+.kt-cal-dropdown {
+	position: relative;
+	display: inline-block;
+}
+
+.kt-cal-trigger {
+	list-style: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 18px;
+	background: #1e293b;
+	color: #ffffff;
+	border-radius: 999px;
+	font-size: 0.95rem;
+	font-weight: 700;
+	cursor: pointer;
+	user-select: none;
+	box-shadow: 0 4px 12px rgba(15, 23, 42, 0.14);
+	transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.kt-cal-trigger::-webkit-details-marker {
+	display: none;
+}
+
+.kt-cal-trigger:hover {
+	background: #0f172a;
+	transform: translateY(-1px);
+}
+
+.kt-cal-dropdown[open] .kt-cal-chevron {
+	transform: rotate(180deg);
+}
+
+.kt-cal-menu {
+	position: absolute;
+	top: calc(100% + 8px);
+	left: 0;
+	min-width: 245px;
+	background: #ffffff;
+	border: 1px solid #e2e8f0;
+	border-radius: 14px;
+	box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16);
+	padding: 8px;
+	z-index: 999;
+}
+
+.kt-cal-session-group + .kt-cal-session-group {
+	border-top: 1px solid #f1f5f9;
+	margin-top: 6px;
+	padding-top: 6px;
+}
+
+.kt-cal-session-title {
+	font-size: 0.78rem;
+	font-weight: 700;
+	color: #64748b;
+	padding: 4px 10px;
+}
+
+.kt-cal-option {
+	display: block;
+	width: 100%;
+	text-align: left;
+	padding: 9px 12px;
+	border: none;
+	background: transparent;
+	color: #0f172a;
+	font-family: inherit;
+	font-size: 0.9rem;
+	font-weight: 600;
+	text-decoration: none;
+	border-radius: 8px;
+	cursor: pointer;
+	box-sizing: border-box;
+	transition: background-color 0.15s ease;
+}
+
+.kt-cal-option:hover {
+	background: #f1f5f9;
+	color: #0f172a;
+}
 
 @media (max-width: 540px) {
 	#ktConcertGridContainer .kt-concert-grid {

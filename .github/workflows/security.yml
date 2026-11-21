@@ -13,7 +13,6 @@ permissions:
   actions: read
 
 jobs:
-# 1. KATMAN: WordPress Güvenlik ve Kod Standartları (PHPCS + WPCS)
   wp-security-standards:
     name: WPCS & Security Audit
     runs-on: ubuntu-latest
@@ -38,7 +37,6 @@ jobs:
             --extensions=php \
             --ignore=vendor/* .
 
-  # 2. KATMAN: Derin PHP & WP Semantik Analiz (Semgrep)
   sast-semgrep:
     name: SAST (PHP & WordPress Rules)
     runs-on: ubuntu-latest
@@ -50,7 +48,6 @@ jobs:
         run: |
           semgrep scan --config p/php --config p/wordpress --error
 
-  # 3. KATMAN: Koda Unutulmuş API Key / Token Taraması (Açık Kaynak Gitleaks CLI)
   secret-scan-gitleaks:
     name: Secret Scan (Gitleaks CLI)
     runs-on: ubuntu-latest

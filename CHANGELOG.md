@@ -1,5 +1,12 @@
 # Değişiklik Günlüğü (Changelog)
 
+## [3.6.0] - 2026-11-21
+### Eklenenler & İyileştirilenler
+- **Bugün & Yarın Rozetleri:** Konser kartlarının sağ üst köşesine İstanbul saat dilimine (`Europe/Istanbul`) göre önbellek dostu **BUGÜN** ve **YARIN** rozetleri eklendi.
+- **Takvime Ekle Düğmesi (Google Takvim & Apple/Outlook `.ics`):** İlçe konser sayfalarına aktif konser bulunduğunda tek tıkla **Google Takvim** açan veya tarayıcıda anında standart `.ics` takvim dosyası indiren **Takvime Ekle** açılır düğmesi entegre edildi (çift seanslı konserlerde her iki seans ayrı seçenek olarak sunulur).
+- **Gutenberg Blokları & Geriye Dönük Uyumluluk:** `konser-takvimi/takvim`, `konser-takvimi/ilce-yonlendir` ve `konser-takvimi/bilet-butonu` Gutenberg blokları eklendi; mevcut kısa kodlar (`[konser_takvimi]`, `[konser_ilce_yonlendir]`, `[konser_bilet_butonu]`) geriye dönük uyumlu (`@deprecated`) olarak korundu.
+- **Google Schema (`MusicEvent`) Alan Tamamlama:** Google Search Console zengin sonuç doğrulaması için `MusicEvent` şemasına `description` ve `offers.validFrom` alanları eklendi.
+
 ## [3.5.0] - 2026-11-20
 ### Eklenenler & İyileştirilenler
 - **Google Schema (JSON-LD `MusicEvent`) Desteği:** `[konser_takvimi]` veya `[konser_ilce_yonlendir]` kısa kodlarının bulunduğu sayfalarda `<head>` içerisine otomatik olarak Google `MusicEvent` yapılandırılmış verisi (`startDate`, `endDate`, `location`, `performer`, `offers`) eklendi; Ayarlar sekmesine şema açma/kapama ve sanatçı/grup adı alanı eklendi.

@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Konser Takvimi
- * Description: Veritabanı tabanlı, çift seans destekli, Google Schema (MusicEvent) JSON-LD üreten, geçmiş konserleri otomatik arşivleyen, önbellek korumalı 302 ilçe yönlendirmesi, CTR dönüşüm sıralamalı analitik ve raporlama sunan WordPress eklentisi.
- * Version: 3.5.0
+ * Description: Veritabanı tabanlı, çift seans destekli, Google Schema (MusicEvent) JSON-LD üreten, geçmiş konserleri otomatik arşivleyen, önbellek korumalı 302 ilçe yönlendirmesi, Takvime Ekle düğmesi, Gutenberg blokları ve CTR dönüşüm sıralamalı analitik sunan WordPress eklentisi.
+ * Version: 3.6.0
  * Author: Şubadap Çocuk
  * License: GPL-3.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -12,28 +12,50 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'KT_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
-define( 'KT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'KT_PLUGIN_VER', '3.5.0' );
-define( 'KT_EVENTS_OPT', 'subadap_konserler_list' );
-define( 'KT_STYLES_OPT', 'subadap_konserler_styles' );
-define( 'KT_STATS_OPT', 'subadap_konserler_stats' );
-define( 'KT_CRON_HOOK', 'kt_weekly_stats_report_event' );
+if ( ! defined( 'KT_PLUGIN_DIR' ) ) {
+	define( 'KT_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+}
+if ( ! defined( 'KT_PLUGIN_URL' ) ) {
+	define( 'KT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+}
+if ( ! defined( 'KT_PLUGIN_VER' ) ) {
+	define( 'KT_PLUGIN_VER', '3.6.0' );
+}
+if ( ! defined( 'KT_EVENTS_OPT' ) ) {
+	define( 'KT_EVENTS_OPT', 'subadap_konserler_list' );
+}
+if ( ! defined( 'KT_STYLES_OPT' ) ) {
+	define( 'KT_STYLES_OPT', 'subadap_konserler_styles' );
+}
+if ( ! defined( 'KT_STATS_OPT' ) ) {
+	define( 'KT_STATS_OPT', 'subadap_konserler_stats' );
+}
+if ( ! defined( 'KT_CRON_HOOK' ) ) {
+	define( 'KT_CRON_HOOK', 'kt_weekly_stats_report_event' );
+}
+
+function kt_get_istanbul_timezone() {
+	try {
+		return new DateTimeZone( 'Europe/Istanbul' );
+	} catch ( Exception $e ) {
+		return new DateTimeZone( '+03:00' );
+	}
+}
 
 function kt_get_istanbul_timestamp() {
-	$tz  = new DateTimeZone( 'Europe/Istanbul' );
+	$tz  = kt_get_istanbul_timezone();
 	$now = new DateTime( 'now', $tz );
 	return $now->getTimestamp();
 }
 
 function kt_get_istanbul_datetime_str() {
-	$tz  = new DateTimeZone( 'Europe/Istanbul' );
+	$tz  = kt_get_istanbul_timezone();
 	$now = new DateTime( 'now', $tz );
 	return $now->format( 'Y-m-d H:i' );
 }
 
 function kt_get_istanbul_date_str( $offset_days = 0 ) {
-	$tz  = new DateTimeZone( 'Europe/Istanbul' );
+	$tz  = kt_get_istanbul_timezone();
 	$now = new DateTime( 'now', $tz );
 	if ( 0 !== intval( $offset_days ) ) {
 		$now->modify( intval( $offset_days ) . ' days' );
@@ -194,7 +216,7 @@ function kt_sync_weekly_cron_schedule( $force_reschedule = false ) {
 	wp_clear_scheduled_hook( KT_CRON_HOOK );
 
 	$day_name = ! empty( $styles['weekly_report_day'] ) ? $styles['weekly_report_day'] : 'monday';
-	$tz       = new DateTimeZone( 'Europe/Istanbul' );
+	$tz       = kt_get_istanbul_timezone();
 	$target   = new DateTime( 'next ' . $day_name . ' 09:00:00', $tz );
 
 	wp_schedule_event( $target->getTimestamp(), 'kt_weekly', KT_CRON_HOOK );
@@ -222,6 +244,8 @@ register_deactivation_hook( __FILE__, 'kt_deactivate_plugin' );
 function kt_deactivate_plugin() {
 	wp_clear_scheduled_hook( KT_CRON_HOOK );
 }
+
+require_once KT_PLUGIN_DIR . 'includes/blocks.php';
 
 if ( is_admin() ) {
 	require_once KT_PLUGIN_DIR . 'includes/admin-page.php';
@@ -474,12 +498,12 @@ function kt_build_stats_report_bundle( $days_span = 7, $render_direct = false ) 
 		$period_label = 'Tüm Zamanlar (Kümülatif)';
 	}
 
-	$rows           = array();
-	$sum_views      = 0;
-	$sum_visitors   = 0;
-	$sum_clicks     = 0;
-	$sum_seconds    = 0;
-	$sum_sessions   = 0;
+	$rows         = array();
+	$sum_views    = 0;
+	$sum_visitors = 0;
+	$sum_clicks   = 0;
+	$sum_seconds  = 0;
+	$sum_sessions = 0;
 
 	foreach ( $stats as $key => $item ) {
 		$all_v   = isset( $item['views'] ) ? intval( $item['views'] ) : 0;
@@ -665,7 +689,6 @@ function kt_send_weekly_stats_email( $override_email = '' ) {
 	return wp_mail( $recipient, $subject, $bundle['html_card'], $headers );
 }
 
-
 /**
  * Belirli bir ilçe / slug için yaklaşan tüm aktif konser kayıtlarını döndürür.
  */
@@ -731,6 +754,7 @@ function kt_build_music_event_schema_item( $event, $performer_name, $ticket_url 
 		'@context'            => 'https://schema.org',
 		'@type'               => 'MusicEvent',
 		'name'                => $performer_name . ' — ' . $city_name . ' Konseri',
+		'description'         => $performer_name . ' ' . $city_name . ' konseri etkinlik ve bilet bilgileri.',
 		'startDate'           => $start_iso,
 		'endDate'             => $end_iso,
 		'eventStatus'         => 'https://schema.org/EventScheduled',
@@ -760,11 +784,12 @@ function kt_build_music_event_schema_item( $event, $performer_name, $ticket_url 
 		$item['image'] = array( esc_url_raw( $image_url ) );
 	}
 
-	$offer_url = ! empty( $ticket_url ) ? $ticket_url : $event_url;
+	$offer_url      = ! empty( $ticket_url ) ? $ticket_url : $event_url;
 	$item['offers'] = array(
 		'@type'         => 'Offer',
 		'url'           => esc_url_raw( $offer_url ),
 		'availability'  => 'https://schema.org/InStock',
+		'validFrom'     => gmdate( 'Y-01-01\T00:00:00+03:00' ),
 		'priceCurrency' => 'TRY',
 	);
 
@@ -772,7 +797,7 @@ function kt_build_music_event_schema_item( $event, $performer_name, $ticket_url 
 }
 
 /**
- * [konser_takvimi] veya [konser_ilce_yonlendir] bulunan sayfalarda <head> içine Google MusicEvent JSON-LD ekler.
+ * Konser Takvimi veya İlçe Yönlendirici blok/kısa kodlarının bulunduğu sayfalarda <head> içine Google MusicEvent JSON-LD ekler.
  */
 add_action( 'wp_head', 'kt_output_music_event_json_ld', 20 );
 function kt_output_music_event_json_ld() {
@@ -790,8 +815,11 @@ function kt_output_music_event_json_ld() {
 		return;
 	}
 
-	$has_calendar = has_shortcode( $post->post_content, 'konser_takvimi' ) || has_shortcode( $post->post_content, 'subadap_konserler' );
-	$has_district = has_shortcode( $post->post_content, 'konser_ilce_yonlendir' );
+	$has_calendar = has_block( 'konser-takvimi/takvim', $post )
+		|| has_shortcode( $post->post_content, 'konser_takvimi' )
+		|| has_shortcode( $post->post_content, 'subadap_konserler' );
+	$has_district = has_block( 'konser-takvimi/ilce-yonlendir', $post )
+		|| has_shortcode( $post->post_content, 'konser_ilce_yonlendir' );
 
 	if ( ! $has_calendar && ! $has_district ) {
 		return;
@@ -811,22 +839,36 @@ function kt_output_music_event_json_ld() {
 	$seen_keys    = array();
 
 	if ( $has_district ) {
+		$district_keys = array();
+
+		if ( has_block( 'konser-takvimi/ilce-yonlendir', $post ) ) {
+			$blocks = parse_blocks( $post->post_content );
+			foreach ( $blocks as $blk ) {
+				if ( isset( $blk['blockName'] ) && 'konser-takvimi/ilce-yonlendir' === $blk['blockName'] ) {
+					$district_keys[] = ! empty( $blk['attrs']['ilce'] ) ? $blk['attrs']['ilce'] : $post->post_name;
+				}
+			}
+		}
+
 		$pattern = get_shortcode_regex( array( 'konser_ilce_yonlendir' ) );
 		if ( preg_match_all( '/' . $pattern . '/s', $post->post_content, $matches, PREG_SET_ORDER ) ) {
 			foreach ( $matches as $match ) {
-				$atts       = shortcode_atts( array( 'ilce' => '' ), shortcode_parse_atts( $match[3] ), 'konser_ilce_yonlendir' );
-				$lookup_key = ! empty( $atts['ilce'] ) ? $atts['ilce'] : $post->post_name;
-				$events     = kt_get_upcoming_events_for_target( $lookup_key );
-				foreach ( $events as $ev ) {
-					$dedup = $ev['datetime'] . '|' . $ev['slug'];
-					if ( isset( $seen_keys[ $dedup ] ) ) {
-						continue;
-					}
-					$seen_keys[ $dedup ] = true;
-					$built               = kt_build_music_event_schema_item( $ev, $performer_name, $ticket_url, $image_url, get_permalink( $post->ID ) );
-					if ( $built ) {
-						$schema_items[] = $built;
-					}
+				$atts            = shortcode_atts( array( 'ilce' => '' ), shortcode_parse_atts( $match[3] ), 'konser_ilce_yonlendir' );
+				$district_keys[] = ! empty( $atts['ilce'] ) ? $atts['ilce'] : $post->post_name;
+			}
+		}
+
+		foreach ( array_unique( $district_keys ) as $lookup_key ) {
+			$events = kt_get_upcoming_events_for_target( $lookup_key );
+			foreach ( $events as $ev ) {
+				$dedup = $ev['datetime'] . '|' . $ev['slug'];
+				if ( isset( $seen_keys[ $dedup ] ) ) {
+					continue;
+				}
+				$seen_keys[ $dedup ] = true;
+				$built               = kt_build_music_event_schema_item( $ev, $performer_name, $ticket_url, $image_url, get_permalink( $post->ID ) );
+				if ( $built ) {
+					$schema_items[] = $built;
 				}
 			}
 		}
@@ -874,44 +916,12 @@ function kt_output_music_event_json_ld() {
  * Belirli bir ilçe / slug için yaklaşan aktif konser olup olmadığını kontrol eder.
  */
 function kt_has_upcoming_concert_for_target( $target ) {
-	$target_slug = sanitize_title( $target );
-	if ( empty( $target_slug ) ) {
-		return false;
-	}
-
-	$base_target = preg_replace( '/-(konseri|konser)$/', '', $target_slug );
-
-	$all_events = get_option( KT_EVENTS_OPT, array() );
-	if ( ! is_array( $all_events ) || empty( $all_events ) ) {
-		return false;
-	}
-
-	$now_ts = kt_get_istanbul_timestamp();
-
-	foreach ( $all_events as $event ) {
-		$end_ts = kt_get_event_end_timestamp( $event );
-		if ( false === $end_ts || $end_ts < $now_ts ) {
-			continue;
-		}
-
-		$ev_slug      = isset( $event['slug'] ) ? sanitize_title( $event['slug'] ) : '';
-		$ev_city_slug = isset( $event['city'] ) ? sanitize_title( $event['city'] ) : '';
-		$ev_base_slug = preg_replace( '/-(konseri|konser)$/', '', $ev_slug );
-
-		if (
-			$ev_slug === $target_slug ||
-			$ev_city_slug === $target_slug ||
-			( ! empty( $base_target ) && ( $ev_base_slug === $base_target || $ev_city_slug === $base_target ) )
-		) {
-			return true;
-		}
-	}
-
-	return false;
+	$events = kt_get_upcoming_events_for_target( $target );
+	return ! empty( $events );
 }
 
 /**
- * Yönlendirme hedef URL'sini çözümler (kısa kod parametresi -> ayarlar -> /konserler).
+ * Yönlendirme hedef URL'sini çözümler (parametre -> ayarlar -> /konserler).
  */
 function kt_resolve_redirect_url( $custom_target = '' ) {
 	$styles         = kt_get_style_settings();
@@ -926,8 +936,8 @@ function kt_resolve_redirect_url( $custom_target = '' ) {
 }
 
 /**
- * [konser_ilce_yonlendir] kısa kodunu sayfa HTML'i gönderilmeden önce yakalar:
- * Yaklaşan konser yoksa belirlenen sayfaya yönlendirir.
+ * İlçe yönlendirici blok veya kısa kodunu sayfa HTML'i gönderilmeden önce yakalar:
+ * Yaklaşan konser yoksa belirlenen sayfaya 302 ile yönlendirir.
  */
 add_action( 'template_redirect', 'kt_handle_district_redirect_shortcode' );
 function kt_handle_district_redirect_shortcode() {
@@ -940,7 +950,10 @@ function kt_handle_district_redirect_shortcode() {
 		return;
 	}
 
-	if ( ! has_shortcode( $post->post_content, 'konser_ilce_yonlendir' ) ) {
+	$has_redirect_block = has_block( 'konser-takvimi/ilce-yonlendir', $post );
+	$has_redirect_sc    = has_shortcode( $post->post_content, 'konser_ilce_yonlendir' );
+
+	if ( ! $has_redirect_block && ! $has_redirect_sc ) {
 		return;
 	}
 
@@ -952,54 +965,224 @@ function kt_handle_district_redirect_shortcode() {
 		return;
 	}
 
-	$pattern = get_shortcode_regex( array( 'konser_ilce_yonlendir' ) );
-	if ( preg_match_all( '/' . $pattern . '/s', $post->post_content, $matches, PREG_SET_ORDER ) ) {
-		foreach ( $matches as $match ) {
-			$atts = shortcode_parse_atts( $match[3] );
-			$atts = shortcode_atts(
-				array(
-					'ilce'  => '',
-					'hedef' => '',
-				),
-				$atts,
-				'konser_ilce_yonlendir'
-			);
+	$targets_to_check = array();
 
-			$lookup_key = ! empty( $atts['ilce'] ) ? $atts['ilce'] : $post->post_name;
-
-			if ( ! kt_has_upcoming_concert_for_target( $lookup_key ) ) {
-				if ( ! defined( 'DONOTCACHEPAGE' ) ) {
-					define( 'DONOTCACHEPAGE', true );
-				}
-				nocache_headers();
-				$redirect_url = kt_resolve_redirect_url( $atts['hedef'] );
-				wp_safe_redirect( $redirect_url, 302 );
-				exit;
+	if ( $has_redirect_block ) {
+		$blocks = parse_blocks( $post->post_content );
+		foreach ( $blocks as $blk ) {
+			if ( isset( $blk['blockName'] ) && 'konser-takvimi/ilce-yonlendir' === $blk['blockName'] ) {
+				$targets_to_check[] = array(
+					'ilce'  => isset( $blk['attrs']['ilce'] ) ? $blk['attrs']['ilce'] : '',
+					'hedef' => isset( $blk['attrs']['hedef'] ) ? $blk['attrs']['hedef'] : '',
+				);
 			}
+		}
+	}
+
+	if ( $has_redirect_sc ) {
+		$pattern = get_shortcode_regex( array( 'konser_ilce_yonlendir' ) );
+		if ( preg_match_all( '/' . $pattern . '/s', $post->post_content, $matches, PREG_SET_ORDER ) ) {
+			foreach ( $matches as $match ) {
+				$atts               = shortcode_parse_atts( $match[3] );
+				$atts               = shortcode_atts(
+					array(
+						'ilce'  => '',
+						'hedef' => '',
+					),
+					$atts,
+					'konser_ilce_yonlendir'
+				);
+				$targets_to_check[] = $atts;
+			}
+		}
+	}
+
+	foreach ( $targets_to_check as $item_atts ) {
+		$lookup_key = ! empty( $item_atts['ilce'] ) ? $item_atts['ilce'] : $post->post_name;
+
+		if ( ! kt_has_upcoming_concert_for_target( $lookup_key ) ) {
+			nocache_headers();
+			$redirect_url = kt_resolve_redirect_url( $item_atts['hedef'] );
+			wp_safe_redirect( $redirect_url, 302 );
+			exit;
 		}
 	}
 }
 
+/**
+ * İlçe konser sayfası için "Takvime Ekle" (Google Takvim & Apple/Outlook .ics) düğmesi HTML'ini üretir.
+ */
+function kt_render_add_to_calendar_widget( $events, $page_url = '' ) {
+	if ( empty( $events ) || ! is_array( $events ) ) {
+		return '';
+	}
+
+	$styles         = kt_get_style_settings();
+	$performer_name = ! empty( $styles['schema_performer'] )
+		? sanitize_text_field( $styles['schema_performer'] )
+		: wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
+
+	$months_tr = array( '', 'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık' );
+	$tz        = kt_get_istanbul_timezone();
+	$utc_tz    = new DateTimeZone( 'UTC' );
+
+	$sessions = array();
+	foreach ( $events as $ev ) {
+		if ( empty( $ev['datetime'] ) || empty( $ev['city'] ) ) {
+			continue;
+		}
+		$city_name = sanitize_text_field( $ev['city'] );
+		$title     = $performer_name . ' — ' . $city_name . ' Konseri';
+		$ev_slug   = isset( $ev['slug'] ) ? sanitize_title( $ev['slug'] ) : sanitize_title( $city_name . '-konseri' );
+		$loc_url   = ! empty( $page_url ) ? $page_url : home_url( '/' . ltrim( $ev_slug, '/' ) . '/' );
+		$desc      = $performer_name . ' ' . $city_name . ' konseri. Detaylar ve bilet: ' . $loc_url;
+
+		try {
+			$start1 = new DateTime( $ev['datetime'], $tz );
+			$end1   = clone $start1;
+			$end1->modify( '+1 hour' );
+
+			$s1_utc = clone $start1;
+			$s1_utc->setTimezone( $utc_tz );
+			$e1_utc = clone $end1;
+			$e1_utc->setTimezone( $utc_tz );
+
+			$day_label  = intval( $start1->format( 'j' ) ) . ' ' . $months_tr[ intval( $start1->format( 'n' ) ) ];
+			$time1_lbl  = $start1->format( 'H.i' );
+			$gcal1_url  = add_query_arg(
+				array(
+					'action'   => 'TEMPLATE',
+					'text'     => $title,
+					'dates'    => $s1_utc->format( 'Ymd\THis\Z' ) . '/' . $e1_utc->format( 'Ymd\THis\Z' ),
+					'details'  => $desc,
+					'location' => $city_name,
+				),
+				'https://calendar.google.com/calendar/render'
+			);
+
+			$sessions[] = array(
+				'label'     => $day_label . ' — Saat ' . $time1_lbl,
+				'title'     => $title,
+				'location'  => $city_name,
+				'desc'      => $desc,
+				'start_utc' => $s1_utc->format( 'Ymd\THis\Z' ),
+				'end_utc'   => $e1_utc->format( 'Ymd\THis\Z' ),
+				'gcal_url'  => $gcal1_url,
+				'filename'  => sanitize_title( $city_name . '-' . $start1->format( 'Y-m-d-Hi' ) ) . '.ics',
+			);
+
+			if ( ! empty( $ev['time2'] ) && preg_match( '/^\d{2}:\d{2}$/', $ev['time2'] ) ) {
+				$start2 = new DateTime( $start1->format( 'Y-m-d' ) . ' ' . $ev['time2'] . ':00', $tz );
+				$end2   = clone $start2;
+				$end2->modify( '+1 hour' );
+
+				$s2_utc = clone $start2;
+				$s2_utc->setTimezone( $utc_tz );
+				$e2_utc = clone $end2;
+				$e2_utc->setTimezone( $utc_tz );
+
+				$time2_lbl = $start2->format( 'H.i' );
+				$gcal2_url = add_query_arg(
+					array(
+						'action'   => 'TEMPLATE',
+						'text'     => $title . ' (2. Seans)',
+						'dates'    => $s2_utc->format( 'Ymd\THis\Z' ) . '/' . $e2_utc->format( 'Ymd\THis\Z' ),
+						'details'  => $desc,
+						'location' => $city_name,
+					),
+					'https://calendar.google.com/calendar/render'
+				);
+
+				$sessions[] = array(
+					'label'     => $day_label . ' — Saat ' . $time2_lbl . ' (2. Seans)',
+					'title'     => $title . ' (2. Seans)',
+					'location'  => $city_name,
+					'desc'      => $desc,
+					'start_utc' => $s2_utc->format( 'Ymd\THis\Z' ),
+					'end_utc'   => $e2_utc->format( 'Ymd\THis\Z' ),
+					'gcal_url'  => $gcal2_url,
+					'filename'  => sanitize_title( $city_name . '-' . $start2->format( 'Y-m-d-Hi' ) ) . '.ics',
+				);
+			}
+		} catch ( Exception $e ) {
+			continue;
+		}
+	}
+
+	if ( empty( $sessions ) ) {
+		return '';
+	}
+
+	wp_enqueue_style( 'kt-frontend-css' );
+	wp_enqueue_script( 'kt-frontend-js' );
+
+	ob_start();
+	?>
+	<div class="kt-add-calendar-wrap">
+		<details class="kt-cal-dropdown">
+			<summary class="kt-cal-trigger">
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+				<span>Takvime Ekle</span>
+				<svg class="kt-cal-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+			</summary>
+			<div class="kt-cal-menu">
+				<?php foreach ( $sessions as $ses ) : ?>
+					<div class="kt-cal-session-group">
+						<?php if ( count( $sessions ) > 1 ) : ?>
+							<div class="kt-cal-session-title"><?php echo esc_html( $ses['label'] ); ?></div>
+						<?php endif; ?>
+						<a href="<?php echo esc_url( $ses['gcal_url'] ); ?>" target="_blank" rel="noopener noreferrer" class="kt-cal-option">
+							Google Takvim'e Ekle
+						</a>
+						<button
+							type="button"
+							class="kt-cal-option kt-cal-ics-btn"
+							data-title="<?php echo esc_attr( $ses['title'] ); ?>"
+							data-location="<?php echo esc_attr( $ses['location'] ); ?>"
+							data-desc="<?php echo esc_attr( $ses['desc'] ); ?>"
+							data-start="<?php echo esc_attr( $ses['start_utc'] ); ?>"
+							data-end="<?php echo esc_attr( $ses['end_utc'] ); ?>"
+							data-filename="<?php echo esc_attr( $ses['filename'] ); ?>"
+						>
+							Apple / Outlook Takvimi (.ics)
+						</button>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		</details>
+	</div>
+	<?php
+	return ob_get_clean();
+}
+
+/**
+ * @deprecated 3.6.0 Yerine 'konser-takvimi/ilce-yonlendir' Gutenberg bloğunu kullanın.
+ */
 add_shortcode( 'konser_ilce_yonlendir', 'kt_district_redirect_shortcode_output' );
 function kt_district_redirect_shortcode_output( $atts ) {
 	$atts = shortcode_atts(
 		array(
-			'ilce'  => '',
-			'hedef' => '',
+			'ilce'         => '',
+			'hedef'        => '',
+			'takvime_ekle' => '1',
 		),
 		$atts,
 		'konser_ilce_yonlendir'
 	);
 
 	global $post;
-	$lookup_key   = ! empty( $atts['ilce'] ) ? $atts['ilce'] : ( $post ? $post->post_name : '' );
-	$page_label   = $post ? $post->post_title : '';
-	$has_event    = kt_has_upcoming_concert_for_target( $lookup_key );
-	$redirect_url = kt_resolve_redirect_url( $atts['hedef'] );
+	$lookup_key      = ! empty( $atts['ilce'] ) ? $atts['ilce'] : ( $post ? $post->post_name : '' );
+	$page_label      = $post ? $post->post_title : '';
+	$page_url        = $post ? get_permalink( $post->ID ) : '';
+	$upcoming_events = kt_get_upcoming_events_for_target( $lookup_key );
+	$has_event       = ! empty( $upcoming_events );
+	$redirect_url    = kt_resolve_redirect_url( $atts['hedef'] );
+	$show_cal_btn    = ( '0' !== strval( $atts['takvime_ekle'] ) && false !== $atts['takvime_ekle'] );
 
 	if ( current_user_can( 'edit_pages' ) ) {
 		if ( $has_event ) {
-			return '<div style="padding:10px 14px;margin:10px 0;background:#f0fdf4;border:1px solid #86efac;border-radius:6px;color:#166534;font-size:13px;"><strong>Konser Takvimi Bilgi:</strong> Bu ilçe (<code>' . esc_html( $lookup_key ) . '</code>) için yaklaşan konser aktif olduğundan ziyaretçiler bu sayfada kalacaktır (yönetici girişi yapıldığı için ziyaret ve tıklamalar sayaca eklenmez).</div>';
+			$cal_preview = $show_cal_btn ? kt_render_add_to_calendar_widget( $upcoming_events, $page_url ) : '';
+			return '<div style="padding:10px 14px;margin:10px 0;background:#f0fdf4;border:1px solid #86efac;border-radius:6px;color:#166534;font-size:13px;"><strong>Konser Takvimi Bilgi:</strong> Bu ilçe (<code>' . esc_html( $lookup_key ) . '</code>) için yaklaşan konser aktif olduğundan ziyaretçiler bu sayfada kalacaktır (yönetici girişi yapıldığı için ziyaret ve tıklamalar sayaca eklenmez).</div>' . $cal_preview;
 		}
 		return '<div style="padding:10px 14px;margin:10px 0;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;color:#991b1b;font-size:13px;"><strong>Konser Takvimi Bilgi:</strong> Bu ilçe (<code>' . esc_html( $lookup_key ) . '</code>) için yaklaşan konser bulunmadığından normal ziyaretçiler otomatik olarak <code>' . esc_html( $redirect_url ) . '</code> adresine yönlendirilecektir (yönetici olduğunuz için yönlendirilmediniz).</div>';
 	}
@@ -1010,11 +1193,11 @@ function kt_district_redirect_shortcode_output( $atts ) {
 
 	kt_enqueue_tracker_script( $lookup_key, $page_label, true );
 
-	return '';
+	return $show_cal_btn ? kt_render_add_to_calendar_widget( $upcoming_events, $page_url ) : '';
 }
 
 /**
- * [konser_bilet_butonu url="..." resim="..." ilce="..." alt="..." hedef="_blank"]
+ * @deprecated 3.6.0 Yerine 'konser-takvimi/bilet-butonu' Gutenberg bloğunu kullanın.
  */
 add_shortcode( 'konser_bilet_butonu', 'kt_ticket_button_shortcode' );
 function kt_ticket_button_shortcode( $atts ) {
@@ -1075,6 +1258,9 @@ function kt_ticket_button_shortcode( $atts ) {
 	);
 }
 
+/**
+ * @deprecated 3.6.0 Yerine 'konser-takvimi/takvim' Gutenberg bloğunu kullanın.
+ */
 add_shortcode( 'konser_takvimi', 'kt_concert_grid_shortcode' );
 add_shortcode( 'subadap_konserler', 'kt_concert_grid_shortcode' );
 function kt_concert_grid_shortcode() {
@@ -1114,8 +1300,7 @@ function kt_concert_grid_shortcode() {
 			--kt-min-w: %dpx;
 			--kt-date-text: %s;
 			--kt-city-text: %s;
-		}
-",
+		}\n",
 		intval( $styles['border_radius'] ),
 		intval( $styles['badge_height'] ),
 		intval( $styles['grid_gap'] ),
@@ -1127,9 +1312,7 @@ function kt_concert_grid_shortcode() {
 	foreach ( $styles['palettes'] as $idx => $pair ) {
 		$num         = $idx + 1;
 		$custom_css .= sprintf(
-			"#ktConcertGridContainer .style-%d .date-part { background-color: %s; }
-#ktConcertGridContainer .style-%d .city-part { background-color: %s; }
-",
+			"#ktConcertGridContainer .style-%d .date-part { background-color: %s; }\n#ktConcertGridContainer .style-%d .city-part { background-color: %s; }\n",
 			$num,
 			esc_attr( $pair['date'] ),
 			$num,

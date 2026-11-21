@@ -177,7 +177,6 @@ document.addEventListener('DOMContentLoaded', function () {
 		renderArchivePage(1);
 	}
 
-	// Son 14 Günlük Ziyaretçi & Bilet Tıklama Canvas Grafiği
 	var chartCanvas = document.getElementById('kt-stats-canvas');
 	var chartJsonEl = document.getElementById('kt-chart-json-data');
 	var chartSelect = document.getElementById('kt-chart-district-select');

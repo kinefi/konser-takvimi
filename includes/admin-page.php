@@ -465,7 +465,7 @@ function kt_konser_admin_page() {
 	<div class="wrap">
 		<h1>Konser Takvimi</h1>
 		<p>
-			Takvimi göstermek için <code>[konser_takvimi]</code>, ilçe sayfasında konser yoksa yönlendirmek ve sayfa istatistiklerini toplamak için <code>[konser_ilce_yonlendir]</code>, bilet düğmesi için <code>[konser_bilet_butonu]</code> kısa kodlarını kullanabilirsiniz.
+			Gutenberg editöründe <strong>Konser Takvimi</strong>, <strong>Konser İlçe Yönlendirici &amp; Takvime Ekle</strong> ve <strong>Konser Bilet Butonu</strong> bloklarını kullanabilirsiniz. <em>(Eski <code>[konser_takvimi]</code>, <code>[konser_ilce_yonlendir]</code> ve <code>[konser_bilet_butonu]</code> kısa kodları geriye dönük uyumluluk için çalışmaya devam eder.)</em>
 		</p>
 		<?php echo wp_kses_post( $message ); ?>
 
@@ -570,7 +570,7 @@ function kt_konser_admin_page() {
 				</summary>
 
 				<div style="margin-top: 15px;">
-					<p class="description" style="margin-bottom: 12px;">Tarihi ve son seans saati geçen konserler otomatik olarak buraya taşınır, düzenlemeye kapatılır ve sitedeki kısa kod alanında gizlenir.</p>
+					<p class="description" style="margin-bottom: 12px;">Tarihi ve son seans saati geçen konserler otomatik olarak buraya taşınır, düzenlemeye kapatılır ve sitedeki takvim alanında gizlenir.</p>
 
 					<table class="widefat fixed striped" id="kt-archive-table" style="opacity: 0.85;">
 						<thead>
@@ -631,12 +631,12 @@ function kt_konser_admin_page() {
 			uasort(
 				$stats,
 				function ( $a, $b ) use ( $sort_by ) {
-					$va = isset( $a['views'] ) ? intval( $a['views'] ) : 0;
-					$vb = isset( $b['views'] ) ? intval( $b['views'] ) : 0;
+					$va   = isset( $a['views'] ) ? intval( $a['views'] ) : 0;
+					$vb   = isset( $b['views'] ) ? intval( $b['views'] ) : 0;
 					$visa = isset( $a['visitors'] ) ? intval( $a['visitors'] ) : $va;
 					$visb = isset( $b['visitors'] ) ? intval( $b['visitors'] ) : $vb;
-					$ca = isset( $a['clicks'] ) ? intval( $a['clicks'] ) : 0;
-					$cb = isset( $b['clicks'] ) ? intval( $b['clicks'] ) : 0;
+					$ca   = isset( $a['clicks'] ) ? intval( $a['clicks'] ) : 0;
+					$cb   = isset( $b['clicks'] ) ? intval( $b['clicks'] ) : 0;
 
 					if ( 'ctr' === $sort_by ) {
 						$ctra = $va > 0 ? ( $ca / $va ) : 0;
@@ -689,7 +689,6 @@ function kt_konser_admin_page() {
 			$overall_ctr     = $total_views > 0 ? number_format( ( $total_clicks / $total_views ) * 100, 1, ',', '.' ) : '0,0';
 			$overall_avg_sec = $duration_count > 0 ? round( $total_seconds / $duration_count ) : 0;
 
-			// Son 14 gün için grafik veri setini hazırla
 			$chart_days = array();
 			for ( $d = 13; $d >= 0; $d-- ) {
 				$d_str        = kt_get_istanbul_date_str( -$d );
@@ -743,7 +742,7 @@ function kt_konser_admin_page() {
 			);
 			?>
 
-	<div style="max-width: 1280px; margin-top: 20px;">
+			<div style="max-width: 1280px; margin-top: 20px;">
 				<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(195px, 1fr)); gap: 14px; margin-bottom: 20px;">
 					<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #0284c7; border-radius: 4px; padding: 14px 16px;">
 						<div style="font-size: 12px; color: #50575e; font-weight: 600;">Bugünkü Tekil Ziyaretçi</div>
@@ -767,7 +766,6 @@ function kt_konser_admin_page() {
 					</div>
 				</div>
 
-				<!-- Son 14 Günlük Ziyaretçi & Bilet Tıklama Grafiği -->
 				<div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 16px 20px; margin-bottom: 20px;">
 					<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px;">
 						<div>
@@ -795,7 +793,6 @@ function kt_konser_admin_page() {
 					<script type="application/json" id="kt-chart-json-data"><?php echo wp_json_encode( $chart_payload ); ?></script>
 				</div>
 
-				<!-- Rapor İndirme & Sıfırlama Çubuğu -->
 				<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #16a34a; border-radius: 4px; padding: 12px 16px; margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;">
 					<div>
 						<strong>Rapor İndir:</strong>
@@ -829,7 +826,7 @@ function kt_konser_admin_page() {
 							'views'    => 'Sayfa Gösterimi',
 							'duration' => 'Ort. Kalma Süresi',
 						);
-						$sort_links = array();
+						$sort_links   = array();
 						foreach ( $sort_options as $s_key => $s_label ) {
 							$s_url = add_query_arg(
 								array(
@@ -906,7 +903,8 @@ function kt_konser_admin_page() {
 								<?php endforeach; ?>
 							<?php endif; ?>
 						</tbody>
-					</table>
+						</table>
+					</div>
 				</form>
 			</div>
 
@@ -1026,7 +1024,7 @@ function kt_konser_admin_page() {
 									İlçe sayfasında aktif konser bulunmadığında ziyaretçilerin yönlendirileceği sayfa yolu (örn. <code>/konserler</code>) veya tam URL.
 								</p>
 								<p class="description" style="margin-top: 6px; color: #1d2327;">
-									<strong>Önemli Not:</strong> <code>[konser_ilce_yonlendir]</code> kısa kodu parametresiz kullanıldığında kontrolü <strong>sayfanın URL uzantısına (slug)</strong> göre yapar. Otomatik algılama için sayfa URL'sinde ilçe adının mutlaka yer alması gerekir (örneğin <code>/urla-konseri</code> veya <code>/urla-konser</code>). URL'de ilçe adı geçmiyorsa kısa kodu <code>[konser_ilce_yonlendir ilce="Urla"]</code> biçiminde kullanabilirsiniz.
+									<strong>Önemli Not:</strong> <strong>Konser İlçe Yönlendirici</strong> bloğu (veya eski <code>[konser_ilce_yonlendir]</code> kısa kodu) parametresiz kullanıldığında kontrolü <strong>sayfanın URL uzantısına (slug)</strong> göre yapar ve aktif konser varsa otomatik olarak <strong>Takvime Ekle</strong> düğmesini gösterir. URL'de ilçe adı geçmiyorsa blok ayarlarından <strong>İlçe Slug</strong> alanını doldurabilirsiniz.
 								</p>
 							</td>
 						</tr>
@@ -1035,7 +1033,7 @@ function kt_konser_admin_page() {
 							<td>
 								<input type="url" id="ticket_btn_url" name="ticket_btn_url" value="<?php echo esc_url( $styles['ticket_btn_url'] ); ?>" class="large-text" placeholder="https://biletinial.com/tr-tr/tiyatro/subadap-cocuk-konseri">
 								<p class="description">
-									Buraya bir varsayılan bilet bağlantısı girerseniz sayfalarda parametre vermeden doğrudan <code>[konser_bilet_butonu]</code> yazabilirsiniz. Belirli bir ilçe için farklı link kullanmak isterseniz <code>[konser_bilet_butonu url="https://..."]</code> ile ezebilirsiniz.
+									Buraya bir varsayılan bilet bağlantısı girerseniz sayfalarda ekstra URL girmeden doğrudan <strong>Konser Bilet Butonu</strong> bloğunu ekleyebilirsiniz.
 								</p>
 							</td>
 						</tr>
@@ -1051,9 +1049,6 @@ function kt_konser_admin_page() {
 										<img src="<?php echo esc_url( $styles['ticket_btn_img'] ); ?>" alt="Bilet Düğmesi Önizleme" style="max-width: 360px; height: auto; border: 1px solid #dcdcde; border-radius: 4px; padding: 4px; background: #f8fafc;">
 									<?php endif; ?>
 								</div>
-								<p class="description" style="margin-top: 6px;">
-									Gerekirse tekil sayfalarda <code>resim="..."</code> veya <code>ilce="..."</code> parametresi eklenebilir.
-								</p>
 							</td>
 						</tr>
 						<tr>
@@ -1061,7 +1056,7 @@ function kt_konser_admin_page() {
 							<td>
 								<input type="text" id="ticket_domains" name="ticket_domains" value="<?php echo esc_attr( $styles['ticket_domains'] ); ?>" class="large-text" placeholder="biletinial.com, biletix.com, passo.com.tr, bubilet.com.tr">
 								<p class="description">
-									Sayfada <code>[konser_bilet_butonu]</code> kısa kodu <strong>olmasa bile</strong>, <code>[konser_ilce_yonlendir]</code> bulunan sayfalarda bu alan adlarına giden bağlantılara veya bilet görseli içeren linklere yapılan tıklamalar otomatik olarak ilgili ilçeye kaydedilir. Virgülle ayırarak alan adı ekleyebilirsiniz.
+									İlçe sayfalarında bu alan adlarına giden bağlantılara veya bilet görseli içeren linklere yapılan tıklamalar otomatik olarak ilgili ilçeye kaydedilir. Virgülle ayırarak alan adı ekleyebilirsiniz.
 								</p>
 							</td>
 						</tr>
@@ -1076,9 +1071,9 @@ function kt_konser_admin_page() {
 							<td>
 								<label>
 									<input type="checkbox" name="schema_enabled" value="1" <?php checked( ! empty( $styles['schema_enabled'] ) ); ?>>
-									<code>[konser_takvimi]</code> veya <code>[konser_ilce_yonlendir]</code> bulunan sayfalara otomatik Google <code>MusicEvent</code> JSON-LD yapılandırılmış verisi ekle.
+									Konser Takvimi veya İlçe Yönlendirici blok/kısa kodlarının bulunduğu sayfalara otomatik Google <code>MusicEvent</code> JSON-LD yapılandırılmış verisi ekle.
 								</label>
-								<p class="description">Etkinlik tarihi, saati, ilçe konumu ve bilet bağlantısı Google arama sonuçlarında zengin etkinlik kartı olarak dizine eklenir.</p>
+								<p class="description">Etkinlik tarihi, saati, ilçe konumu, açıklama ve bilet bağlantısı Google arama sonuçlarında zengin etkinlik kartı olarak dizine eklenir.</p>
 							</td>
 						</tr>
 						<tr>

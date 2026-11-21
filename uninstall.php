@@ -1,14 +1,18 @@
 <?php
+/**
+ * Konser Takvimi — Eklenti Kaldırma (Uninstall) Betiği
+ */
+
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
-wp_clear_scheduled_hook( 'kt_weekly_stats_report_event' );
+$kt_styles = get_option( 'subadap_konserler_styles', array() );
 
-$styles = get_option( 'subadap_konserler_styles', array() );
-
-if ( is_array( $styles ) && ! empty( $styles['delete_on_uninst'] ) ) {
+if ( is_array( $kt_styles ) && ! empty( $kt_styles['delete_on_uninst'] ) ) {
 	delete_option( 'subadap_konserler_list' );
 	delete_option( 'subadap_konserler_styles' );
 	delete_option( 'subadap_konserler_stats' );
 }
+
+wp_clear_scheduled_hook( 'kt_weekly_stats_report_event' );

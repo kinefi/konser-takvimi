@@ -11,6 +11,7 @@
 
 		var formData = new FormData();
 		formData.append('action', 'kt_track_district_event');
+		formData.append('nonce', ktTrackerData.nonce || '');
 		formData.append('event_type', eventType);
 		formData.append('district', district);
 		formData.append('label', label || '');
