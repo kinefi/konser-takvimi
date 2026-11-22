@@ -12,6 +12,9 @@
 - The daily chart caption no longer says "Istanbul time zone"; it follows the selected timezone.
 - Archive cleanup and the conversion-alert threshold are now sentences that translate naturally.
 
+### Fixed
+- The **Tools & Diagnostics** tab no longer shows the button/colour/settings form below the diagnostics; each tab now renders only its own content (regression test added).
+
 ## [4.3.0] - 2026-11-22
 ### Added
 - **Tools & Diagnostics tab:** tracking health panel (districts stored, buffered events, last write, lock), a scanner that lists posts/pages using the deprecated `[subadap_konserler]` shortcode or pre-4.1.0 Turkish attribute names (`ilce`, `hedef`, `resim`, `takvime_ekle`) in shortcodes or block JSON, an archive cleanup ("delete archived events older than 6/12/24/36 months") and a warning when the 300-district cap is reached.

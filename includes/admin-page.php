@@ -371,15 +371,14 @@ function kt_render_admin_page() {
 			</a>
 		</nav>
 
-		<?php if ( 'tools' === $active_tab ) : ?>
-			<?php kt_render_tools_tab( $existing_events ); ?>
-		<?php endif; ?>
-
 		<?php if ( 'concerts' === $active_tab ) : ?>
 			<?php require KT_PLUGIN_DIR . 'includes/admin/view-concerts.php'; ?>
 
 		<?php elseif ( 'stats' === $active_tab ) : ?>
 			<?php require KT_PLUGIN_DIR . 'includes/admin/view-stats.php'; ?>
+
+		<?php elseif ( 'tools' === $active_tab ) : ?>
+			<?php kt_render_tools_tab( $existing_events ); ?>
 
 		<?php else : ?>
 			<?php require KT_PLUGIN_DIR . 'includes/admin/view-styles.php'; ?>

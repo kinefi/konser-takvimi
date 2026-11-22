@@ -61,6 +61,19 @@ t( 'settings: source placeholder = host', false !== strpos( $html, 'placeholder=
 t( 'settings: medium default', false !== strpos( $html, 'name="utm_medium" value="referral"' ) );
 t( 'settings: capture+calendar checked, ticket unchecked by default', 2 === preg_match_all( '/name="utm_(calendar|capture)_enabled" value="1"\s+checked="checked"/', $html ) && 0 === preg_match_all( '/name="utm_ticket_enabled" value="1"\s+checked="checked"/', $html ) );
 
+// tools tab must not also render the styles/settings form
+class KT_Test_Wpdb {
+	public $posts = 'wp_posts';
+	public function esc_like( $s ) { return addcslashes( $s, '_%\\' ); }
+	public function prepare( $q, $args = array() ) { return $q; }
+	public function get_results( $q ) { return array(); }
+}
+$GLOBALS['wpdb'] = new KT_Test_Wpdb();
+$_GET = array( 'tab' => 'tools' );
+ob_start(); kt_render_admin_page(); $html = ob_get_clean();
+t( 'tools tab: diagnostics shown', false !== strpos( $html, 'Takip Tanılama' ) );
+t( 'tools tab: no styles form', false === strpos( $html, 'kt_styles_nonce' ) && false === strpos( $html, 'Canlı Düğme Önizlemesi' ) );
+
 // save handler
 $GLOBALS['__opts'] = array();
 $_GET = array( 'tab' => 'styles' );
