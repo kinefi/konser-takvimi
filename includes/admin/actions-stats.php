@@ -22,7 +22,7 @@ if ( isset( $_POST['kt_reset_stats'] ) && check_admin_referer( 'kt_stats_nonce_a
 		array( 'a' => array( 'href' => array() ) )
 	) . '</p></div>';
 } elseif ( isset( $_POST['kt_archive_stat_key'] ) && check_admin_referer( 'kt_stats_nonce_action', 'kt_stats_nonce' ) ) {
-	$arch_key = kt_normalize_district_key( wp_unslash( $_POST['kt_archive_stat_key'] ) );
+	$arch_key = kt_normalize_district_key( sanitize_text_field( wp_unslash( $_POST['kt_archive_stat_key'] ) ) );
 	if ( '' !== $arch_key && kt_archive_district_stats( $arch_key, 'manual', true ) ) {
 		$message = '<div class="notice notice-info is-dismissible"><p>' . wp_kses(
 			sprintf(
