@@ -144,7 +144,7 @@ The plugin logic is covered by dependency-free tests that stub the WordPress fun
 ./tests/run.sh   # PHP lint, JS syntax, PHP tests and tracker.js tests
 ```
 
-GitHub Actions runs the same checks on PHP 8.3 – 8.5 and Node 20 (`.github/workflows/tests.yml`), next to the security workflow (`security.yml`). The stubs only approximate WordPress, so they do not replace a manual check on a staging site.
+GitHub Actions runs the same checks on PHP 8.4 – 8.5 and Node 26 (`.github/workflows/tests.yml`), next to the security workflow (`security.yml`). The stubs only approximate WordPress, so they do not replace a manual check on a staging site.
 
 ## File Structure
 
@@ -157,8 +157,9 @@ konser-takvimi/
 ├── README.tr.md                 # Project documentation (Turkish)
 ├── CHANGELOG.md                 # Release history
 ├── .github/workflows/
-│   ├── tests.yml                # Lint + unit tests (PHP 8.3-8.5, Node 20)
-│   └── security.yml             # WPCS security sniffs, Semgrep and Gitleaks
+│   ├── tests.yml                # Lint + unit tests (PHP 8.4-8.5, Node 26)
+│   ├── security.yml             # WPCS security sniffs, Semgrep and Gitleaks
+│   └── release.yml              # Builds the plugin zip and publishes a GitHub release on v* tags
 ├── tests/                       # Stubbed-WordPress unit tests and tracker.js tests (run with ./tests/run.sh)
 ├── includes/
 │   ├── admin-page.php           # Admin screens: CTR-ranked statistics, UTM sources, chart, export and settings tabs

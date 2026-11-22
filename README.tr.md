@@ -123,7 +123,7 @@ Tüm veri `wp_options` tablosundaki üç satırda tutulur (autoload kapalı): ko
 - **Kısa kodlar:** Sayfaları düzenleyip öznitelik adlarını değiştirin, örn. `[konser_ilce_yonlendir ilce="urla"]` → `[konser_ilce_yonlendir district="urla"]`.
 - **Bloklar:** WordPress bilinmeyen blok özniteliklerini sessizce yok sayar; bu yüzden `ilce` değeri girilmiş bir blok, değeri blok kenar çubuğundan yeniden girene kadar sayfa slug'ına döner.
 - Blok adları (`konser-takvimi/...`), kısa kod adları, `subadap_konserler_*` veritabanı seçenekleri ve `{sehir}-konseri` slug biçimi değişmedi; kayıtlı konserleriniz ve istatistikleriniz etkilenmez.
-- Yükseltmeden sonra UTM etiketleme **varsayılan olarak açıktır**. Giden bağlantıların değişmesini istemiyorsanız ayarlardan kapatın.
+- Giden bilet bağlantısı etiketleme 4.3.0'dan beri **varsayılan olarak kapalıdır** ve zaten `utm_*` parametresi taşıyan bağlantılara (örn. Biletinial) hiç dokunmaz. Gelen UTM kaydı açıktır.
 
 ## Geliştirme ve Testler
 
@@ -133,7 +133,7 @@ Eklenti mantığı, ihtiyaç duyduğu WordPress fonksiyonlarını taklit eden (`
 ./tests/run.sh   # PHP lint, JS sözdizimi, PHP testleri ve tracker.js testleri
 ```
 
-GitHub Actions aynı kontrolleri PHP 8.3 – 8.5 ve Node 20 üzerinde çalıştırır (`.github/workflows/tests.yml`); güvenlik workflow'u (`security.yml`) ayrıca çalışır. Taklit fonksiyonlar WordPress'i yalnızca yaklaşık olarak temsil eder; bir deneme sitesinde elle kontrolün yerini tutmaz.
+GitHub Actions aynı kontrolleri PHP 8.4 – 8.5 ve Node 26 üzerinde çalıştırır (`.github/workflows/tests.yml`); güvenlik workflow'u (`security.yml`) ayrıca çalışır. Taklit fonksiyonlar WordPress'i yalnızca yaklaşık olarak temsil eder; bir deneme sitesinde elle kontrolün yerini tutmaz.
 
 ## Dosya Yapısı
 
@@ -146,8 +146,9 @@ konser-takvimi/
 ├── README.tr.md                 # Proje dokümantasyonu (Türkçe)
 ├── CHANGELOG.md                 # Sürüm geçmişi
 ├── .github/workflows/
-│   ├── tests.yml                # Lint + birim testleri (PHP 8.3-8.5, Node 20)
-│   └── security.yml             # WPCS güvenlik kuralları, Semgrep ve Gitleaks
+│   ├── tests.yml                # Lint + birim testleri (PHP 8.4-8.5, Node 26)
+│   ├── security.yml             # WPCS güvenlik kuralları, Semgrep ve Gitleaks
+│   └── release.yml              # v* etiketlerinde eklenti zip'ini üretir ve GitHub sürümü yayımlar
 ├── tests/                       # WordPress taklitli birim testleri ve tracker.js testleri (./tests/run.sh)
 ├── includes/
 │   ├── admin-page.php           # Yönetim paneli, CTR sıralamalı istatistikler, UTM kaynakları, grafik, dışa aktarma ve ayar sekmeleri

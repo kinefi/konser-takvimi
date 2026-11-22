@@ -3,6 +3,7 @@
  * Plugin Name: Konser Takvimi
  * Description: Database-backed concert calendar with double-session support, Google MusicEvent JSON-LD, automatic archiving of past concerts, cache-safe 302 district redirects, Add to Calendar buttons, Gutenberg blocks, UTM tagging and CTR-ranked analytics.
  * Version: 4.4.0
+ * Requires PHP: 8.4
  * Author: Şubadap Çocuk
  * Text Domain: konser-takvimi
  * Domain Path: /languages
