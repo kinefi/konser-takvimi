@@ -46,11 +46,10 @@ jobs:
       - name: Build plugin zip
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
+          # Whitelist: only the files WordPress needs at runtime (plus docs). Anything new in the repo stays out of the zip.
           mkdir -p build/konser-takvimi
-          rsync -a \
-            --exclude='.git' --exclude='.github' --exclude='tests' --exclude='tools' --exclude='build' \
-            --exclude='README.tr.md' --exclude='.gitignore' --exclude='*.zip' \
-            ./ build/konser-takvimi/
+          cp konser-takvimi.php uninstall.php LICENSE README.md CHANGELOG.md build/konser-takvimi/
+          cp -r includes assets languages build/konser-takvimi/
           (cd build && zip -r "../konser-takvimi-${VERSION}.zip" konser-takvimi)
           unzip -l "konser-takvimi-${VERSION}.zip" | tail -n 20
 
