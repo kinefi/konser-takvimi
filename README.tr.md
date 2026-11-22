@@ -76,6 +76,8 @@ Tüm veri `wp_options` tablosundaki üç satırda tutulur (autoload kapalı): ko
 
 ## Kurulum
 
+**Gereksinimler:** WordPress 6.0+ ve PHP 8.4+ (eklenti PHP 8.4 ve 8.5 üzerinde test ediliyor).
+
 1. Eski sürüm yüklüyse WordPress **Eklentiler** sayfasından önce etkisizleştirip silin (ayarlarda silme seçeneği işaretli değilse veritabanı kayıtlarınız korunur).
 2. Eklenti `.zip` arşivini indirin.
 3. WordPress yönetim panelinde **Eklentiler > Yeni Eklenti Ekle > Eklenti Yükle** yolunu izleyin.

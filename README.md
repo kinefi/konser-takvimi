@@ -87,6 +87,8 @@ All data lives in three `wp_options` rows (autoload off): concerts, statistics a
 
 ## Installation
 
+**Requirements:** WordPress 6.0+ and PHP 8.4+ (the plugin is tested on PHP 8.4 and 8.5).
+
 1. If an older version is installed, deactivate and delete it on the WordPress **Plugins** page first (your database records are kept unless the delete-on-uninstall option is ticked in the settings).
 2. Download the plugin `.zip` archive.
 3. In the WordPress admin, go to **Plugins > Add New Plugin > Upload Plugin**.
