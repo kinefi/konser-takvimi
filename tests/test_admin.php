@@ -14,10 +14,11 @@ function disabled( $d ) { if ( $d ) echo ' disabled="disabled"'; }
 function wp_list_pluck( $l, $f ) { return array_column( $l, $f ); }
 function wp_kses_post( $s ) { return $s; }
 function add_menu_page() {} function wp_enqueue_media() {}
-function wp_next_scheduled() { return false; } function wp_clear_scheduled_hook() {} function wp_schedule_event() {}
+function wp_clear_scheduled_hook() {} function wp_schedule_event() {}
 function sanitize_email( $e ) { return $e; } function is_email( $e ) { return (bool) strpos( $e, '@' ); }
 function wp_die( $m ) { echo "WP_DIE: $m\n"; }
 function current_user_can( $c = '' ) { return 'manage_options' === $c; }
+require dirname( __DIR__ ) . '/includes/admin-tools.php';
 require dirname( __DIR__ ) . '/includes/admin-page.php';
 
 $fail = 0; $n = 0;
@@ -58,7 +59,7 @@ ob_start(); kt_render_admin_page(); $html = ob_get_clean();
 t( 'settings: utm card', false !== strpos( $html, 'UTM Parametreleri' ) );
 t( 'settings: source placeholder = host', false !== strpos( $html, 'placeholder="subadapcocuk.org"' ) );
 t( 'settings: medium default', false !== strpos( $html, 'name="utm_medium" value="referral"' ) );
-t( 'settings: 3 checkboxes checked by default', 3 === preg_match_all( '/name="utm_(ticket|calendar|capture)_enabled" value="1"\s+checked="checked"/', $html ) );
+t( 'settings: capture+calendar checked, ticket unchecked by default', 2 === preg_match_all( '/name="utm_(calendar|capture)_enabled" value="1"\s+checked="checked"/', $html ) && 0 === preg_match_all( '/name="utm_ticket_enabled" value="1"\s+checked="checked"/', $html ) );
 
 // save handler
 $GLOBALS['__opts'] = array();

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Konser Takvimi
  * Description: Database-backed concert calendar with double-session support, Google MusicEvent JSON-LD, automatic archiving of past concerts, cache-safe 302 district redirects, Add to Calendar buttons, Gutenberg blocks, UTM tagging and CTR-ranked analytics.
- * Version: 4.2.0
+ * Version: 4.3.0
  * Author: Şubadap Çocuk
  * License: GPL-3.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -19,7 +19,7 @@ if ( ! defined( 'KT_PLUGIN_URL' ) ) {
 	define( 'KT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 }
 if ( ! defined( 'KT_PLUGIN_VER' ) ) {
-	define( 'KT_PLUGIN_VER', '4.2.0' );
+	define( 'KT_PLUGIN_VER', '4.3.0' );
 }
 if ( ! defined( 'KT_EVENTS_OPT' ) ) {
 	define( 'KT_EVENTS_OPT', 'subadap_konserler_list' );
@@ -37,6 +37,20 @@ if ( ! defined( 'KT_CRON_HOOK' ) ) {
 if ( ! defined( 'KT_STATS_MAX_DISTRICTS' ) ) {
 	define( 'KT_STATS_MAX_DISTRICTS', 300 );
 }
+// Buffered tracking events waiting to be merged into the statistics option.
+if ( ! defined( 'KT_STATS_BUFFER_OPT' ) ) {
+	define( 'KT_STATS_BUFFER_OPT', 'kt_stats_buffer' );
+}
+if ( ! defined( 'KT_STATS_BUFFER_MAX' ) ) {
+	define( 'KT_STATS_BUFFER_MAX', 500 );
+}
+if ( ! defined( 'KT_STATS_FLUSH_HOOK' ) ) {
+	define( 'KT_STATS_FLUSH_HOOK', 'kt_flush_stats_buffer_event' );
+}
+// Date of the last time a new district was rejected because KT_STATS_MAX_DISTRICTS was reached.
+if ( ! defined( 'KT_STATS_OVERFLOW_OPT' ) ) {
+	define( 'KT_STATS_OVERFLOW_OPT', 'kt_stats_overflow' );
+}
 // Option name used as a short-lived lock while the statistics option is read-modified-written.
 if ( ! defined( 'KT_STATS_LOCK_OPT' ) ) {
 	define( 'KT_STATS_LOCK_OPT', 'kt_stats_write_lock' );
@@ -46,28 +60,62 @@ if ( ! defined( 'KT_UTM_MAX_COMBOS' ) ) {
 	define( 'KT_UTM_MAX_COMBOS', 40 );
 }
 
-function kt_get_istanbul_timezone() {
+/**
+ * Returns the timezone selected in the plugin settings (default Europe/Istanbul).
+ * Event times, "today" for statistics and calendar links are all evaluated in this timezone.
+ */
+function kt_get_site_timezone() {
+	$styles = get_option( KT_STYLES_OPT, array() );
+	$name   = ( is_array( $styles ) && ! empty( $styles['timezone'] ) ) ? $styles['timezone'] : 'Europe/Istanbul';
 	try {
-		return new DateTimeZone( 'Europe/Istanbul' );
+		return new DateTimeZone( $name );
 	} catch ( Exception $e ) {
-		return new DateTimeZone( '+03:00' );
+		return new DateTimeZone( 'Europe/Istanbul' );
 	}
 }
 
-function kt_get_istanbul_timestamp() {
-	$tz  = kt_get_istanbul_timezone();
+/**
+ * Builds an ISO 8601 date-time with the correct UTC offset for a local date (Y-m-d) and time (H:i) in the selected timezone.
+ */
+function kt_local_to_iso( $date, $time ) {
+	try {
+		$dt = new DateTime( $date . ' ' . $time . ':00', kt_get_site_timezone() );
+		return $dt->format( 'Y-m-d\TH:i:sP' );
+	} catch ( Exception $e ) {
+		return $date . 'T' . $time . ':00+00:00';
+	}
+}
+
+/**
+ * Returns the ISO date-time of an event's second session. The UTC offset stored with the first session is reused,
+ * so records saved under a different timezone setting keep their original meaning.
+ */
+function kt_second_session_iso( $event ) {
+	$dt_parts = explode( 'T', (string) $event['datetime'] );
+	$time2    = isset( $event['time2'] ) ? sanitize_text_field( $event['time2'] ) : '';
+	if ( empty( $dt_parts[0] ) || '' === $time2 ) {
+		return (string) $event['datetime'];
+	}
+	if ( isset( $dt_parts[1] ) && preg_match( '/(Z|[+-]\d{2}:\d{2})$/', $dt_parts[1], $m ) ) {
+		return $dt_parts[0] . 'T' . $time2 . ':00' . ( 'Z' === $m[1] ? '+00:00' : $m[1] );
+	}
+	return kt_local_to_iso( $dt_parts[0], $time2 );
+}
+
+function kt_get_site_timestamp() {
+	$tz  = kt_get_site_timezone();
 	$now = new DateTime( 'now', $tz );
 	return $now->getTimestamp();
 }
 
-function kt_get_istanbul_datetime_str() {
-	$tz  = kt_get_istanbul_timezone();
+function kt_get_site_datetime_str() {
+	$tz  = kt_get_site_timezone();
 	$now = new DateTime( 'now', $tz );
 	return $now->format( 'Y-m-d H:i' );
 }
 
-function kt_get_istanbul_date_str( $offset_days = 0 ) {
-	$tz  = kt_get_istanbul_timezone();
+function kt_get_site_date_str( $offset_days = 0 ) {
+	$tz  = kt_get_site_timezone();
 	$now = new DateTime( 'now', $tz );
 	if ( 0 !== intval( $offset_days ) ) {
 		$now->modify( intval( $offset_days ) . ' days' );
@@ -90,12 +138,9 @@ function kt_get_event_end_timestamp( $event ) {
 	}
 
 	if ( ! empty( $event['time2'] ) && preg_match( '/^\d{2}:\d{2}$/', $event['time2'] ) ) {
-		$dt_parts = explode( 'T', $event['datetime'] );
-		if ( ! empty( $dt_parts[0] ) ) {
-			$second_ts = strtotime( $dt_parts[0] . 'T' . $event['time2'] . ':00+03:00' );
-			if ( false !== $second_ts && $second_ts > $primary_ts ) {
-				return $second_ts;
-			}
+		$second_ts = strtotime( kt_second_session_iso( $event ) );
+		if ( false !== $second_ts && $second_ts > $primary_ts ) {
+			return $second_ts;
 		}
 	}
 
@@ -125,8 +170,15 @@ function kt_get_default_style_settings() {
 		'ticket_domains'      => 'biletinial.com, biletix.com, passo.com.tr, bubilet.com.tr, mobilet.com, biletino.com',
 		'schema_enabled'      => 1,
 		'schema_performer'    => '',
+		'stats_buffer_seconds' => 60,
+		'stats_retention_days' => 90,
+		'alert_enabled'        => 0,
+		'alert_min_conversion' => 3,
+		'alert_min_visitors'   => 50,
 		'load_google_font'     => 1,
-		'utm_ticket_enabled'   => 1,
+		'font_mode'            => 'google',
+		'timezone'             => 'Europe/Istanbul',
+		'utm_ticket_enabled'   => 0,
 		'utm_calendar_enabled' => 1,
 		'utm_capture_enabled'  => 1,
 		'utm_source'           => '',
@@ -183,6 +235,26 @@ function kt_get_style_settings() {
 	if ( ! isset( $merged['schema_performer'] ) ) {
 		$merged['schema_performer'] = '';
 	}
+
+	// Font mode: 'google' (Quicksand from Google Fonts), 'system' (no external request) or 'theme' (inherit the theme font).
+	if ( ! isset( $saved['font_mode'] ) || ! in_array( $saved['font_mode'], array( 'google', 'system', 'theme' ), true ) ) {
+		$merged['font_mode'] = empty( $merged['load_google_font'] ) ? 'system' : 'google';
+	}
+	$merged['load_google_font'] = ( 'google' === $merged['font_mode'] ) ? 1 : 0;
+
+	// Timezone used for event times, statistics days and calendar links.
+	if ( empty( $merged['timezone'] ) || ! in_array( $merged['timezone'], timezone_identifiers_list(), true ) ) {
+		$merged['timezone'] = 'Europe/Istanbul';
+	}
+
+	if ( ! in_array( intval( $merged['stats_retention_days'] ), array( 30, 90, 180 ), true ) ) {
+		$merged['stats_retention_days'] = 90;
+	}
+	if ( ! in_array( intval( $merged['stats_buffer_seconds'] ), array( 0, 30, 60, 300 ), true ) ) {
+		$merged['stats_buffer_seconds'] = 60;
+	}
+	$merged['alert_min_conversion'] = max( 0, min( 100, floatval( $merged['alert_min_conversion'] ) ) );
+	$merged['alert_min_visitors']   = max( 1, intval( $merged['alert_min_visitors'] ) );
 
 	if ( empty( $merged['utm_medium'] ) ) {
 		$merged['utm_medium'] = $defaults['utm_medium'];
@@ -292,8 +364,8 @@ function kt_get_calendar_utm_params( $channel, $district_key = '', $session_numb
 }
 
 /**
- * Appends utm_* parameters to an http(s) URL. Parameters that already exist on the URL are never overwritten,
- * so manually tagged links keep their own values. Non-http(s) and relative URLs are returned unchanged.
+ * Appends utm_* parameters to an http(s) URL. If the URL already carries any utm_* parameter it is returned
+ * unchanged (all-or-nothing), so manually tagged links and ticket platforms keep their own tagging. Non-http(s) and relative URLs are returned unchanged.
  */
 function kt_append_utm_params( $url, $params ) {
 	if ( empty( $url ) || empty( $params ) || ! is_array( $params ) ) {
@@ -310,9 +382,17 @@ function kt_append_utm_params( $url, $params ) {
 		wp_parse_str( $parts['query'], $existing );
 	}
 
+	// All-or-nothing: if the destination already carries any utm_* parameter (for example the ticket platform's
+	// own tagging), leave the URL alone so we never create a hybrid of two tagging schemes.
+	foreach ( array_keys( $existing ) as $existing_name ) {
+		if ( 0 === strpos( strtolower( (string) $existing_name ), 'utm_' ) ) {
+			return $url;
+		}
+	}
+
 	$to_add = array();
 	foreach ( $params as $name => $value ) {
-		if ( 0 !== strpos( $name, 'utm_' ) || '' === (string) $value || isset( $existing[ $name ] ) ) {
+		if ( 0 !== strpos( $name, 'utm_' ) || '' === (string) $value ) {
 			continue;
 		}
 		$to_add[ $name ] = $value;
@@ -358,7 +438,7 @@ function kt_sync_weekly_cron_schedule( $force_reschedule = false ) {
 	wp_clear_scheduled_hook( KT_CRON_HOOK );
 
 	$day_name = ! empty( $styles['weekly_report_day'] ) ? $styles['weekly_report_day'] : 'monday';
-	$tz       = kt_get_istanbul_timezone();
+	$tz       = kt_get_site_timezone();
 	$target   = new DateTime( 'next ' . $day_name . ' 09:00:00', $tz );
 
 	wp_schedule_event( $target->getTimestamp(), 'kt_weekly', KT_CRON_HOOK );
@@ -390,6 +470,7 @@ function kt_deactivate_plugin() {
 require_once KT_PLUGIN_DIR . 'includes/blocks.php';
 
 if ( is_admin() ) {
+	require_once KT_PLUGIN_DIR . 'includes/admin-tools.php';
 	require_once KT_PLUGIN_DIR . 'includes/admin-page.php';
 }
 
@@ -399,7 +480,7 @@ function kt_register_frontend_assets() {
 
 	// The Quicksand web font is loaded from Google Fonts; sites with strict privacy requirements can turn it off.
 	$font_settings = kt_get_style_settings();
-	if ( ! empty( $font_settings['load_google_font'] ) ) {
+	if ( 'google' === $font_settings['font_mode'] ) {
 		wp_register_style(
 			'kt-quicksand-font',
 			'https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700;900&display=swap',
@@ -415,6 +496,11 @@ function kt_register_frontend_assets() {
 		$style_deps,
 		KT_PLUGIN_VER
 	);
+
+	if ( 'theme' === $font_settings['font_mode'] ) {
+		// Use the active theme's typography instead of Quicksand.
+		wp_add_inline_style( 'kt-frontend-css', '#ktConcertGridContainer, .kt-add-calendar-wrap { font-family: inherit; }' );
+	}
 
 	wp_register_script(
 		'kt-frontend-js',
@@ -467,7 +553,7 @@ function kt_enqueue_tracker_script( $district_key = '', $page_label = '', $track
 			'defaultDistrict' => kt_normalize_district_key( $district_key ),
 			'defaultLabel'    => sanitize_text_field( $page_label ),
 			'trackView'       => $track_page_view ? 1 : 0,
-			'todayStr'        => kt_get_istanbul_date_str( 0 ),
+			'todayStr'        => kt_get_site_date_str( 0 ),
 			'ticketDomains'   => $domains,
 			'defaultImgUrl'   => esc_url_raw( $styles['ticket_btn_img'] ),
 			'captureUtm'      => $utm['capture_enabled'] ? 1 : 0,
@@ -581,10 +667,92 @@ function kt_add_utm_hit( $utm_rows, $utm, $type, $is_unique ) {
  * Safely updates the stats counters (views, visitors, clicks, duration), the UTM breakdown and the last 90 days of daily data.
  */
 function kt_record_district_stat( $raw_key, $type = 'views', $page_title = '', $extra = array() ) {
+	$key = kt_normalize_district_key( $raw_key );
+	if ( empty( $key ) || ! in_array( $type, array( 'views', 'clicks', 'duration' ), true ) ) {
+		return;
+	}
+
+	// Remember the day the event happened, so buffered events are counted on the right day.
+	$extra['date'] = kt_get_site_date_str( 0 );
+
+	$styles = kt_get_style_settings();
+	$delay  = intval( $styles['stats_buffer_seconds'] );
+
+	if ( $delay > 0 ) {
+		kt_buffer_stat_event( $key, $type, $page_title, $extra, $delay );
+		return;
+	}
+
 	if ( ! kt_acquire_stats_lock() ) {
 		return;
 	}
-	kt_record_district_stat_unlocked( $raw_key, $type, $page_title, $extra );
+	$stats = get_option( KT_STATS_OPT, array() );
+	$stats = kt_apply_stat_event( is_array( $stats ) ? $stats : array(), $key, $type, $page_title, $extra );
+	update_option( KT_STATS_OPT, $stats, false );
+	kt_release_stats_lock();
+}
+
+/**
+ * Appends an event to a small buffer option instead of rewriting the (large) statistics option on every hit.
+ * The buffer is merged into the statistics in one write when it holds 50 events, when its oldest event is older
+ * than the configured delay, when a single scheduled cron event fires, or when an admin screen or report is opened.
+ */
+function kt_buffer_stat_event( $key, $type, $page_title, $extra, $delay ) {
+	if ( ! kt_acquire_stats_lock() ) {
+		return;
+	}
+
+	$buffer = get_option( KT_STATS_BUFFER_OPT, array() );
+	if ( ! is_array( $buffer ) ) {
+		$buffer = array();
+	}
+
+	if ( count( $buffer ) < KT_STATS_BUFFER_MAX ) {
+		$buffer[] = array( $key, $type, $page_title, $extra, time() );
+		update_option( KT_STATS_BUFFER_OPT, $buffer, false );
+	}
+
+	$count  = count( $buffer );
+	$oldest = isset( $buffer[0][4] ) ? intval( $buffer[0][4] ) : time();
+	kt_release_stats_lock();
+
+	if ( ! wp_next_scheduled( KT_STATS_FLUSH_HOOK ) ) {
+		wp_schedule_single_event( time() + $delay + 5, KT_STATS_FLUSH_HOOK );
+	}
+
+	if ( $count >= 50 || ( time() - $oldest ) >= $delay ) {
+		kt_flush_stats_buffer();
+	}
+}
+
+/**
+ * Merges all buffered events into the statistics option with a single read and a single write.
+ */
+add_action( KT_STATS_FLUSH_HOOK, 'kt_flush_stats_buffer' );
+function kt_flush_stats_buffer() {
+	$buffer = get_option( KT_STATS_BUFFER_OPT, array() );
+	if ( empty( $buffer ) || ! is_array( $buffer ) ) {
+		return;
+	}
+
+	if ( ! kt_acquire_stats_lock() ) {
+		return;
+	}
+
+	// Re-read inside the lock: another request may have flushed or appended in the meantime.
+	$buffer = get_option( KT_STATS_BUFFER_OPT, array() );
+	if ( ! empty( $buffer ) && is_array( $buffer ) ) {
+		$stats = get_option( KT_STATS_OPT, array() );
+		if ( ! is_array( $stats ) ) {
+			$stats = array();
+		}
+		foreach ( $buffer as $item ) {
+			$stats = kt_apply_stat_event( $stats, $item[0], $item[1], $item[2], $item[3] );
+		}
+		update_option( KT_STATS_OPT, $stats, false );
+		update_option( KT_STATS_BUFFER_OPT, array(), false );
+	}
+
 	kt_release_stats_lock();
 }
 
@@ -614,24 +782,17 @@ function kt_release_stats_lock() {
 }
 
 /**
- * Applies one event to the statistics option. Callers must hold the stats lock.
+ * Applies one event to an in-memory statistics array and returns it (unchanged when the event is rejected).
+ * $key is an already normalized district key. Callers are responsible for locking and persisting.
  */
-function kt_record_district_stat_unlocked( $raw_key, $type = 'views', $page_title = '', $extra = array() ) {
-	$key = kt_normalize_district_key( $raw_key );
-	if ( empty( $key ) || ! in_array( $type, array( 'views', 'clicks', 'duration' ), true ) ) {
-		return;
-	}
-
-	$stats = get_option( KT_STATS_OPT, array() );
-	if ( ! is_array( $stats ) ) {
-		$stats = array();
-	}
-
-	$today_str = kt_get_istanbul_date_str( 0 );
-	$cutoff    = kt_get_istanbul_date_str( -90 );
+function kt_apply_stat_event( $stats, $key, $type, $page_title, $extra ) {
+	$styles    = kt_get_style_settings();
+	$today_str = ( ! empty( $extra['date'] ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $extra['date'] ) ) ? $extra['date'] : kt_get_site_date_str( 0 );
+	$cutoff    = kt_get_site_date_str( -intval( $styles['stats_retention_days'] ) );
 
 	if ( ( ! isset( $stats[ $key ] ) || ! is_array( $stats[ $key ] ) ) && count( $stats ) >= KT_STATS_MAX_DISTRICTS ) {
-		return;
+		update_option( KT_STATS_OVERFLOW_OPT, kt_get_site_date_str( 0 ), false );
+		return $stats;
 	}
 
 	if ( ! isset( $stats[ $key ] ) || ! is_array( $stats[ $key ] ) ) {
@@ -701,6 +862,14 @@ function kt_record_district_stat_unlocked( $raw_key, $type = 'views', $page_titl
 			$stats[ $key ]['click_visitors']                        = ( isset( $stats[ $key ]['click_visitors'] ) ? intval( $stats[ $key ]['click_visitors'] ) : 0 ) + 1;
 			$stats[ $key ]['daily'][ $today_str ]['click_visitors'] = ( isset( $stats[ $key ]['daily'][ $today_str ]['click_visitors'] ) ? intval( $stats[ $key ]['daily'][ $today_str ]['click_visitors'] ) : 0 ) + 1;
 		}
+		// Optional per-session attribution (ticket button with session="1" / "2").
+		$session = isset( $extra['session'] ) ? (string) $extra['session'] : '';
+		if ( in_array( $session, array( '1', '2' ), true ) ) {
+			if ( ! isset( $stats[ $key ]['session_clicks'] ) || ! is_array( $stats[ $key ]['session_clicks'] ) ) {
+				$stats[ $key ]['session_clicks'] = array( '1' => 0, '2' => 0 );
+			}
+			$stats[ $key ]['session_clicks'][ $session ] = ( isset( $stats[ $key ]['session_clicks'][ $session ] ) ? intval( $stats[ $key ]['session_clicks'][ $session ] ) : 0 ) + 1;
+		}
 		$stats[ $key ]['clicks']                        = intval( $stats[ $key ]['clicks'] ) + 1;
 		$stats[ $key ]['daily'][ $today_str ]['clicks'] = intval( $stats[ $key ]['daily'][ $today_str ]['clicks'] ) + 1;
 	} elseif ( 'duration' === $type ) {
@@ -711,11 +880,11 @@ function kt_record_district_stat_unlocked( $raw_key, $type = 'views', $page_titl
 			$stats[ $key ]['daily'][ $today_str ]['seconds']  = intval( $stats[ $key ]['daily'][ $today_str ]['seconds'] ) + $sec;
 			$stats[ $key ]['daily'][ $today_str ]['sessions'] = intval( $stats[ $key ]['daily'][ $today_str ]['sessions'] ) + 1;
 		} else {
-			return;
+			return $stats;
 		}
 	}
 
-	$stats[ $key ]['updated'] = kt_get_istanbul_datetime_str();
+	$stats[ $key ]['updated'] = kt_get_site_datetime_str();
 
 	foreach ( $stats[ $key ]['daily'] as $d_key => $d_val ) {
 		if ( $d_key < $cutoff ) {
@@ -723,7 +892,7 @@ function kt_record_district_stat_unlocked( $raw_key, $type = 'views', $page_titl
 		}
 	}
 
-	update_option( KT_STATS_OPT, $stats, false );
+	return $stats;
 }
 
 /**
@@ -732,6 +901,7 @@ function kt_record_district_stat_unlocked( $raw_key, $type = 'views', $page_titl
 add_action( 'wp_ajax_kt_track_district_event', 'kt_ajax_track_district_event' );
 add_action( 'wp_ajax_nopriv_kt_track_district_event', 'kt_ajax_track_district_event' );
 function kt_ajax_track_district_event() {
+	// phpcs:disable WordPress.Security.NonceVerification.Missing -- Public, cache-friendly tracking endpoint; a nonce is identical for all anonymous visitors and expires in cached pages. Every value below is sanitized, validated and capped.
 	if ( current_user_can( 'edit_pages' ) ) {
 		wp_send_json_success( array( 'ignored' => 'admin' ) );
 	}
@@ -763,7 +933,9 @@ function kt_ajax_track_district_event() {
 		'is_unique' => isset( $_POST['is_unique'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['is_unique'] ) ),
 		'seconds'   => isset( $_POST['seconds'] ) ? intval( wp_unslash( $_POST['seconds'] ) ) : 0,
 		'utm'       => $utm,
+		'session'   => isset( $_POST['session'] ) ? substr( sanitize_text_field( wp_unslash( $_POST['session'] ) ), 0, 1 ) : '',
 	);
+	// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 	kt_record_district_stat( $district, $ev_type, $label, $extra );
 	wp_send_json_success( array( 'recorded' => $ev_type ) );
@@ -823,6 +995,7 @@ function kt_get_utm_report_rows( $stats ) {
  * Builds the summary statistics report data and its HTML output for the given number of days (e.g. 7, 14, 30, or all time).
  */
 function kt_build_stats_report_bundle( $days_span = 7, $render_direct = false ) {
+	kt_flush_stats_buffer();
 	$stats = get_option( KT_STATS_OPT, array() );
 	if ( ! is_array( $stats ) ) {
 		$stats = array();
@@ -834,7 +1007,7 @@ function kt_build_stats_report_bundle( $days_span = 7, $render_direct = false ) 
 
 	if ( ! $is_alltime ) {
 		for ( $d = $days_span - 1; $d >= 0; $d-- ) {
-			$day_keys[] = kt_get_istanbul_date_str( -$d );
+			$day_keys[] = kt_get_site_date_str( -$d );
 		}
 		$period_label = $day_keys[0] . ' – ' . $day_keys[ count( $day_keys ) - 1 ] . ' (Son ' . $days_span . ' Gün)';
 	} else {
@@ -929,7 +1102,7 @@ function kt_build_stats_report_bundle( $days_span = 7, $render_direct = false ) 
 	$overall_ctr        = $sum_views > 0 ? number_format( ( $sum_clicks / $sum_views ) * 100, 1, ',', '.' ) : '0,0';
 	$overall_conversion = number_format( kt_conversion_rate( $sum_click_visitors, $sum_visitors ), 1, ',', '.' );
 	$site_name       = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
-	$generated_at    = kt_get_istanbul_datetime_str();
+	$generated_at    = kt_get_site_datetime_str();
 
 	if ( ! $render_direct ) {
 		ob_start();
@@ -1075,8 +1248,44 @@ function kt_send_weekly_stats_email( $override_email = '' ) {
 	$bundle  = kt_build_stats_report_bundle( 7 );
 	$subject = sprintf( '[%s] Haftalık Konser Sayfası İstatistik Raporu (%s)', $bundle['site_name'], $bundle['period_label'] );
 	$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+	$body    = $bundle['html_card'];
 
-	return wp_mail( $recipient, $subject, $bundle['html_card'], $headers );
+	// Optional alert block for pages whose visitors rarely click the ticket button.
+	if ( ! empty( $styles['alert_enabled'] ) ) {
+		$low = kt_get_low_conversion_rows( $bundle['rows'], $styles['alert_min_conversion'], $styles['alert_min_visitors'] );
+		if ( ! empty( $low ) ) {
+			$subject .= ' — Düşük dönüşüm uyarısı';
+			$body     = kt_render_low_conversion_alert( $low, $styles['alert_min_conversion'], $styles['alert_min_visitors'] ) . $body;
+		}
+	}
+
+	return wp_mail( $recipient, $subject, $body, $headers );
+}
+
+/**
+ * Returns report rows whose conversion rate is below the threshold and that have enough unique visitors to be meaningful.
+ */
+function kt_get_low_conversion_rows( $rows, $min_conversion, $min_visitors ) {
+	$low = array();
+	foreach ( (array) $rows as $row ) {
+		if ( isset( $row['visitors'], $row['conversion'] ) && $row['visitors'] >= $min_visitors && $row['conversion'] < $min_conversion ) {
+			$low[] = $row;
+		}
+	}
+	return $low;
+}
+
+/**
+ * Renders the e-mail alert block (inline styles; e-mail clients ignore stylesheets).
+ */
+function kt_render_low_conversion_alert( $low_rows, $min_conversion, $min_visitors ) {
+	$html  = '<div style="background:#fef2f2;border:1px solid #fecaca;border-left:4px solid #dc2626;border-radius:6px;padding:12px 16px;margin:0 0 16px 0;font-family:Arial,sans-serif;font-size:14px;color:#7f1d1d;">';
+	$html .= '<strong>' . esc_html( sprintf( 'Dönüşüm oranı %%%s altında kalan sayfalar (en az %d tekil ziyaretçi):', rtrim( rtrim( number_format( (float) $min_conversion, 1, ',', '' ), '0' ), ',' ), intval( $min_visitors ) ) ) . '</strong><ul style="margin:8px 0 0 18px;padding:0;">';
+	foreach ( $low_rows as $row ) {
+		$html .= '<li>' . esc_html( sprintf( '%s — %d tekil ziyaretçi, %d tıklayan, dönüşüm %%%s', $row['label'], $row['visitors'], $row['click_visitors'], number_format( $row['conversion'], 1, ',', '.' ) ) ) . '</li>';
+	}
+	$html .= '</ul></div>';
+	return $html;
 }
 
 /**
@@ -1094,7 +1303,7 @@ function kt_get_upcoming_events_for_target( $target ) {
 		return array();
 	}
 
-	$now_ts  = kt_get_istanbul_timestamp();
+	$now_ts  = kt_get_site_timestamp();
 	$matched = array();
 
 	foreach ( $all_events as $event ) {
@@ -1137,7 +1346,7 @@ function kt_build_music_event_schema_item( $event, $performer_name, $ticket_url 
 	$last_start = $start_iso;
 
 	if ( ! empty( $event['time2'] ) && preg_match( '/^\d{2}:\d{2}$/', $event['time2'] ) && ! empty( $dt_parts[0] ) ) {
-		$last_start = $dt_parts[0] . 'T' . sanitize_text_field( $event['time2'] ) . ':00+03:00';
+		$last_start = kt_second_session_iso( $event );
 	}
 
 	// Google expects endDate after startDate: assume one hour after the start of the last session (same as the calendar entries).
@@ -1189,7 +1398,7 @@ function kt_build_music_event_schema_item( $event, $performer_name, $ticket_url 
 		'@type'         => 'Offer',
 		'url'           => esc_url_raw( $offer_url ),
 		'availability'  => 'https://schema.org/InStock',
-		'validFrom'     => gmdate( 'Y-01-01\T00:00:00+03:00' ),
+		'validFrom'     => kt_local_to_iso( gmdate( 'Y' ) . '-01-01', '00:00' ),
 		'priceCurrency' => 'TRY',
 	);
 
@@ -1277,7 +1486,7 @@ function kt_output_music_event_json_ld() {
 	if ( $has_calendar ) {
 		$all_events = get_option( KT_EVENTS_OPT, array() );
 		if ( is_array( $all_events ) ) {
-			$now_ts   = kt_get_istanbul_timestamp();
+			$now_ts   = kt_get_site_timestamp();
 			$upcoming = array();
 			foreach ( $all_events as $ev ) {
 				$end_ts = kt_get_event_end_timestamp( $ev );
@@ -1454,7 +1663,7 @@ function kt_render_add_to_calendar_widget( $events, $page_url = '', $district_ke
 		: wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
 
 	$months_tr = array( '', 'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık' );
-	$tz        = kt_get_istanbul_timezone();
+	$tz        = kt_get_site_timezone();
 	$utc_tz    = new DateTimeZone( 'UTC' );
 
 	$sessions = array();
@@ -1648,10 +1857,14 @@ function kt_ticket_button_shortcode( $atts ) {
 			'district'    => '',
 			'alt'         => 'Bilet Al',
 			'link_target' => '',
+			'session'     => '',
 		),
 		$atts,
 		'konser_bilet_butonu'
 	);
+
+	// Optional per-session attribution: "1" or "2" marks this button as the first/second session's ticket button.
+	$session = in_array( (string) $atts['session'], array( '1', '2' ), true ) ? (string) $atts['session'] : '';
 
 	$target_url = ! empty( $atts['url'] ) ? $atts['url'] : $styles['ticket_btn_url'];
 	if ( empty( $target_url ) ) {
@@ -1666,7 +1879,7 @@ function kt_ticket_button_shortcode( $atts ) {
 	kt_enqueue_tracker_script( $district_key, $page_label, false );
 
 	// Tag the outbound ticket URL with UTM parameters (existing utm_* values on the URL are kept).
-	$target_url = kt_append_utm_params( $target_url, kt_get_ticket_utm_params( $district_key, 'ticket-button' ) );
+	$target_url = kt_append_utm_params( $target_url, kt_get_ticket_utm_params( $district_key, '' !== $session ? 'ticket-button-s' . $session : 'ticket-button' ) );
 
 	$target_attr = '';
 	if ( ! empty( $atts['link_target'] ) ) {
@@ -1690,10 +1903,11 @@ function kt_ticket_button_shortcode( $atts ) {
 	}
 
 	return sprintf(
-		'<figure class="wp-block-image size-large"><a href="%s" class="kt-ticket-btn-link" data-kt-district="%s" data-kt-label="%s"%s>%s</a></figure>',
+		'<figure class="wp-block-image size-large"><a href="%s" class="kt-ticket-btn-link" data-kt-district="%s" data-kt-label="%s"%s%s>%s</a></figure>',
 		esc_url( $target_url ),
 		esc_attr( kt_normalize_district_key( $district_key ) ),
 		esc_attr( $page_label ),
+		'' !== $session ? ' data-kt-session="' . esc_attr( $session ) . '"' : '',
 		$target_attr,
 		$img_html
 	);
@@ -1710,15 +1924,11 @@ function kt_concert_grid_shortcode() {
 	$styles          = kt_get_style_settings();
 
 	if ( is_array( $all_events ) ) {
-		$now_ts = kt_get_istanbul_timestamp();
+		$now_ts = kt_get_site_timestamp();
 		foreach ( $all_events as $event ) {
 			$end_ts = kt_get_event_end_timestamp( $event );
 			if ( false !== $end_ts && $end_ts >= $now_ts ) {
-				$dt_parts = explode( 'T', $event['datetime'] );
-				$end_iso  = $event['datetime'];
-				if ( ! empty( $event['time2'] ) && ! empty( $dt_parts[0] ) ) {
-					$end_iso = $dt_parts[0] . 'T' . sanitize_text_field( $event['time2'] ) . ':00+03:00';
-				}
+				$end_iso = ! empty( $event['time2'] ) ? kt_second_session_iso( $event ) : $event['datetime'];
 
 				$upcoming_events[] = array(
 					'datetime'    => sanitize_text_field( $event['datetime'] ),
@@ -1770,6 +1980,7 @@ function kt_concert_grid_shortcode() {
 			'events'   => $upcoming_events,
 			'baseUrl'  => trailingslashit( home_url() ),
 			'maxItems' => intval( $styles['max_items'] ),
+			'timezone' => $styles['timezone'],
 		)
 	);
 

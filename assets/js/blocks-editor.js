@@ -7,6 +7,7 @@
 	var PanelBody = wp.components.PanelBody;
 	var TextControl = wp.components.TextControl;
 	var ToggleControl = wp.components.ToggleControl;
+	var SelectControl = wp.components.SelectControl;
 	var ServerSideRender = wp.serverSideRender;
 
 	// Block 1: Concert Calendar
@@ -133,6 +134,10 @@
 			link_target: {
 				type: 'string',
 				default: ''
+			},
+			session: {
+				type: 'string',
+				default: ''
 			}
 		},
 		edit: function (props) {
@@ -179,6 +184,18 @@
 							value: attributes.alt,
 							onChange: function (val) {
 								setAttributes({ alt: val });
+							}
+						}),
+						el(SelectControl, {
+							label: 'Seans (isteğe bağlı: hangi seansın butonu?)',
+							value: attributes.session,
+							options: [
+								{ label: 'Belirtilmedi', value: '' },
+								{ label: '1. Seans', value: '1' },
+								{ label: '2. Seans', value: '2' }
+							],
+							onChange: function (val) {
+								setAttributes({ session: val });
 							}
 						}),
 						el(ToggleControl, {

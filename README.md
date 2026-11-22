@@ -61,6 +61,20 @@ When a visitor lands on a page with `utm_source`, `utm_medium` or `utm_campaign`
 - The `MusicEvent` JSON-LD URLs are intentionally **not** tagged, because structured data should point at canonical URLs.
 - Incoming UTM data is all-time (it is not split by report period). The HTML report and the weekly e-mail list the top 15 rows; the CSV export contains all of them in a second block.
 
+### Classifying incoming traffic (channel links)
+Ticket platforms such as Biletinial tag their own links, so you do not need outbound tagging. What matters is tagging the links **you share**. Use **Tools & Diagnostics → Campaign link builder**, e.g. for an Adana concert page:
+
+| Channel | `utm_source` | `utm_medium` | `utm_campaign` |
+|---|---|---|---|
+| WhatsApp | `whatsapp` | `messaging` | `adana` |
+| Meta ads | `meta` | `cpc` | `adana` |
+| YouTube ads | `youtube` | `cpc` | `adana` |
+| Newsletter | `newsletter` | `email` | `adana` |
+| Instagram (organic) | `instagram` | `social` | `adana` |
+| Plain link | – | – | – (counted as direct) |
+
+Keep the same lowercase source/medium names on every campaign so the table groups them. Apps may strip referrers, so untagged visits cannot be attributed reliably; only tagged links are classified.
+
 ## Privacy
 
 - Statistics use no cookies. The browser's `localStorage` only stores a per-day "already counted" marker per district (visits and ticket clicks).
@@ -118,7 +132,7 @@ Version 4.0.0 replaces the Turkish attribute names with English ones. **There is
 - **Shortcodes:** edit the pages and rename the attributes, e.g. `[konser_ilce_yonlendir ilce="urla"]` → `[konser_ilce_yonlendir district="urla"]`.
 - **Blocks:** WordPress silently ignores unknown block attributes, so a block that had `ilce` set falls back to the page slug until you re-enter the value in the block sidebar.
 - Block names (`konser-takvimi/...`), shortcode names, the `subadap_konserler_*` database options and the `{city}-konseri` slug format are unchanged, so stored concerts and statistics are untouched.
-- UTM tagging is **on by default** after the upgrade. Switch it off in the settings if you do not want outbound links to change.
+- Outbound ticket-link tagging is **off by default** since 4.3.0 and never touches links that already have `utm_*` parameters (e.g. Biletinial). Incoming UTM capture is on.
 
 ## Development & Tests
 
@@ -128,7 +142,7 @@ The plugin logic is covered by dependency-free tests that stub the WordPress fun
 ./tests/run.sh   # PHP lint, JS syntax, PHP tests and tracker.js tests
 ```
 
-GitHub Actions runs the same checks on PHP 8.1 – 8.3 and Node 20 (`.github/workflows/tests.yml`), next to the security workflow (`security.yml`). The stubs only approximate WordPress, so they do not replace a manual check on a staging site.
+GitHub Actions runs the same checks on PHP 8.3 – 8.5 and Node 20 (`.github/workflows/tests.yml`), next to the security workflow (`security.yml`). The stubs only approximate WordPress, so they do not replace a manual check on a staging site.
 
 ## File Structure
 
@@ -141,7 +155,7 @@ konser-takvimi/
 ├── README.tr.md                 # Project documentation (Turkish)
 ├── CHANGELOG.md                 # Release history
 ├── .github/workflows/
-│   ├── tests.yml                # Lint + unit tests (PHP 8.1-8.3, Node 20)
+│   ├── tests.yml                # Lint + unit tests (PHP 8.3-8.5, Node 20)
 │   └── security.yml             # WPCS security sniffs, Semgrep and Gitleaks
 ├── tests/                       # Stubbed-WordPress unit tests and tracker.js tests (run with ./tests/run.sh)
 ├── includes/

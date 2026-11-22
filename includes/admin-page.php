@@ -48,9 +48,11 @@ function kt_handle_stats_export() {
 		wp_die( 'Yetkisiz erişim.' );
 	}
 
+	kt_flush_stats_buffer();
+
 	check_admin_referer( 'kt_stats_nonce_action', 'kt_stats_nonce' );
 
-	$date_stamp    = kt_get_istanbul_date_str( 0 );
+	$date_stamp    = kt_get_site_date_str( 0 );
 	$report_format = isset( $_POST['report_format'] ) ? sanitize_key( $_POST['report_format'] ) : 'html';
 	$report_period = isset( $_POST['report_period'] ) ? intval( $_POST['report_period'] ) : 7;
 
@@ -214,7 +216,7 @@ function kt_handle_concert_export() {
 		$scope = 'all';
 	}
 
-	$now_ts     = kt_get_istanbul_timestamp();
+	$now_ts     = kt_get_site_timestamp();
 	$all_events = get_option( KT_EVENTS_OPT, array() );
 	if ( ! is_array( $all_events ) ) {
 		$all_events = array();
@@ -236,7 +238,7 @@ function kt_handle_concert_export() {
 		$filtered[]   = $ev;
 	}
 
-	$date_stamp = kt_get_istanbul_date_str( 0 );
+	$date_stamp = kt_get_site_date_str( 0 );
 	$filename   = "konser-takvimi-{$scope}-{$date_stamp}.{$format}";
 
 	nocache_headers();
@@ -287,16 +289,27 @@ function kt_render_admin_page() {
 	}
 
 	$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'concerts';
-	if ( ! in_array( $active_tab, array( 'concerts', 'stats', 'styles' ), true ) ) {
+	if ( ! in_array( $active_tab, array( 'concerts', 'stats', 'styles', 'tools' ), true ) ) {
 		$active_tab = 'concerts';
 	}
 
 	$message         = '';
-	$now_ts          = kt_get_istanbul_timestamp();
+	$now_ts          = kt_get_site_timestamp();
 	$existing_events = get_option( KT_EVENTS_OPT, array() );
 
 	if ( ! is_array( $existing_events ) ) {
 		$existing_events = array();
+	}
+
+	// Make sure buffered tracking events are visible before any statistics are shown or changed.
+	if ( 'stats' === $active_tab || 'tools' === $active_tab ) {
+		kt_flush_stats_buffer();
+	}
+
+	// Tools tab actions (archive cleanup, buffer flush).
+	$tools_message = kt_handle_tools_actions();
+	if ( '' !== $tools_message ) {
+		$message = $tools_message;
 	}
 
 	// Tab 1: save concerts.
@@ -342,7 +355,7 @@ function kt_render_admin_page() {
 			}
 
 			$active_events[] = array(
-				'datetime' => $date . 'T' . $time . ':00+03:00',
+				'datetime' => kt_local_to_iso( $date, $time ),
 				'time2'    => $time2,
 				'city'     => $city,
 				'slug'     => $slug,
@@ -418,7 +431,19 @@ function kt_render_admin_page() {
 		$schema_enabled   = isset( $_POST['schema_enabled'] ) ? 1 : 0;
 		$schema_performer = isset( $_POST['schema_performer'] ) ? sanitize_text_field( wp_unslash( $_POST['schema_performer'] ) ) : '';
 
-		$load_font       = isset( $_POST['load_google_font'] ) ? 1 : 0;
+		$font_mode = isset( $_POST['font_mode'] ) ? sanitize_key( wp_unslash( $_POST['font_mode'] ) ) : 'google';
+		if ( ! in_array( $font_mode, array( 'google', 'system', 'theme' ), true ) ) {
+			$font_mode = 'google';
+		}
+		$timezone = isset( $_POST['timezone'] ) ? sanitize_text_field( wp_unslash( $_POST['timezone'] ) ) : 'Europe/Istanbul';
+		if ( ! in_array( $timezone, timezone_identifiers_list(), true ) ) {
+			$timezone = 'Europe/Istanbul';
+		}
+		$retention_days  = isset( $_POST['stats_retention_days'] ) ? intval( $_POST['stats_retention_days'] ) : 90;
+		$buffer_seconds  = isset( $_POST['stats_buffer_seconds'] ) ? intval( $_POST['stats_buffer_seconds'] ) : 60;
+		$alert_enabled   = isset( $_POST['alert_enabled'] ) ? 1 : 0;
+		$alert_min_conv  = isset( $_POST['alert_min_conversion'] ) ? floatval( $_POST['alert_min_conversion'] ) : 3;
+		$alert_min_vis   = isset( $_POST['alert_min_visitors'] ) ? intval( $_POST['alert_min_visitors'] ) : 50;
 		$utm_ticket_on   = isset( $_POST['utm_ticket_enabled'] ) ? 1 : 0;
 		$utm_calendar_on = isset( $_POST['utm_calendar_enabled'] ) ? 1 : 0;
 		$utm_capture_on  = isset( $_POST['utm_capture_enabled'] ) ? 1 : 0;
@@ -468,7 +493,14 @@ function kt_render_admin_page() {
 			'ticket_domains'      => $raw_domains,
 			'schema_enabled'      => $schema_enabled,
 			'schema_performer'    => $schema_performer,
-			'load_google_font'     => $load_font,
+			'load_google_font'     => ( 'google' === $font_mode ) ? 1 : 0,
+			'font_mode'            => $font_mode,
+			'timezone'             => $timezone,
+			'stats_retention_days' => $retention_days,
+			'stats_buffer_seconds' => $buffer_seconds,
+			'alert_enabled'        => $alert_enabled,
+			'alert_min_conversion' => $alert_min_conv,
+			'alert_min_visitors'   => $alert_min_vis,
 			'utm_ticket_enabled'   => $utm_ticket_on,
 			'utm_calendar_enabled' => $utm_calendar_on,
 			'utm_capture_enabled'  => $utm_capture_on,
@@ -520,6 +552,11 @@ function kt_render_admin_page() {
 			Gutenberg editöründe <strong>Konser Takvimi</strong>, <strong>Konser İlçe Yönlendirici &amp; Takvime Ekle</strong> ve <strong>Konser Bilet Butonu</strong> bloklarını kullanabilirsiniz. <em>(Eski <code>[konser_takvimi]</code>, <code>[konser_ilce_yonlendir]</code> ve <code>[konser_bilet_butonu]</code> kısa kodları geriye dönük uyumluluk için çalışmaya devam eder.)</em>
 		</p>
 		<?php echo wp_kses_post( $message ); ?>
+		<?php if ( 'tools' !== $active_tab && get_option( KT_STATS_OVERFLOW_OPT, '' ) ) : ?>
+			<div class="notice notice-warning"><p>
+				<strong>Konser Takvimi:</strong> İstatistik tablosu <?php echo esc_html( (string) KT_STATS_MAX_DISTRICTS ); ?> ilçe sınırına ulaştı ve yeni ilçeler kaydedilemiyor. <a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=tools' ) ); ?>">Ayrıntılar</a>
+			</p></div>
+		<?php endif; ?>
 
 		<nav class="nav-tab-wrapper" style="margin-top: 15px; max-width: 1060px;">
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=concerts' ) ); ?>" class="nav-tab <?php echo 'concerts' === $active_tab ? 'nav-tab-active' : ''; ?>">
@@ -531,7 +568,14 @@ function kt_render_admin_page() {
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=styles' ) ); ?>" class="nav-tab <?php echo 'styles' === $active_tab ? 'nav-tab-active' : ''; ?>">
 				Düğme Biçimleri, Renkler & Ayarlar
 			</a>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=tools' ) ); ?>" class="nav-tab <?php echo 'tools' === $active_tab ? 'nav-tab-active' : ''; ?>">
+				Araçlar & Tanılama
+			</a>
 		</nav>
+
+		<?php if ( 'tools' === $active_tab ) : ?>
+			<?php kt_render_tools_tab( $existing_events ); ?>
+		<?php endif; ?>
 
 		<?php if ( 'concerts' === $active_tab ) : ?>
 
@@ -673,7 +717,7 @@ function kt_render_admin_page() {
 				$stats = array();
 			}
 
-			$today_str = kt_get_istanbul_date_str( 0 );
+			$today_str = kt_get_site_date_str( 0 );
 
 			$sort_by = isset( $_GET['sort_by'] ) ? sanitize_key( $_GET['sort_by'] ) : 'visitors';
 			if ( ! in_array( $sort_by, array( 'visitors', 'views', 'clicks', 'ctr', 'conversion', 'duration' ), true ) ) {
@@ -756,7 +800,7 @@ function kt_render_admin_page() {
 
 			$chart_days = array();
 			for ( $d = 13; $d >= 0; $d-- ) {
-				$d_str        = kt_get_istanbul_date_str( -$d );
+				$d_str        = kt_get_site_date_str( -$d );
 				$chart_days[] = array(
 					'date'  => $d_str,
 					'label' => substr( $d_str, 8, 2 ) . '.' . substr( $d_str, 5, 2 ),
@@ -972,7 +1016,12 @@ function kt_render_admin_page() {
 										<td><strong><?php echo esc_html( number_format_i18n( $t_vis ) ); ?></strong></td>
 										<td><?php echo esc_html( number_format_i18n( $vis ) ); ?></td>
 										<td><?php echo esc_html( number_format_i18n( $v ) ); ?></td>
-										<td style="color: #15803d; font-weight: 600;"><?php echo esc_html( number_format_i18n( $c ) ); ?></td>
+										<td style="color: #15803d; font-weight: 600;">
+											<?php echo esc_html( number_format_i18n( $c ) ); ?>
+											<?php if ( ! empty( $row['session_clicks'] ) && is_array( $row['session_clicks'] ) ) : ?>
+												<div style="font-size: 11px; font-weight: 400; color: #64748b;"><?php echo esc_html( sprintf( '1. seans: %d · 2. seans: %d', isset( $row['session_clicks']['1'] ) ? intval( $row['session_clicks']['1'] ) : 0, isset( $row['session_clicks']['2'] ) ? intval( $row['session_clicks']['2'] ) : 0 ) ); ?></div>
+											<?php endif; ?>
+										</td>
 										<td><span style="display: inline-block; padding: 3px 8px; background: <?php echo esc_attr( $ctr_bg ); ?>; color: <?php echo esc_attr( $ctr_fg ); ?>; border-radius: 4px; font-weight: 700;">%<?php echo esc_html( $ctr ); ?></span></td>
 										<td style="color: #0f766e; font-weight: 600;"><?php echo esc_html( number_format_i18n( $cv_count ) ); ?></td>
 										<td><span style="display: inline-block; padding: 3px 8px; background: <?php echo esc_attr( $conv_bg ); ?>; color: <?php echo esc_attr( $conv_fg ); ?>; border-radius: 4px; font-weight: 700;">%<?php echo esc_html( $conv ); ?></span></td>
@@ -1321,14 +1370,83 @@ function kt_render_admin_page() {
 				</div>
 
 				<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #64748b; border-radius: 4px; padding: 16px 20px; margin-bottom: 20px;">
-					<h2 style="margin-top: 0;">Gizlilik & Yazı Tipi</h2>
-					<label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer;">
-						<input type="checkbox" name="load_google_font" value="1" <?php checked( ! empty( $styles['load_google_font'] ) ); ?> style="margin-top: 3px;">
-						<span>
-							<strong>Quicksand yazı tipini Google Fonts'tan yükle.</strong><br>
-							<span class="description">Kapatırsanız ziyaretçilerin tarayıcısı Google'a bağlanmaz ve kartlar sistem yazı tipiyle gösterilir. İstatistikler çerez kullanmaz; yalnızca tarayıcının <code>localStorage</code> alanına günlük bir "ziyaret edildi" işareti yazar. Sitenizin onay (KVKK/GDPR) politikasına uygunluğunu ayrıca değerlendirin.</span>
-						</span>
-					</label>
+					<h2 style="margin-top: 0;">Gizlilik, Yazı Tipi, Saat Dilimi & Veri</h2>
+					<table class="form-table" role="presentation" style="margin-top: 0;">
+						<tr>
+							<th scope="row">Yazı tipi</th>
+							<td>
+								<?php
+								$font_options = array(
+									'google' => 'Quicksand (Google Fonts üzerinden yüklenir)',
+									'system' => 'Sistem yazı tipi (Google\'a bağlanılmaz)',
+									'theme'  => 'Temanın varsayılan yazı tipi',
+								);
+								foreach ( $font_options as $font_value => $font_label ) :
+									?>
+									<label style="display: block; margin-bottom: 4px;">
+										<input type="radio" name="font_mode" value="<?php echo esc_attr( $font_value ); ?>" <?php checked( $styles['font_mode'], $font_value ); ?>>
+										<?php echo esc_html( $font_label ); ?>
+									</label>
+								<?php endforeach; ?>
+								<p class="description">Google Fonts kapalıyken ziyaretçilerin tarayıcısı Google'a bağlanmaz. İstatistikler çerez kullanmaz; yalnızca tarayıcının <code>localStorage</code> alanına günlük bir "ziyaret edildi" işareti yazar. Sitenizin onay (KVKK/GDPR) politikasına uygunluğunu ayrıca değerlendirin.</p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="timezone">Saat dilimi</label></th>
+							<td>
+								<select id="timezone" name="timezone">
+									<?php foreach ( timezone_identifiers_list() as $tz_name ) : ?>
+										<option value="<?php echo esc_attr( $tz_name ); ?>" <?php selected( $styles['timezone'], $tz_name ); ?>><?php echo esc_html( $tz_name ); ?></option>
+									<?php endforeach; ?>
+								</select>
+								<p class="description">Konser saatleri, "bugün/yarın" etiketleri, günlük istatistikler ve Takvime Ekle bağlantıları bu saat dilimine göre hesaplanır. Daha önce kaydedilmiş konserler kendi saat farkını korur.</p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="stats_retention_days">Günlük istatistik saklama</label></th>
+							<td>
+								<select id="stats_retention_days" name="stats_retention_days">
+									<?php foreach ( array( 30, 90, 180 ) as $days_opt ) : ?>
+										<option value="<?php echo esc_attr( (string) $days_opt ); ?>" <?php selected( intval( $styles['stats_retention_days'] ), $days_opt ); ?>><?php echo esc_html( $days_opt . ' gün' ); ?></option>
+									<?php endforeach; ?>
+								</select>
+								<p class="description">Günlük kırılımlar bu süreden sonra silinir; toplam sayılar korunur. Kısa süre veritabanını küçük tutar.</p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="stats_buffer_seconds">Yazma tamponu</label></th>
+							<td>
+								<select id="stats_buffer_seconds" name="stats_buffer_seconds">
+									<?php
+									$buffer_labels = array(
+										0   => 'Kapalı (anında yaz)',
+										30  => '30 saniye',
+										60  => '60 saniye (önerilen)',
+										300 => '5 dakika',
+									);
+									foreach ( $buffer_labels as $buf_value => $buf_label ) :
+										?>
+										<option value="<?php echo esc_attr( (string) $buf_value ); ?>" <?php selected( intval( $styles['stats_buffer_seconds'] ), $buf_value ); ?>><?php echo esc_html( $buf_label ); ?></option>
+									<?php endforeach; ?>
+								</select>
+								<p class="description">Yoğun trafikte veritabanı yazma sayısını azaltır. İstatistikler bu süre kadar gecikmeli görünebilir; İstatistikler sekmesini açtığınızda bekleyenler hemen işlenir.</p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row">Düşük dönüşüm uyarısı</th>
+							<td>
+								<label style="display: block; margin-bottom: 6px;">
+									<input type="checkbox" name="alert_enabled" value="1" <?php checked( ! empty( $styles['alert_enabled'] ) ); ?>>
+									Haftalık rapor e-postasına, dönüşüm oranı düşük sayfalar için uyarı ekle.
+								</label>
+								Dönüşüm
+								<input type="number" name="alert_min_conversion" value="<?php echo esc_attr( (string) $styles['alert_min_conversion'] ); ?>" min="0" max="100" step="0.1" style="width: 80px;">
+								% altında ve en az
+								<input type="number" name="alert_min_visitors" value="<?php echo esc_attr( (string) $styles['alert_min_visitors'] ); ?>" min="1" step="1" style="width: 90px;">
+								tekil ziyaretçisi olan sayfalar.
+							</td>
+						</tr>
+					</table>
 				</div>
 
 				<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #d63638; border-radius: 4px; padding: 16px 20px; margin-bottom: 20px;">

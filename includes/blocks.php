@@ -85,6 +85,10 @@ function kt_register_gutenberg_blocks() {
 					'type'    => 'string',
 					'default' => '',
 				),
+				'session'     => array(
+					'type'    => 'string',
+					'default' => '',
+				),
 			),
 		)
 	);
@@ -114,6 +118,7 @@ function kt_render_ticket_button_block( $attributes ) {
 		'district'    => isset( $attributes['district'] ) ? sanitize_text_field( $attributes['district'] ) : '',
 		'alt'         => isset( $attributes['alt'] ) ? sanitize_text_field( $attributes['alt'] ) : 'Bilet Al',
 		'link_target' => isset( $attributes['link_target'] ) ? sanitize_text_field( $attributes['link_target'] ) : '',
+		'session'     => isset( $attributes['session'] ) ? sanitize_text_field( $attributes['session'] ) : '',
 	);
 
 	$html = kt_ticket_button_shortcode( $atts );
@@ -132,7 +137,7 @@ function kt_render_calendar_editor_preview() {
 	$upcoming   = array();
 
 	if ( is_array( $all_events ) ) {
-		$now_ts = kt_get_istanbul_timestamp();
+		$now_ts = kt_get_site_timestamp();
 		foreach ( $all_events as $ev ) {
 			$end_ts = kt_get_event_end_timestamp( $ev );
 			if ( false !== $end_ts && $end_ts >= $now_ts ) {
@@ -147,11 +152,11 @@ function kt_render_calendar_editor_preview() {
 		return '<div style="padding:20px;text-align:center;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;color:#475569;"><strong>Konser Takvimi Bloğu:</strong> Şu anda yaklaşan aktif konser kaydı bulunmuyor.</div>';
 	}
 
-	$today_str    = kt_get_istanbul_date_str( 0 );
-	$tomorrow_str = kt_get_istanbul_date_str( 1 );
+	$today_str    = kt_get_site_date_str( 0 );
+	$tomorrow_str = kt_get_site_date_str( 1 );
 	$months_tr    = array( '', 'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık' );
 	$days_tr      = array( 'Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi' );
-	$tz           = kt_get_istanbul_timezone();
+	$tz           = kt_get_site_timezone();
 
 	ob_start();
 	?>

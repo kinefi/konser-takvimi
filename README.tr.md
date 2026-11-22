@@ -61,6 +61,9 @@ Ziyaretçi adreste `utm_source`, `utm_medium` veya `utm_campaign` bulunan bir sa
 - `MusicEvent` JSON-LD içindeki adresler bilerek **etiketlenmez**; yapılandırılmış veri kanonik adresleri göstermelidir.
 - Gelen UTM verisi tüm zamanları kapsar (rapor dönemine göre bölünmez). HTML rapor ve haftalık e-posta ilk 15 satırı listeler; CSV dışa aktarma hepsini ikinci bir blokta içerir.
 
+### Gelen trafiğin sınıflandırılması (kanal bağlantıları)
+Biletinial gibi bilet platformları kendi bağlantılarını zaten etiketler; giden bağlantıya UTM eklemeniz gerekmez. Önemli olan **sizin paylaştığınız** bağlantıların etiketli olmasıdır. **Araçlar & Tanılama → Kampanya bağlantı oluşturucu** ile (ör. Adana konseri): WhatsApp `whatsapp/messaging/adana`, Meta reklam `meta/cpc/adana`, YouTube reklam `youtube/cpc/adana`, e-posta `newsletter/email/adana`, Instagram organik `instagram/social/adana`, etiketsiz bağlantı doğrudan sayılır. Tabloda gruplanması için kaynak/ortam adlarını her kampanyada aynı (küçük harf) tutun. Uygulamalar yönlendiren bilgisini silebildiği için etiketsiz ziyaretler güvenilir biçimde kanala atfedilemez.
+
 ## Gizlilik
 
 - İstatistikler çerez kullanmaz. Tarayıcının `localStorage` alanına yalnızca ilçe başına günlük bir "sayıldı" işareti (ziyaret ve bilet tıklaması için) yazılır.
@@ -128,7 +131,7 @@ Eklenti mantığı, ihtiyaç duyduğu WordPress fonksiyonlarını taklit eden (`
 ./tests/run.sh   # PHP lint, JS sözdizimi, PHP testleri ve tracker.js testleri
 ```
 
-GitHub Actions aynı kontrolleri PHP 8.1 – 8.3 ve Node 20 üzerinde çalıştırır (`.github/workflows/tests.yml`); güvenlik workflow'u (`security.yml`) ayrıca çalışır. Taklit fonksiyonlar WordPress'i yalnızca yaklaşık olarak temsil eder; bir deneme sitesinde elle kontrolün yerini tutmaz.
+GitHub Actions aynı kontrolleri PHP 8.3 – 8.5 ve Node 20 üzerinde çalıştırır (`.github/workflows/tests.yml`); güvenlik workflow'u (`security.yml`) ayrıca çalışır. Taklit fonksiyonlar WordPress'i yalnızca yaklaşık olarak temsil eder; bir deneme sitesinde elle kontrolün yerini tutmaz.
 
 ## Dosya Yapısı
 
@@ -141,7 +144,7 @@ konser-takvimi/
 ├── README.tr.md                 # Proje dokümantasyonu (Türkçe)
 ├── CHANGELOG.md                 # Sürüm geçmişi
 ├── .github/workflows/
-│   ├── tests.yml                # Lint + birim testleri (PHP 8.1-8.3, Node 20)
+│   ├── tests.yml                # Lint + birim testleri (PHP 8.3-8.5, Node 20)
 │   └── security.yml             # WPCS güvenlik kuralları, Semgrep ve Gitleaks
 ├── tests/                       # WordPress taklitli birim testleri ve tracker.js testleri (./tests/run.sh)
 ├── includes/

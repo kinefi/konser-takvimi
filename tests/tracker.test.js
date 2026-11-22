@@ -52,10 +52,10 @@ const baseCfg = () => ({ ajaxUrl: '/ajax', nonce: 'n', defaultDistrict: 'urla', 
   t('view has no stray params', view && !('foo' in view));
   t('view is_unique', view && view.is_unique === '1');
   t('ticket link decorated', ticket.href === 'https://biletinial.com/e/1?utm_source=subadapcocuk.org&utm_medium=referral&utm_campaign=urla&utm_content=ticket-link', ticket.href);
-  t('manual utm_source kept, rest added', manual.href.includes('utm_source=newsletter') && manual.href.includes('utm_campaign=bornova') && !manual.href.includes('utm_source=subadapcocuk.org'), manual.href);
+  t('link with its own utm is left untouched (all-or-nothing)', manual.href === 'https://biletix.com/e/2?utm_source=newsletter', manual.href);
   t('internal link untouched', internal.href === 'https://subadapcocuk.org/baska-sayfa/', internal.href);
   t('non-ticket external untouched', other.href === 'https://example.com/');
-  t('server-tagged button gets only missing params', button.href.includes('utm_medium=referral') && button.href.includes('utm_campaign=urla') && (button.href.match(/utm_source=/g) || []).length === 1 && (button.href.match(/utm_content=/g) || []).length === 1, button.href);
+  t('server-tagged button is not re-tagged', button.href === 'https://biletinial.com/e/3?utm_source=subadapcocuk.org&utm_content=ticket-button', button.href);
 
   // 3) click event
   const fresh = makeLink('https://biletinial.com/e/9', [], null);
@@ -69,6 +69,21 @@ const baseCfg = () => ({ ajaxUrl: '/ajax', nonce: 'n', defaultDistrict: 'urla', 
   const clicks = sent.filter(m => m.event_type === 'clicks');
   t('second click same day not unique', clicks.length === 2 && clicks[1].is_unique === '0', JSON.stringify(clicks));
   t('click link decorated before navigation', fresh.href.includes('utm_content=ticket-link'), fresh.href);
+}
+
+// 3b) per-session ticket buttons
+{
+  const mk = (href, sess) => { const l = makeLink(href, ['kt-ticket-btn-link'], 'urla'); const g = l.getAttribute; l.getAttribute = n => (n === 'data-kt-session' ? sess : g(n)); return l; };
+  const s1 = mk('https://biletinial.com/e/1', '1');
+  const { sent, handlers } = run(baseCfg(), '', [s1]);
+  t('session button tagged with -s1 content', s1.href.includes('utm_content=ticket-button-s1'), s1.href);
+  handlers.click[0]({ target: { closest: () => s1 } });
+  const clk = sent.find(m => m.event_type === 'clicks');
+  t('click carries session', clk && clk.session === '1', JSON.stringify(clk));
+  const plain = makeLink('https://biletinial.com/e/2', ['kt-ticket-btn-link'], 'urla');
+  const r2 = run(baseCfg(), '', [plain]);
+  r2.handlers.click[0]({ target: { closest: () => plain } });
+  t('click without session has no session param', !('session' in r2.sent.find(m => m.event_type === 'clicks')));
 }
 
 // 4) capture disabled

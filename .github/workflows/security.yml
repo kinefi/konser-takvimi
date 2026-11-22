@@ -22,7 +22,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.3'
           tools: composer
 
       - name: Install WordPress Coding Standards & Security Rules
@@ -35,7 +35,7 @@ jobs:
           "$(composer global config bin-dir --absolute --quiet)/phpcs" --standard=WordPress \
             --sniffs=WordPress.Security.EscapeOutput,WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput,WordPress.Security.SafeRedirect,WordPress.DB.PreparedSQL \
             --extensions=php \
-            --ignore=vendor/* .
+            --ignore=vendor/*,tests/* .
 
   sast-semgrep:
     name: SAST (PHP & WordPress Rules)

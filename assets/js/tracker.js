@@ -106,17 +106,33 @@
 			return;
 		}
 
+		// All-or-nothing: a link that already carries any utm_* parameter (for example the ticket platform's own) is left alone.
+		var hasUtm = false;
+		url.searchParams.forEach(function (value, name) {
+			if (name.toLowerCase().indexOf('utm_') === 0) {
+				hasUtm = true;
+			}
+		});
+		if (hasUtm) {
+			return;
+		}
+
 		var district = link.getAttribute('data-kt-district') || ktTrackerData.defaultDistrict || '';
+		var sessionNo = link.getAttribute('data-kt-session');
+		var contentValue = link.classList.contains('kt-ticket-btn-link') ? 'ticket-button' : 'ticket-link';
+		if (sessionNo === '1' || sessionNo === '2') {
+			contentValue += '-s' + sessionNo;
+		}
 		var values = {
 			utm_source: cfg.source,
 			utm_medium: cfg.medium,
 			utm_campaign: cfg.campaign || district,
-			utm_content: link.classList.contains('kt-ticket-btn-link') ? 'ticket-button' : 'ticket-link'
+			utm_content: contentValue
 		};
 
 		var changed = false;
 		Object.keys(values).forEach(function (name) {
-			if (values[name] && !url.searchParams.has(name)) {
+			if (values[name]) {
 				url.searchParams.set(name, values[name]);
 				changed = true;
 			}
@@ -238,6 +254,10 @@
 		decorateTicketLink(link);
 		var clickParams = readIncomingUtm();
 		clickParams.is_unique = checkDailyUniqueClicker(district, ktTrackerData.todayStr);
+		var clickedSession = link.getAttribute('data-kt-session');
+		if (clickedSession === '1' || clickedSession === '2') {
+			clickParams.session = clickedSession;
+		}
 		sendStatEvent('clicks', district, label, clickParams);
 		flushActiveDuration();
 	});

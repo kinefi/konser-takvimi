@@ -1,5 +1,21 @@
 # Changelog
 
+## [4.3.0] - 2026-11-22
+### Added
+- **Tools & Diagnostics tab:** tracking health panel (districts stored, buffered events, last write, lock), a scanner that lists posts/pages using the deprecated `[subadap_konserler]` shortcode or pre-4.1.0 Turkish attribute names (`ilce`, `hedef`, `resim`, `takvime_ekle`) in shortcodes or block JSON, an archive cleanup ("delete archived events older than 6/12/24/36 months") and a warning when the 300-district cap is reached.
+- **Campaign link builder:** one tracking link per channel for any concert page (WhatsApp, Meta ads, YouTube ads, newsletter, Instagram, Facebook, X, plain/direct). Campaign defaults to the page slug. These are the links that incoming-traffic capture classifies.
+- **Selectable timezone** (default `Europe/Istanbul`) for event times, "today/tomorrow", daily statistics and calendar links. Stored events keep their own UTC offset.
+- **Font choice:** Quicksand from Google Fonts, system font, or the active theme's font.
+- **Statistics retention** (30 / 90 / 180 days of daily data) and **write buffering** (off / 30 s / 60 s / 5 min) to reduce database writes. Pending events are flushed when you open the statistics or tools tab, or build a report.
+- **Per-session ticket clicks:** `session="1"` / `session="2"` on the ticket button (block setting too); counted separately and tagged `utm_content=ticket-button-s1/s2` when tagging is on.
+- **Low-conversion alert** in the weekly e-mail (thresholds configurable).
+- **Release workflow:** pushing a `vX.Y.Z` tag builds the plugin zip and publishes a GitHub release using this changelog.
+
+### Changed
+- **UTM tagging is all-or-nothing:** a link that already carries any `utm_*` parameter (for example the ticket platform's own) is never touched, in PHP and JavaScript.
+- **Outbound ticket-link tagging is off by default** (ticket platforms tag their own links). Incoming UTM capture and calendar-link tagging stay on.
+- CI: tests run on PHP 8.3, 8.4 and 8.5; phpcs skips `tests/`; the public tracking endpoint documents why it has no nonce.
+
 ## [4.2.0] - 2026-11-21
 ### Added
 - **Incoming UTM data in reports:** The HTML report and the weekly e-mail now include a **UTM traffic sources** table (top 15 rows: source / medium / campaign, district, unique visitors, unique ticket clickers and conversion). The CSV export contains all UTM rows in a second block, with spreadsheet-formula characters neutralised.

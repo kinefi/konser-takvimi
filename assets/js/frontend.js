@@ -1,7 +1,10 @@
 (function () {
-	function getIstanbulYMD(dateObj) {
+	// Timezone selected in the plugin settings (passed from PHP); defaults to Europe/Istanbul.
+	var siteTimeZone = 'Europe/Istanbul';
+
+	function getSiteYMD(dateObj) {
 		var parts = new Intl.DateTimeFormat('en-CA', {
-			timeZone: 'Europe/Istanbul',
+			timeZone: siteTimeZone,
 			year: 'numeric',
 			month: '2-digit',
 			day: '2-digit'
@@ -98,6 +101,9 @@
 
 		var manualEvents = ktConcertData.events || [];
 		var baseUrl = ktConcertData.baseUrl || '/';
+		if (ktConcertData.timezone) {
+			siteTimeZone = ktConcertData.timezone;
+		}
 		var maxItems = parseInt(ktConcertData.maxItems, 10) || 16;
 
 		var monthNames = [
@@ -109,9 +115,9 @@
 		];
 
 		var now = new Date();
-		var todayYMD = getIstanbulYMD(now);
+		var todayYMD = getSiteYMD(now);
 		var tomorrowDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-		var tomorrowYMD = getIstanbulYMD(tomorrowDate);
+		var tomorrowYMD = getSiteYMD(tomorrowDate);
 
 		var upcomingEvents = manualEvents
 			.filter(function (event) {
@@ -132,16 +138,16 @@
 
 		upcomingEvents.forEach(function (event, index) {
 			var eventDate = new Date(event.datetime);
-			var eventYMD = getIstanbulYMD(eventDate);
-			var istanbulDate = new Date(
-				eventDate.toLocaleString('en-US', { timeZone: 'Europe/Istanbul' })
+			var eventYMD = getSiteYMD(eventDate);
+			var localDate = new Date(
+				eventDate.toLocaleString('en-US', { timeZone: siteTimeZone })
 			);
 
-			var day = istanbulDate.getDate();
-			var month = monthNames[istanbulDate.getMonth()];
-			var dayName = dayNames[istanbulDate.getDay()];
-			var hours = String(istanbulDate.getHours()).padStart(2, '0');
-			var minutes = String(istanbulDate.getMinutes()).padStart(2, '0');
+			var day = localDate.getDate();
+			var month = monthNames[localDate.getMonth()];
+			var dayName = dayNames[localDate.getDay()];
+			var hours = String(localDate.getHours()).padStart(2, '0');
+			var minutes = String(localDate.getMinutes()).padStart(2, '0');
 
 			var formattedTime1 = hours + '.' + minutes;
 			var timeText = formattedTime1;

@@ -11,7 +11,16 @@ function register_activation_hook() {} function register_deactivation_hook() {}
 function is_admin() { return false; }
 function add_option( $k, $v = '', $d = '', $a = 'yes' ) { if ( array_key_exists( $k, $GLOBALS['__opts'] ) ) { return false; } $GLOBALS['__opts'][ $k ] = $v; return true; }
 function delete_option( $k ) { unset( $GLOBALS['__opts'][ $k ] ); return true; }
-function get_option( $k, $d = false ) { return array_key_exists( $k, $GLOBALS['__opts'] ) ? $GLOBALS['__opts'][ $k ] : $d; }
+// Tests run unbuffered by default so stats are readable right after recording; set $GLOBALS['__buffer_on'] = true to test buffering.
+function get_option( $k, $d = false ) {
+	$v = array_key_exists( $k, $GLOBALS['__opts'] ) ? $GLOBALS['__opts'][ $k ] : $d;
+	if ( 'subadap_konserler_styles' === $k && empty( $GLOBALS['__buffer_on'] ) ) {
+		$v = array_merge( is_array( $v ) ? $v : array(), array( 'stats_buffer_seconds' => 0 ) );
+	}
+	return $v;
+}
+function wp_next_scheduled( $h ) { return isset( $GLOBALS['__cron'][ $h ] ) ? $GLOBALS['__cron'][ $h ] : false; }
+function wp_schedule_single_event( $t, $h ) { $GLOBALS['__cron'][ $h ] = $t; return true; }
 function update_option( $k, $v ) { $GLOBALS['__opts'][ $k ] = $v; return true; }
 function wp_parse_args( $a, $d ) { return array_merge( $d, (array) $a ); }
 function sanitize_hex_color( $c ) { return preg_match( '/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', (string) $c ) ? $c : ''; }
@@ -50,3 +59,6 @@ function attachment_url_to_postid() { return 0; }
 function nocache_headers() {}
 function number_format_i18n( $n ) { return number_format( $n ); }
 function trailingslashit( $s ) { return rtrim( $s, '/' ) . '/'; }
+
+if ( ! defined( 'DAY_IN_SECONDS' ) ) { define( 'DAY_IN_SECONDS', 86400 ); }
+function wp_date( $f, $ts = null, $tz = null ) { $d = new DateTime( '@' . ( null === $ts ? time() : $ts ) ); if ( $tz ) { $d->setTimezone( $tz ); } return $d->format( $f ); }
