@@ -289,7 +289,7 @@ function kt_render_admin_page() {
 		return;
 	}
 
-	$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'concerts';
+	$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'concerts'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only tab selection; sanitized and whitelisted below.
 	if ( ! in_array( $active_tab, array( 'concerts', 'stats', 'styles', 'tools' ), true ) ) {
 		$active_tab = 'concerts';
 	}

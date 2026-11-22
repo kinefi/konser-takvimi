@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 			$today_str = kt_get_site_date_str( 0 );
 
-			$sort_by = isset( $_GET['sort_by'] ) ? sanitize_key( $_GET['sort_by'] ) : 'visitors';
+			$sort_by = isset( $_GET['sort_by'] ) ? sanitize_key( $_GET['sort_by'] ) : 'visitors'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only sort column; sanitized and whitelisted below.
 			if ( ! in_array( $sort_by, array( 'visitors', 'views', 'clicks', 'ctr', 'conversion', 'duration' ), true ) ) {
 				$sort_by = 'visitors';
 			}

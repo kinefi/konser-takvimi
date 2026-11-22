@@ -235,8 +235,8 @@ function kt_render_tools_tab( $concert_events ) {
 				<tr><td><?php echo esc_html__( 'Saat dilimi / şu an', 'konser-takvimi' ); ?></td><td><?php echo esc_html( $tz->getName() . ' — ' . $now_str ); ?></td></tr>
 				<tr><td><?php echo esc_html__( 'Kayıtlı ilçe sayısı', 'konser-takvimi' ); ?></td><td><?php echo esc_html( $diag['districts'] . ' / ' . $diag['max'] ); ?></td></tr>
 				<tr><td><?php echo esc_html__( 'İşlenmeyi bekleyen olay', 'konser-takvimi' ); ?></td><td><?php echo esc_html( (string) $diag['buffered'] ); ?></td></tr>
-				<tr><td><?php echo esc_html__( 'Son istatistik yazımı', 'konser-takvimi' ); ?></td><td><?php echo $diag['last_update'] ? esc_html( wp_date( 'd.m.Y H:i:s', $diag['last_update'], $tz ) ) : __( 'Henüz kayıt yok', 'konser-takvimi' ); ?></td></tr>
-				<tr><td><?php echo esc_html__( 'Yazma kilidi', 'konser-takvimi' ); ?></td><td><?php echo $diag['lock_active'] ? __( 'Şu an aktif (normalde birkaç ms sürer)', 'konser-takvimi' ) : __( 'Boş', 'konser-takvimi' ); ?></td></tr>
+				<tr><td><?php echo esc_html__( 'Son istatistik yazımı', 'konser-takvimi' ); ?></td><td><?php echo $diag['last_update'] ? esc_html( wp_date( 'd.m.Y H:i:s', $diag['last_update'], $tz ) ) : esc_html__( 'Henüz kayıt yok', 'konser-takvimi' ); ?></td></tr>
+				<tr><td><?php echo esc_html__( 'Yazma kilidi', 'konser-takvimi' ); ?></td><td><?php echo $diag['lock_active'] ? esc_html__( 'Şu an aktif (normalde birkaç ms sürer)', 'konser-takvimi' ) : esc_html__( 'Boş', 'konser-takvimi' ); ?></td></tr>
 			</tbody>
 		</table>
 		<p class="description"><?php echo esc_html__( 'Yönetici (sayfa düzenleme yetkili) ziyaretleri sayılmaz. Bunu test etmek için siteyi çıkış yapmış bir tarayıcıda veya gizli sekmede açın.', 'konser-takvimi' ); ?></p>
