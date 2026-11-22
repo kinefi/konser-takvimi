@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Konser Takvimi
  * Description: Database-backed concert calendar with double-session support, Google MusicEvent JSON-LD, automatic archiving of past concerts, cache-safe 302 district redirects, Add to Calendar buttons, Gutenberg blocks, UTM tagging and CTR-ranked analytics.
- * Version: 4.4.0
+ * Version: 4.5.0
  * Requires PHP: 8.4
  * Author: Şubadap Çocuk
  * Text Domain: konser-takvimi
@@ -25,7 +25,7 @@ if ( ! defined( 'KT_PLUGIN_URL' ) ) {
 	define( 'KT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 }
 if ( ! defined( 'KT_PLUGIN_VER' ) ) {
-	define( 'KT_PLUGIN_VER', '4.4.0' );
+	define( 'KT_PLUGIN_VER', '4.5.0' );
 }
 if ( ! defined( 'KT_EVENTS_OPT' ) ) {
 	define( 'KT_EVENTS_OPT', 'subadap_konserler_list' );
@@ -57,6 +57,16 @@ if ( ! defined( 'KT_STATS_FLUSH_HOOK' ) ) {
 if ( ! defined( 'KT_STATS_OVERFLOW_OPT' ) ) {
 	define( 'KT_STATS_OVERFLOW_OPT', 'kt_stats_overflow' );
 }
+// Archived statistics snapshots (one entry per district and period) and the daily job that creates them.
+if ( ! defined( 'KT_STATS_ARCHIVE_OPT' ) ) {
+	define( 'KT_STATS_ARCHIVE_OPT', 'subadap_konserler_stats_archive' );
+}
+if ( ! defined( 'KT_STATS_ARCHIVE_MAX' ) ) {
+	define( 'KT_STATS_ARCHIVE_MAX', 400 );
+}
+if ( ! defined( 'KT_ARCHIVE_CRON_HOOK' ) ) {
+	define( 'KT_ARCHIVE_CRON_HOOK', 'kt_archive_finished_stats_event' );
+}
 // Option name used as a short-lived lock while the statistics option is read-modified-written.
 if ( ! defined( 'KT_STATS_LOCK_OPT' ) ) {
 	define( 'KT_STATS_LOCK_OPT', 'kt_stats_write_lock' );
@@ -72,6 +82,7 @@ require_once KT_PLUGIN_DIR . 'includes/events-time.php';
 require_once KT_PLUGIN_DIR . 'includes/settings.php';
 require_once KT_PLUGIN_DIR . 'includes/utm.php';
 require_once KT_PLUGIN_DIR . 'includes/stats-recording.php';
+require_once KT_PLUGIN_DIR . 'includes/stats-archive.php';
 require_once KT_PLUGIN_DIR . 'includes/reports.php';
 require_once KT_PLUGIN_DIR . 'includes/cron.php';
 require_once KT_PLUGIN_DIR . 'includes/assets.php';
@@ -102,4 +113,5 @@ function kt_init_db_option() {
 register_deactivation_hook( __FILE__, 'kt_deactivate_plugin' );
 function kt_deactivate_plugin() {
 	wp_clear_scheduled_hook( KT_CRON_HOOK );
+	wp_clear_scheduled_hook( KT_ARCHIVE_CRON_HOOK );
 }

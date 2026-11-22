@@ -64,6 +64,15 @@ Ziyaretçi adreste `utm_source`, `utm_medium` veya `utm_campaign` bulunan bir sa
 ### Gelen trafiğin sınıflandırılması (kanal bağlantıları)
 Biletinial gibi bilet platformları kendi bağlantılarını zaten etiketler; giden bağlantıya UTM eklemeniz gerekmez. Önemli olan **sizin paylaştığınız** bağlantıların etiketli olmasıdır. **Araçlar & Tanılama → Kampanya bağlantı oluşturucu** ile (ör. Adana konseri): WhatsApp `whatsapp/messaging/adana`, Meta reklam `meta/cpc/adana`, YouTube reklam `youtube/cpc/adana`, e-posta `newsletter/email/adana`, Instagram organik `instagram/social/adana`, etiketsiz bağlantı doğrudan sayılır. Tabloda gruplanması için kaynak/ortam adlarını her kampanyada aynı (küçük harf) tutun. Uygulamalar yönlendiren bilgisini silebildiği için etiketsiz ziyaretler güvenilir biçimde kanala atfedilemez.
 
+## İstatistik Arşivi
+
+İstatistikler tek bir konsere değil ilçeye (sayfa slug'ına) bağlıdır. Her konsere sıfırdan başlarken geçmişi kaybetmemek için eklenti bir **arşiv** tutar (**İstatistik Arşivi** sekmesi):
+
+- İlçe satırındaki **Arşivle & sıfırla** (veya **Tümünü Arşivle & Sıfırla**) sayıları (toplamlar, günlük veri, UTM satırları) arşive kopyalar ve temiz bir sayımla başlar. Hiçbir şey doğrudan silinmez.
+- **Otomatik:** günlük bir görev, bir ilçenin tüm konserleri bittikten bir gün sonra istatistiklerini arşivler ve sıfırlar. Yaklaşan konseri olan ilçelere dokunulmaz. **Ayarlar → İstatistik arşivi** bölümünden kapatılabilir.
+- Her arşiv kaydı, ilçenin önceki arşivinden (veya ilk kaydından) arşivlendiği güne kadar olan dönemi kapsar. Günlük ayrıntı saklama ayarıyla (30/90/180 gün) sınırlıdır; toplamlar tüm dönemi kapsar.
+- **Geri yükle**, kaydı ilçenin canlı sayaçları olarak geri koyar (yalnızca ilçenin canlı kaydı yokken). **Sil** kalıcı olarak kaldırır. En fazla 400 kayıt saklanır; fazlasında en eskiler silinir.
+
 ## Gizlilik
 
 - İstatistikler çerez kullanmaz. Tarayıcının `localStorage` alanına yalnızca ilçe başına günlük bir "sayıldı" işareti (ziyaret ve bilet tıklaması için) yazılır.

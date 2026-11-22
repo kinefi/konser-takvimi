@@ -1,23 +1,44 @@
 <?php
 /**
- * Admin actions: reset/delete statistics and send a test report.
+ * Admin actions: archive/reset statistics and send a test report.
  * Included by kt_render_admin_page(); shares its local variables.
  */
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// Reset all statistics / delete a single row.
+// Archive and reset all statistics / a single district. Nothing is deleted outright: the numbers move to the archive first.
+$kt_archive_url = admin_url( 'admin.php?page=konser-takvimi&tab=archive' );
 if ( isset( $_POST['kt_reset_stats'] ) && check_admin_referer( 'kt_stats_nonce_action', 'kt_stats_nonce' ) ) {
-	update_option( KT_STATS_OPT, array(), false );
-	$message = '<div class="notice notice-info is-dismissible"><p>' . esc_html__( 'Tüm ilçe ziyaret ve tıklama istatistikleri sıfırlandı.', 'konser-takvimi' ) . '</p></div>';
-} elseif ( isset( $_POST['kt_delete_stat_key'] ) && check_admin_referer( 'kt_stats_nonce_action', 'kt_stats_nonce' ) ) {
-	$del_key = sanitize_title( wp_unslash( $_POST['kt_delete_stat_key'] ) );
-	$stats   = get_option( KT_STATS_OPT, array() );
-	if ( is_array( $stats ) && isset( $stats[ $del_key ] ) ) {
-		unset( $stats[ $del_key ] );
-		update_option( KT_STATS_OPT, $stats, false );
-		$message = '<div class="notice notice-info is-dismissible"><p>' . esc_html__( 'Seçilen ilçe istatistik kaydı silindi.', 'konser-takvimi' ) . '</p></div>';
+	$archived_count = kt_archive_all_district_stats();
+	$message        = '<div class="notice notice-info is-dismissible"><p>' . wp_kses(
+		sprintf(
+			/* translators: 1: number of districts, 2: opening link tag, 3: closing link tag */
+			__( 'Tüm ilçe istatistikleri (%1$d ilçe) arşive taşındı ve sayaçlar sıfırlandı. %2$sArşivden geri yükleyebilirsiniz%3$s.', 'konser-takvimi' ),
+			$archived_count,
+			'<a href="' . esc_url( $kt_archive_url ) . '">',
+			'</a>'
+		),
+		array( 'a' => array( 'href' => array() ) )
+	) . '</p></div>';
+} elseif ( isset( $_POST['kt_archive_stat_key'] ) && check_admin_referer( 'kt_stats_nonce_action', 'kt_stats_nonce' ) ) {
+	$arch_key = kt_normalize_district_key( wp_unslash( $_POST['kt_archive_stat_key'] ) );
+	if ( '' !== $arch_key && kt_archive_district_stats( $arch_key, 'manual', true ) ) {
+		$message = '<div class="notice notice-info is-dismissible"><p>' . wp_kses(
+			sprintf(
+				/* translators: 1: district key, 2: opening link tag, 3: closing link tag */
+				__( '%1$s istatistikleri arşive taşındı ve sayaçlar sıfırlandı. %2$sArşivden geri yükleyebilirsiniz%3$s.', 'konser-takvimi' ),
+				'<code>' . esc_html( $arch_key ) . '</code>',
+				'<a href="' . esc_url( $kt_archive_url ) . '">',
+				'</a>'
+			),
+			array(
+				'a'    => array( 'href' => array() ),
+				'code' => array(),
+			)
+		) . '</p></div>';
+	} else {
+		$message = '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'İstatistik arşivlenemedi (kayıt bulunamadı veya veritabanı meşgul). Lütfen tekrar deneyin.', 'konser-takvimi' ) . '</p></div>';
 	}
 }
 

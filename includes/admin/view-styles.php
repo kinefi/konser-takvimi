@@ -341,6 +341,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 							</td>
 						</tr>
 						<tr>
+							<th scope="row"><?php echo esc_html__( 'İstatistik arşivi', 'konser-takvimi' ); ?></th>
+							<td>
+								<label>
+									<input type="checkbox" name="auto_archive_stats" value="1" <?php checked( ! empty( $styles['auto_archive_stats'] ) ); ?>>
+									<?php echo esc_html__( 'Bir ilçenin tüm konserleri bittikten bir gün sonra istatistiklerini otomatik arşivle ve sayaçları sıfırla.', 'konser-takvimi' ); ?>
+								</label>
+								<p class="description"><?php echo esc_html__( 'Arşiv, ilçenin önceki arşivinden (veya ilk kaydından) konserin bittiği güne kadar olan sayıları saklar. Arşivlenen kayıtlar İstatistik Arşivi sekmesinden geri yüklenebilir.', 'konser-takvimi' ); ?></p>
+							</td>
+						</tr>
+						<tr>
 							<th scope="row"><?php echo esc_html__( 'Düşük dönüşüm uyarısı', 'konser-takvimi' ); ?></th>
 							<td>
 								<label style="display: block; margin-bottom: 6px;">

@@ -51,6 +51,7 @@ if ( isset( $_POST['kt_reset_styles'] ) && check_admin_referer( 'kt_styles_nonce
 	$retention_days  = isset( $_POST['stats_retention_days'] ) ? intval( $_POST['stats_retention_days'] ) : 90;
 	$buffer_seconds  = isset( $_POST['stats_buffer_seconds'] ) ? intval( $_POST['stats_buffer_seconds'] ) : 60;
 	$alert_enabled   = isset( $_POST['alert_enabled'] ) ? 1 : 0;
+	$auto_archive    = isset( $_POST['auto_archive_stats'] ) ? 1 : 0;
 	$alert_min_conv  = isset( $_POST['alert_min_conversion'] ) ? floatval( $_POST['alert_min_conversion'] ) : 3;
 	$alert_min_vis   = isset( $_POST['alert_min_visitors'] ) ? intval( $_POST['alert_min_visitors'] ) : 50;
 	$utm_ticket_on   = isset( $_POST['utm_ticket_enabled'] ) ? 1 : 0;
@@ -107,6 +108,7 @@ if ( isset( $_POST['kt_reset_styles'] ) && check_admin_referer( 'kt_styles_nonce
 		'timezone'             => $timezone,
 		'stats_retention_days' => $retention_days,
 		'stats_buffer_seconds' => $buffer_seconds,
+		'auto_archive_stats'   => $auto_archive,
 		'alert_enabled'        => $alert_enabled,
 		'alert_min_conversion' => $alert_min_conv,
 		'alert_min_visitors'   => $alert_min_vis,

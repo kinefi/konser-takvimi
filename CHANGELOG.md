@@ -1,5 +1,18 @@
 # Changelog
 
+## [4.5.0] - 2026-11-22
+### Added
+- **Statistics archive:** a new **İstatistik Arşivi / Statistics Archive** tab keeps snapshots of a district's counters (totals, daily data, UTM rows). Each snapshot covers the period from the district's previous archive (or first record) to the day it was archived, with its reason (manual, concert ended, reset all).
+- **Per-district reset:** the district row in the statistics table now has **Archive & reset**, which moves only that district's numbers to the archive and starts a clean count for the next concert.
+- **Automatic archiving:** a daily job archives and resets a district one day after *all* its concerts have ended (districts with a still-upcoming concert are left alone). It can be switched off in the settings (**İstatistik arşivi**, on by default).
+- **Restore / delete:** an archived snapshot can be restored as the district's live counters (only while the district has no live row, so two periods are never mixed) or deleted permanently.
+- New statistics rows record a `since` date (older rows fall back to their oldest daily entry).
+
+### Changed
+- **Nothing is deleted outright any more:** the district **Sil** button and **Tüm İstatistikleri Sıfırla** now archive first (renamed **Archive & reset** / **Archive & reset all**), so an accidental click can be undone from the archive.
+- At most 400 archive records are kept; beyond that the oldest are removed.
+- Upgrading: the automatic archive setting defaults to on, so finished districts are archived by the daily job after the update.
+
 ## [4.4.0] - 2026-11-22
 ### Added
 - **Internationalisation:** all admin screens, reports, e-mails, notices, month/day names and JavaScript texts are translatable (text domain `konser-takvimi`). Turkish is the source language; an English catalogue ships in `languages/`. The plugin follows the WordPress locale automatically (site language, or the user's own language in the admin); every locale without its own catalogue falls back to English, Turkish sites keep the original texts.

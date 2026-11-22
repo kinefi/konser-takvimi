@@ -75,6 +75,15 @@ Ticket platforms such as Biletinial tag their own links, so you do not need outb
 
 Keep the same lowercase source/medium names on every campaign so the table groups them. Apps may strip referrers, so untagged visits cannot be attributed reliably; only tagged links are classified.
 
+## Statistics archive
+
+Statistics belong to a district (the page slug), not to a single concert. To start each concert from zero without losing history, the plugin keeps an **archive** (tab **İstatistik Arşivi / Statistics Archive**):
+
+- **Archive & reset** on a district row (or **Archive & reset all**) copies the numbers (totals, daily data, UTM rows) to the archive and starts a clean count. Nothing is deleted outright.
+- **Automatic:** a daily job archives and resets a district one day after all of its concerts have ended. Districts that still have an upcoming concert are skipped. Switch it off under **Settings → İstatistik arşivi**.
+- Each archive record covers the period from the district's previous archive (or first record) to the day it was archived. Daily detail is limited by the retention setting (30/90/180 days); totals cover the whole period.
+- **Restore** puts a record back as the district's live counters (only while the district has no live row). **Delete** removes it permanently. At most 400 records are kept; the oldest are dropped beyond that.
+
 ## Privacy
 
 - Statistics use no cookies. The browser's `localStorage` only stores a per-day "already counted" marker per district (visits and ticket clicks).

@@ -16,8 +16,10 @@ if ( is_array( $kt_styles ) && ! empty( $kt_styles['delete_on_uninst'] ) ) {
 	delete_option( 'kt_stats_buffer' );
 	delete_option( 'kt_stats_write_lock' );
 	delete_option( 'kt_stats_overflow' );
+	delete_option( 'subadap_konserler_stats_archive' );
 }
 
 // Scheduled hooks are always removed, regardless of the data-deletion setting.
 wp_clear_scheduled_hook( 'kt_weekly_stats_report_event' );
 wp_clear_scheduled_hook( 'kt_flush_stats_buffer_event' );
+wp_clear_scheduled_hook( 'kt_archive_finished_stats_event' );

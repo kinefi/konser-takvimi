@@ -290,7 +290,7 @@ function kt_render_admin_page() {
 	}
 
 	$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'concerts'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only tab selection; sanitized and whitelisted below.
-	if ( ! in_array( $active_tab, array( 'concerts', 'stats', 'styles', 'tools' ), true ) ) {
+	if ( ! in_array( $active_tab, array( 'concerts', 'stats', 'styles', 'tools', 'archive' ), true ) ) {
 		$active_tab = 'concerts';
 	}
 
@@ -303,7 +303,7 @@ function kt_render_admin_page() {
 	}
 
 	// Make sure buffered tracking events are visible before any statistics are shown or changed.
-	if ( 'stats' === $active_tab || 'tools' === $active_tab ) {
+	if ( 'stats' === $active_tab || 'tools' === $active_tab || 'archive' === $active_tab ) {
 		kt_flush_stats_buffer();
 	}
 
@@ -315,6 +315,7 @@ function kt_render_admin_page() {
 
 	require KT_PLUGIN_DIR . 'includes/admin/actions-concerts.php';
 	require KT_PLUGIN_DIR . 'includes/admin/actions-stats.php';
+	require KT_PLUGIN_DIR . 'includes/admin/actions-archive.php';
 	require KT_PLUGIN_DIR . 'includes/admin/actions-styles.php';
 
 	$upcoming_list = array();
@@ -363,6 +364,9 @@ function kt_render_admin_page() {
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats' ) ); ?>" class="nav-tab <?php echo 'stats' === $active_tab ? 'nav-tab-active' : ''; ?>">
 				<?php echo esc_html__( 'İstatistikler & Grafik', 'konser-takvimi' ); ?>
 			</a>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=archive' ) ); ?>" class="nav-tab <?php echo 'archive' === $active_tab ? 'nav-tab-active' : ''; ?>">
+				<?php echo esc_html__( 'İstatistik Arşivi', 'konser-takvimi' ); ?>
+			</a>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=styles' ) ); ?>" class="nav-tab <?php echo 'styles' === $active_tab ? 'nav-tab-active' : ''; ?>">
 				<?php echo esc_html__( 'Düğme Biçimleri, Renkler & Ayarlar', 'konser-takvimi' ); ?>
 			</a>
@@ -376,6 +380,9 @@ function kt_render_admin_page() {
 
 		<?php elseif ( 'stats' === $active_tab ) : ?>
 			<?php require KT_PLUGIN_DIR . 'includes/admin/view-stats.php'; ?>
+
+		<?php elseif ( 'archive' === $active_tab ) : ?>
+			<?php require KT_PLUGIN_DIR . 'includes/admin/view-archive.php'; ?>
 
 		<?php elseif ( 'tools' === $active_tab ) : ?>
 			<?php kt_render_tools_tab( $existing_events ); ?>

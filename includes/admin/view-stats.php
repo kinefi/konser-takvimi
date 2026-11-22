@@ -222,7 +222,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 							<option value="csv"><?php echo esc_html__( 'Excel Tablosu (.csv)', 'konser-takvimi' ); ?></option>
 						</select>
 						<input type="submit" name="kt_download_report_action" class="button button-primary" value="<?php echo esc_attr__( 'Raporu İndir', 'konser-takvimi' ); ?>" <?php disabled( empty( $stats ) ); ?>>
-						<input type="submit" name="kt_reset_stats" class="button" style="color: #b32d2e; margin-left: 6px;" value="<?php echo esc_attr__( 'Tüm İstatistikleri Sıfırla', 'konser-takvimi' ); ?>" <?php disabled( empty( $stats ) ); ?> onclick="return confirm(<?php echo esc_attr( wp_json_encode( __( 'Tüm ilçe ziyaret ve tıklama verileri kalıcı olarak sıfırlanacak. Emin misiniz?', 'konser-takvimi' ) ) ); ?>);">
+						<input type="submit" name="kt_reset_stats" class="button" style="color: #b32d2e; margin-left: 6px;" value="<?php echo esc_attr__( 'Tümünü Arşivle & Sıfırla', 'konser-takvimi' ); ?>" <?php disabled( empty( $stats ) ); ?> onclick="return confirm(<?php echo esc_attr( wp_json_encode( __( 'Tüm ilçelerin istatistikleri arşive taşınacak ve sayaçlar sıfırlanacak. Arşiv sekmesinden geri yükleyebilirsiniz. Devam edilsin mi?', 'konser-takvimi' ) ) ); ?>);">
 					</form>
 				</div>
 
@@ -323,7 +323,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 										<td><span style="display: inline-block; padding: 3px 8px; background: <?php echo esc_attr( $conv_bg ); ?>; color: <?php echo esc_attr( $conv_fg ); ?>; border-radius: 4px; font-weight: 700;">%<?php echo esc_html( $conv ); ?></span></td>
 										<td><?php echo esc_html( kt_format_duration_human( $avg_sec ) ); ?></td>
 										<td>
-											<button type="submit" name="kt_delete_stat_key" value="<?php echo esc_attr( $key ); ?>" class="button button-small" style="color: #b32d2e;" onclick="return confirm(<?php echo esc_attr( wp_json_encode( __( 'Bu ilçeye ait istatistik kaydını silmek istediğinize emin misiniz?', 'konser-takvimi' ) ) ); ?>);"><?php echo esc_html__( 'Sil', 'konser-takvimi' ); ?></button>
+											<button type="submit" name="kt_archive_stat_key" value="<?php echo esc_attr( $key ); ?>" class="button button-small" onclick="return confirm(<?php echo esc_attr( wp_json_encode( __( 'Bu ilçenin istatistikleri arşive taşınacak ve sayaçlar sıfırlanacak. Arşiv sekmesinden geri yükleyebilirsiniz. Devam edilsin mi?', 'konser-takvimi' ) ) ); ?>);"><?php echo esc_html__( 'Arşivle & sıfırla', 'konser-takvimi' ); ?></button>
 										</td>
 									</tr>
 								<?php endforeach; ?>

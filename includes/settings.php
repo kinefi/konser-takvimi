@@ -23,6 +23,7 @@ function kt_get_default_style_settings() {
 		'schema_performer'    => '',
 		'stats_buffer_seconds' => 60,
 		'stats_retention_days' => 90,
+		'auto_archive_stats'   => 1,
 		'alert_enabled'        => 0,
 		'alert_min_conversion' => 3,
 		'alert_min_visitors'   => 50,

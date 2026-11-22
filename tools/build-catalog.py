@@ -70,7 +70,7 @@ def main():
     if '--mo-only' not in sys.argv:
         pot_entries, _ = parse_po(open(os.path.join(LANG, 'konser-takvimi.pot'), encoding='utf-8').read())
         T = {}
-        for part in ('en_US_part1', 'en_US_part2'):
+        for part in ('en_US_part1', 'en_US_part2', 'en_US_part3'):
             spec = importlib.util.spec_from_file_location(part, os.path.join(ROOT, 'tools', part + '.py'))
             m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m); T.update(m.T)
         ids = {e['msgid'] for e in pot_entries}

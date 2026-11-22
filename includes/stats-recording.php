@@ -189,6 +189,7 @@ function kt_apply_stat_event( $stats, $key, $type, $page_title, $extra ) {
 			'duration_count' => 0,
 			'daily'          => array(),
 			'utm'            => array(),
+			'since'          => $today_str,
 			'updated'        => '',
 		);
 	} else {

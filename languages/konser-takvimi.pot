@@ -37,6 +37,11 @@ msgstr ""
 msgid "%1$s %2$s konseri. Detaylar ve bilet: "
 msgstr ""
 
+#: includes/admin/actions-stats.php:30
+#, php-format
+msgid "%1$s istatistikleri arşive taşındı ve sayaçlar sıfırlandı. %2$sArşivden geri yükleyebilirsiniz%3$s."
+msgstr ""
+
 #: includes/admin/view-styles.php:18
 #, php-format
 msgid "%1$s ve %2$s"
@@ -160,12 +165,28 @@ msgstr ""
 msgid "Aralık"
 msgstr ""
 
-#: includes/admin-page.php:370
+#: includes/admin-page.php:374
 msgid "Araçlar & Tanılama"
 msgstr ""
 
 #: includes/admin-tools.php:306
 msgid "Arşiv Temizliği"
+msgstr ""
+
+#: includes/admin/actions-archive.php:19
+msgid "Arşiv kaydı bulunamadı veya veritabanı meşgul. Lütfen tekrar deneyin."
+msgstr ""
+
+#: includes/admin/actions-archive.php:23
+msgid "Arşiv kaydı kalıcı olarak silindi."
+msgstr ""
+
+#: includes/admin/view-styles.php:350
+msgid "Arşiv, ilçenin önceki arşivinden (veya ilk kaydından) konserin bittiği güne kadar olan sayıları saklar. Arşivlenen kayıtlar İstatistik Arşivi sekmesinden geri yüklenebilir."
+msgstr ""
+
+#: includes/admin/view-stats.php:326
+msgid "Arşivle & sıfırla"
 msgstr ""
 
 #: includes/admin-page.php:238 includes/admin/view-concerts.php:129
@@ -177,7 +198,15 @@ msgstr ""
 msgid "Arşivlenen Konserler (%d adet - Görmek için tıklayın)"
 msgstr ""
 
-#: includes/admin/view-styles.php:381
+#: includes/admin/view-archive.php:20
+msgid "Arşivlenen istatistikler burada saklanır. Her kayıt, bir ilçenin önceki arşivinden (veya ilk kaydından) arşivlendiği güne kadar olan toplamlarını ve günlük verisini içerir."
+msgstr ""
+
+#: includes/admin/actions-archive.php:13
+msgid "Arşivlenen istatistikler geri yüklendi; ilçenin canlı sayaçları olarak yeniden görünür."
+msgstr ""
+
+#: includes/admin/view-styles.php:391
 msgid "Ayarları Kaydet"
 msgstr ""
 
@@ -185,7 +214,7 @@ msgstr ""
 msgid "Aynı gün iki seans varsa <strong>2. Seans</strong> alanını doldurun; düğmede <code>12.00 ve 14.00</code> olarak gösterilir. Tek seans için 2. seansı boş bırakabilirsiniz."
 msgstr ""
 
-#: includes/admin-page.php:355
+#: includes/admin-page.php:356
 msgid "Ayrıntılar"
 msgstr ""
 
@@ -241,7 +270,7 @@ msgstr ""
 msgid "Bilet Tık"
 msgstr ""
 
-#: includes/admin-page.php:96 includes/admin-page.php:136 includes/admin/view-stats.php:189
+#: includes/admin-page.php:96 includes/admin-page.php:136 includes/admin/view-archive.php:35
 msgid "Bilet Tıklaması"
 msgstr ""
 
@@ -255,6 +284,10 @@ msgstr ""
 
 #: includes/admin/view-styles.php:194
 msgid "Bilet düğmesine ve otomatik takip edilen bilet alan adlarına giden bağlantılara UTM parametreleri ekle."
+msgstr ""
+
+#: includes/admin/view-styles.php:348
+msgid "Bir ilçenin tüm konserleri bittikten bir gün sonra istatistiklerini otomatik arşivle ve sayaçları sıfırla."
 msgstr ""
 
 #: includes/admin/view-styles.php:38
@@ -287,6 +320,10 @@ msgstr ""
 msgid "Bu Görseli Kullan"
 msgstr ""
 
+#: includes/admin/view-archive.php:73
+msgid "Bu arşiv kaydı kalıcı olarak silinecek ve geri getirilemez. Emin misiniz?"
+msgstr ""
+
 #: includes/reports.php:157
 msgid "Bu dönemde henüz kayıtlı ziyaret verisi oluşmamıştır."
 msgstr ""
@@ -301,8 +338,16 @@ msgstr ""
 msgid "Bu ilçe (%s) için yaklaşan konser aktif olduğundan ziyaretçiler bu sayfada kalacaktır (yönetici girişi yapıldığı için ziyaret ve tıklamalar sayaca eklenmez)."
 msgstr ""
 
+#: includes/admin/view-archive.php:72
+msgid "Bu ilçenin canlı istatistikleri var. Önce onları arşivleyip sıfırlayın."
+msgstr ""
+
+#: includes/admin/actions-archive.php:15
+msgid "Bu ilçenin canlı istatistikleri var; iki dönem karışmasın diye geri yükleme yapılmadı. Önce canlı kaydı arşivleyip sıfırlayın."
+msgstr ""
+
 #: includes/admin/view-stats.php:326
-msgid "Bu ilçeye ait istatistik kaydını silmek istediğinize emin misiniz?"
+msgid "Bu ilçenin istatistikleri arşive taşınacak ve sayaçlar sıfırlanacak. Arşiv sekmesinden geri yükleyebilirsiniz. Devam edilsin mi?"
 msgstr ""
 
 #: includes/admin/view-stats.php:270
@@ -329,7 +374,7 @@ msgstr ""
 msgid "Buton Görsel URL (Boş bırakılırsa varsayılan görsel)"
 msgstr ""
 
-#: includes/admin/view-stats.php:360 includes/reports.php:166
+#: includes/admin/view-archive.php:36 includes/admin/view-stats.php:360 includes/reports.php:166
 msgid "CTR"
 msgstr ""
 
@@ -369,6 +414,10 @@ msgstr ""
 msgid "Durum"
 msgstr ""
 
+#: includes/admin/view-archive.php:32
+msgid "Dönem"
+msgstr ""
+
 #: includes/admin/view-stats.php:210
 msgid "Dönem ve biçim seçerek yazdırılabilir görsel rapor (HTML/PDF) veya Excel tablosu (CSV) indirin."
 msgstr ""
@@ -383,7 +432,7 @@ msgstr ""
 msgid "Dönem: %s"
 msgstr ""
 
-#: includes/admin/view-stats.php:276 includes/admin/view-stats.php:362 includes/reports.php:168
+#: includes/admin/view-archive.php:37 includes/admin/view-stats.php:276 includes/admin/view-stats.php:362
 msgid "Dönüşüm"
 msgstr ""
 
@@ -400,7 +449,7 @@ msgstr ""
 msgid "Dönüşüm oranı %%%1$s altında kalan sayfalar (en az %2$d tekil ziyaretçi):"
 msgstr ""
 
-#: includes/admin/view-styles.php:357
+#: includes/admin/view-styles.php:367
 #, php-format
 msgid "Dönüşüm oranı %1$s %% altında ve en az %2$s tekil ziyaretçisi olan sayfalar için uyar."
 msgstr ""
@@ -409,7 +458,7 @@ msgstr ""
 msgid "Dönüşüm: Tıklayan Kişi / Tekil Ziyaretçi (%)"
 msgstr ""
 
-#: includes/admin-page.php:367
+#: includes/admin-page.php:371
 msgid "Düğme Biçimleri, Renkler & Ayarlar"
 msgstr ""
 
@@ -417,7 +466,7 @@ msgstr ""
 msgid "Düğme Yüksekliği"
 msgstr ""
 
-#: includes/admin/actions-styles.php:128
+#: includes/admin/actions-styles.php:130
 msgid "Düğme biçimleri ve ayarlar kaydedildi."
 msgstr ""
 
@@ -429,7 +478,7 @@ msgstr ""
 msgid "Düğmeler Arası Boşluk (Gap)"
 msgstr ""
 
-#: includes/admin/view-styles.php:344
+#: includes/admin/view-styles.php:354
 msgid "Düşük dönüşüm uyarısı"
 msgstr ""
 
@@ -437,7 +486,7 @@ msgstr ""
 msgid "E-posta bülteni"
 msgstr ""
 
-#: includes/admin/actions-stats.php:34
+#: includes/admin/actions-stats.php:55
 msgid "E-posta gönderilemedi. Lütfen sunucunuzun WordPress e-posta (SMTP) ayarlarını kontrol edin."
 msgstr ""
 
@@ -445,8 +494,17 @@ msgstr ""
 msgid "Ekim"
 msgstr ""
 
-#: includes/admin/view-styles.php:374
+#: includes/admin/view-styles.php:384
 msgid "Eklenti WordPress panelinden silindiğinde veritabanındaki tüm konser kayıtlarını, istatistikleri ve görünüm ayarlarını da sil."
+msgstr ""
+
+#: includes/admin/view-archive.php:14
+msgid "Elle"
+msgstr ""
+
+#: includes/admin/view-archive.php:21
+#, php-format
+msgid "En fazla %d kayıt saklanır; sınır aşılırsa en eski kayıtlar silinir."
 msgstr ""
 
 #: includes/admin-tools.php:258
@@ -497,6 +555,10 @@ msgstr ""
 msgid "Genel Tık"
 msgstr ""
 
+#: includes/admin/view-archive.php:72
+msgid "Geri yükle"
+msgstr ""
+
 #: includes/admin/view-styles.php:190
 msgid "Giden Bağlantılar"
 msgstr ""
@@ -517,7 +579,7 @@ msgstr ""
 msgid "Google Takvim'e Ekle"
 msgstr ""
 
-#: includes/admin-page.php:350
+#: includes/admin-page.php:351
 msgid "Gutenberg editöründe <strong>Konser Takvimi</strong>, <strong>Konser İlçe Yönlendirici &amp; Takvime Ekle</strong> ve <strong>Konser Bilet Butonu</strong> bloklarını kullanabilirsiniz. <em>(Eski <code>[konser_takvimi]</code>, <code>[konser_ilce_yonlendir]</code> ve <code>[konser_bilet_butonu]</code> kısa kodları geriye dönük uyumluluk için çalışmaya devam eder.)</em>"
 msgstr ""
 
@@ -533,7 +595,7 @@ msgstr ""
 msgid "Görsel Rapor (HTML / Yazdır & PDF)"
 msgstr ""
 
-#: includes/admin/view-stats.php:272 includes/admin/view-stats.php:358 includes/reports.php:164
+#: includes/admin/view-archive.php:34 includes/admin/view-stats.php:272 includes/admin/view-stats.php:358
 msgid "Gösterim"
 msgstr ""
 
@@ -553,7 +615,7 @@ msgstr ""
 msgid "Günlük tekil ziyaretçi ve bilet düğmesi tıklama eğilimi (seçili saat dilimi)."
 msgstr ""
 
-#: includes/admin/view-styles.php:375
+#: includes/admin/view-styles.php:385
 msgid "Güvenlik amacıyla varsayılan olarak kapalıdır (işaretsizdir). İşaretsiz bırakıldığında eklentiyi silip yeniden yükleseniz bile konser arşiviniz ve istatistikleriniz korunur."
 msgstr ""
 
@@ -561,7 +623,7 @@ msgstr ""
 msgid "Haftada Bir (Konser Takvimi Raporu)"
 msgstr ""
 
-#: includes/admin/view-styles.php:348
+#: includes/admin/view-styles.php:358
 msgid "Haftalık rapor e-postasına, dönüşüm oranı düşük sayfalar için uyarı ekle."
 msgstr ""
 
@@ -575,6 +637,10 @@ msgstr ""
 
 #: includes/admin/view-stats.php:368
 msgid "Henüz UTM parametreli ziyaret kaydedilmedi. Örnek:"
+msgstr ""
+
+#: includes/admin/view-archive.php:24
+msgid "Henüz arşivlenmiş istatistik yok."
 msgstr ""
 
 #: includes/admin/view-concerts.php:113
@@ -610,7 +676,7 @@ msgstr ""
 msgid "JSON-LD yapılandırılmış verisi ekle."
 msgstr ""
 
-#: includes/admin/view-styles.php:370
+#: includes/admin/view-styles.php:380
 msgid "Kaldırma (Uninstall) Veritabanı Davranışı"
 msgstr ""
 
@@ -658,11 +724,11 @@ msgstr ""
 msgid "Konser Bilet Butonu"
 msgstr ""
 
-#: includes/admin-page.php:361
+#: includes/admin-page.php:362
 msgid "Konser Listesi & Arşiv"
 msgstr ""
 
-#: includes/admin-page.php:348 includes/i18n.php:104
+#: includes/admin-page.php:349 includes/i18n.php:104
 msgid "Konser Takvimi"
 msgstr ""
 
@@ -672,6 +738,10 @@ msgstr ""
 
 #: includes/admin/view-styles.php:171
 msgid "Konser Takvimi veya İlçe Yönlendirici blok/kısa kodlarının bulunduğu sayfalara otomatik Google"
+msgstr ""
+
+#: includes/admin/view-archive.php:15
+msgid "Konser bitti (otomatik)"
 msgstr ""
 
 #: includes/admin/actions-concerts.php:65
@@ -720,6 +790,10 @@ msgstr ""
 
 #: includes/admin/view-styles.php:171
 msgid "MusicEvent"
+msgstr ""
+
+#: includes/admin/view-archive.php:38
+msgid "Neden / Tarih"
 msgstr ""
 
 #: includes/i18n.php:57
@@ -864,15 +938,11 @@ msgstr ""
 msgid "Seans (isteğe bağlı: hangi seansın butonu?)"
 msgstr ""
 
-#: includes/admin/actions-stats.php:20
-msgid "Seçilen ilçe istatistik kaydı silindi."
-msgstr ""
-
 #: includes/admin-tools.php:316
 msgid "Seçilen süreden eski arşivlenmiş konser kayıtları kalıcı olarak silinecek. Emin misiniz?"
 msgstr ""
 
-#: includes/admin-tools.php:316 includes/admin/view-concerts.php:57 includes/admin/view-stats.php:326
+#: includes/admin-tools.php:316 includes/admin/view-archive.php:73 includes/admin/view-concerts.php:57
 msgid "Sil"
 msgstr ""
 
@@ -956,7 +1026,7 @@ msgstr ""
 msgid "Tarihi ve son seans saati geçen konserler otomatik olarak buraya taşınır, düzenlemeye kapatılır ve sitedeki takvim alanında gizlenir."
 msgstr ""
 
-#: includes/admin-page.php:94 includes/admin-page.php:136 includes/admin/view-stats.php:234
+#: includes/admin-page.php:94 includes/admin-page.php:136 includes/admin/view-archive.php:33
 msgid "Tekil Ziyaretçi"
 msgstr ""
 
@@ -988,16 +1058,17 @@ msgstr ""
 msgid "Tüm Zamanlar (Kümülatif)"
 msgstr ""
 
-#: includes/admin/view-styles.php:382
+#: includes/admin/view-styles.php:392
 msgid "Tüm düğme biçimi ve renk ayarları varsayılana sıfırlanacak. Emin misiniz?"
 msgstr ""
 
-#: includes/admin/actions-stats.php:13
-msgid "Tüm ilçe ziyaret ve tıklama istatistikleri sıfırlandı."
+#: includes/admin/actions-stats.php:17
+#, php-format
+msgid "Tüm ilçe istatistikleri (%1$d ilçe) arşive taşındı ve sayaçlar sıfırlandı. %2$sArşivden geri yükleyebilirsiniz%3$s."
 msgstr ""
 
 #: includes/admin/view-stats.php:225
-msgid "Tüm ilçe ziyaret ve tıklama verileri kalıcı olarak sıfırlanacak. Emin misiniz?"
+msgid "Tüm ilçelerin istatistikleri arşive taşınacak ve sayaçlar sıfırlanacak. Arşiv sekmesinden geri yükleyebilirsiniz. Devam edilsin mi?"
 msgstr ""
 
 #: includes/reports.php:197
@@ -1012,12 +1083,16 @@ msgstr ""
 msgid "Tüm İlçeler (Toplam)"
 msgstr ""
 
-#: includes/admin/view-stats.php:225
-msgid "Tüm İstatistikleri Sıfırla"
-msgstr ""
-
 #: includes/admin/view-concerts.php:79
 msgid "Tümü (Aktif + Arşiv)"
+msgstr ""
+
+#: includes/admin/view-stats.php:225
+msgid "Tümünü Arşivle & Sıfırla"
+msgstr ""
+
+#: includes/admin/view-archive.php:16
+msgid "Tümünü sıfırla"
 msgstr ""
 
 #: includes/admin-page.php:97 includes/admin-page.php:136
@@ -1072,7 +1147,7 @@ msgstr ""
 msgid "Varsayılan Bilet Satış URL'si"
 msgstr ""
 
-#: includes/admin/view-styles.php:382
+#: includes/admin/view-styles.php:392
 msgid "Varsayılan Renk ve Boyutlara Sıfırla"
 msgstr ""
 
@@ -1215,7 +1290,7 @@ msgstr ""
 msgid "Örn: Urla"
 msgstr ""
 
-#: includes/admin/actions-stats.php:32
+#: includes/admin/actions-stats.php:53
 #, php-format
 msgid "Örnek haftalık istatistik raporu %s adresine gönderildi."
 msgstr ""
@@ -1225,7 +1300,7 @@ msgstr ""
 msgid "İlk %1$d satır gösteriliyor (toplam %2$d)."
 msgstr ""
 
-#: includes/reports.php:202
+#: includes/admin/view-archive.php:31 includes/reports.php:202
 msgid "İlçe"
 msgstr ""
 
@@ -1273,6 +1348,10 @@ msgstr ""
 msgid "İlçe sayfasında aktif konser bulunmadığında ziyaretçilerin yönlendirileceği sayfa yolu (örn. <code>/konserler</code>) veya tam URL."
 msgstr ""
 
+#: includes/admin/actions-archive.php:17
+msgid "İlçe sınırına ulaşıldığı için geri yüklenemedi."
+msgstr ""
+
 #: includes/i18n.php:107
 msgid "İlçede aktif konser varsa Takvime Ekle düğmesini ve analitiği çalıştırır; yoksa ziyaretçiyi hedef sayfaya yönlendirir."
 msgstr ""
@@ -1285,17 +1364,29 @@ msgstr ""
 msgid "İstanbul"
 msgstr ""
 
+#: includes/admin-page.php:368
+msgid "İstatistik Arşivi"
+msgstr ""
+
+#: includes/admin/view-styles.php:344
+msgid "İstatistik arşivi"
+msgstr ""
+
+#: includes/admin/actions-stats.php:41
+msgid "İstatistik arşivlenemedi (kayıt bulunamadı veya veritabanı meşgul). Lütfen tekrar deneyin."
+msgstr ""
+
 #: includes/admin-tools.php:250
 #, php-format
 msgid "İstatistik tablosu %1$s ilçe sınırına ulaştı; %2$s tarihinde yeni bir ilçe kaydedilemedi. Gereksiz kayıtları İstatistikler sekmesinden silin."
 msgstr ""
 
-#: includes/admin-page.php:355
+#: includes/admin-page.php:356
 #, php-format
 msgid "İstatistik tablosu %d ilçe sınırına ulaştı ve yeni ilçeler kaydedilemiyor."
 msgstr ""
 
-#: includes/admin-page.php:364
+#: includes/admin-page.php:365
 msgid "İstatistikler & Grafik"
 msgstr ""
 
