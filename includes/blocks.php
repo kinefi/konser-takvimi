@@ -20,6 +20,7 @@ function kt_register_gutenberg_blocks() {
 		KT_PLUGIN_VER,
 		true
 	);
+	wp_localize_script( 'kt-blocks-editor-js', 'ktI18n', kt_get_js_dictionary() );
 
 	// 1. Concert Calendar block
 	register_block_type(
@@ -123,7 +124,7 @@ function kt_render_ticket_button_block( $attributes ) {
 
 	$html = kt_ticket_button_shortcode( $atts );
 	if ( empty( $html ) && defined( 'REST_REQUEST' ) && REST_REQUEST ) {
-		return '<div style="padding:12px;background:#fefce8;border:1px solid #fde047;border-radius:6px;color:#854d0e;font-size:13px;"><strong>Konser Bilet Butonu:</strong> Önizleme için sağ panelden veya eklenti genel ayarlarından bir Bilet Satış URL\'si girin.</div>';
+		return '<div style="padding:12px;background:#fefce8;border:1px solid #fde047;border-radius:6px;color:#854d0e;font-size:13px;"><strong>Konser Bilet Butonu:</strong> ' . esc_html__( 'Önizleme için sağ panelden veya eklenti genel ayarlarından bir Bilet Satış URL\'si girin.', 'konser-takvimi' ) . '</div>';
 	}
 	return $html;
 }
@@ -149,13 +150,13 @@ function kt_render_calendar_editor_preview() {
 	}
 
 	if ( empty( $upcoming ) ) {
-		return '<div style="padding:20px;text-align:center;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;color:#475569;"><strong>Konser Takvimi Bloğu:</strong> Şu anda yaklaşan aktif konser kaydı bulunmuyor.</div>';
+		return '<div style="padding:20px;text-align:center;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;color:#475569;"><strong>Konser Takvimi Bloğu:</strong> ' . esc_html__( 'Şu anda yaklaşan aktif konser kaydı bulunmuyor.', 'konser-takvimi' ) . '</div>';
 	}
 
 	$today_str    = kt_get_site_date_str( 0 );
 	$tomorrow_str = kt_get_site_date_str( 1 );
-	$months_tr    = array( '', 'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık' );
-	$days_tr      = array( 'Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi' );
+	$months_tr    = kt_get_month_names();
+	$days_tr      = kt_get_day_names();
 	$tz           = kt_get_site_timezone();
 
 	ob_start();
@@ -170,14 +171,14 @@ function kt_render_calendar_editor_preview() {
 			$day_name = $days_tr[ intval( $dt->format( 'w' ) ) ];
 			$time_str = $dt->format( 'H.i' );
 			if ( ! empty( $ev['time2'] ) ) {
-				$time_str .= ' ve ' . str_replace( ':', '.', sanitize_text_field( $ev['time2'] ) );
+				$time_str .= ' ' . __( 've', 'konser-takvimi' ) . ' ' . str_replace( ':', '.', sanitize_text_field( $ev['time2'] ) );
 			}
 			$pair  = $styles['palettes'][ $idx % 12 ];
 			$badge = '';
 			if ( $ymd === $today_str ) {
-				$badge = '<span style="position:absolute;top:6px;right:8px;background:#dc2626;color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px;">BUGÜN</span>';
+				$badge = '<span style="position:absolute;top:6px;right:8px;background:#dc2626;color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px;">' . esc_html__( 'BUGÜN', 'konser-takvimi' ) . '</span>';
 			} elseif ( $ymd === $tomorrow_str ) {
-				$badge = '<span style="position:absolute;top:6px;right:8px;background:#d97706;color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px;">YARIN</span>';
+				$badge = '<span style="position:absolute;top:6px;right:8px;background:#d97706;color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px;">' . esc_html__( 'YARIN', 'konser-takvimi' ) . '</span>';
 			}
 			?>
 			<div style="display:flex;height:<?php echo intval( $styles['badge_height'] ); ?>px;border-radius:<?php echo intval( $styles['border_radius'] ); ?>px;overflow:hidden;box-shadow:0 3px 10px rgba(0,0,0,0.06);">

@@ -36,7 +36,7 @@ function kt_analyze_content_for_legacy_usage( $content ) {
 
 	foreach ( kt_get_deprecated_shortcode_names() as $name ) {
 		if ( false !== strpos( $content, '[' . $name ) ) {
-			$findings[] = sprintf( '[%s] kısa kodu kullanımdan kalktı', $name );
+			$findings[] = sprintf( /* translators: %s: shortcode name */ __( '[%s] kısa kodu kullanımdan kalktı', 'konser-takvimi' ), $name );
 		}
 	}
 
@@ -54,7 +54,7 @@ function kt_analyze_content_for_legacy_usage( $content ) {
 			$found = true;
 		}
 		if ( $found ) {
-			$findings[] = sprintf( 'eski öznitelik "%s" → "%s"', $old, $new );
+			$findings[] = sprintf( /* translators: 1: old attribute name, 2: new attribute name */ __( 'eski öznitelik "%1$s" → "%2$s"', 'konser-takvimi' ), $old, $new );
 		}
 	}
 
@@ -87,7 +87,7 @@ function kt_scan_legacy_usage( $limit = 300 ) {
 		if ( ! empty( $findings ) ) {
 			$out[] = array(
 				'id'       => intval( $row->ID ),
-				'title'    => '' !== $row->post_title ? $row->post_title : '(başlıksız)',
+				'title'    => '' !== $row->post_title ? $row->post_title : __( '(başlıksız)', 'konser-takvimi' ),
 				'edit_url' => admin_url( 'post.php?post=' . intval( $row->ID ) . '&action=edit' ),
 				'findings' => $findings,
 			);
@@ -103,13 +103,13 @@ function kt_scan_legacy_usage( $limit = 300 ) {
 function kt_get_utm_link_presets() {
 	return array(
 		array( 'label' => 'WhatsApp', 'source' => 'whatsapp', 'medium' => 'messaging' ),
-		array( 'label' => 'Meta Reklam', 'source' => 'meta', 'medium' => 'cpc' ),
-		array( 'label' => 'YouTube Reklam', 'source' => 'youtube', 'medium' => 'cpc' ),
-		array( 'label' => 'E-posta bülteni', 'source' => 'newsletter', 'medium' => 'email' ),
-		array( 'label' => 'Instagram (organik)', 'source' => 'instagram', 'medium' => 'social' ),
-		array( 'label' => 'Facebook (organik)', 'source' => 'facebook', 'medium' => 'social' ),
-		array( 'label' => 'X / Twitter (organik)', 'source' => 'x', 'medium' => 'social' ),
-		array( 'label' => 'Doğrudan (etiketsiz)', 'source' => '', 'medium' => '' ),
+		array( 'label' => __( 'Meta Reklam', 'konser-takvimi' ), 'source' => 'meta', 'medium' => 'cpc' ),
+		array( 'label' => __( 'YouTube Reklam', 'konser-takvimi' ), 'source' => 'youtube', 'medium' => 'cpc' ),
+		array( 'label' => __( 'E-posta bülteni', 'konser-takvimi' ), 'source' => 'newsletter', 'medium' => 'email' ),
+		array( 'label' => __( 'Instagram (organik)', 'konser-takvimi' ), 'source' => 'instagram', 'medium' => 'social' ),
+		array( 'label' => __( 'Facebook (organik)', 'konser-takvimi' ), 'source' => 'facebook', 'medium' => 'social' ),
+		array( 'label' => __( 'X / Twitter (organik)', 'konser-takvimi' ), 'source' => 'x', 'medium' => 'social' ),
+		array( 'label' => __( 'Doğrudan (etiketsiz)', 'konser-takvimi' ), 'source' => '', 'medium' => '' ),
 	);
 }
 
@@ -201,17 +201,17 @@ function kt_handle_tools_actions() {
 		if ( $gone > 0 ) {
 			update_option( KT_EVENTS_OPT, $kept, false );
 		}
-		return '<div class="notice notice-success is-dismissible"><p>' . esc_html( sprintf( '%d aydan eski %d arşiv kaydı silindi.', $months, $gone ) ) . '</p></div>';
+		return '<div class="notice notice-success is-dismissible"><p>' . esc_html( sprintf( /* translators: 1: months, 2: number of removed records */ __( '%1$d aydan eski %2$d arşiv kaydı silindi.', 'konser-takvimi' ), $months, $gone ) ) . '</p></div>';
 	}
 
 	if ( isset( $_POST['kt_flush_buffer_now'] ) && check_admin_referer( 'kt_tools_nonce_action', 'kt_tools_nonce' ) ) {
 		kt_flush_stats_buffer();
-		return '<div class="notice notice-success is-dismissible"><p>Bekleyen istatistik olayları işlendi.</p></div>';
+		return '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Bekleyen istatistik olayları işlendi.', 'konser-takvimi' ) . '</p></div>';
 	}
 
 	if ( isset( $_POST['kt_clear_overflow'] ) && check_admin_referer( 'kt_tools_nonce_action', 'kt_tools_nonce' ) ) {
 		delete_option( KT_STATS_OVERFLOW_OPT );
-		return '<div class="notice notice-info is-dismissible"><p>Uyarı temizlendi.</p></div>';
+		return '<div class="notice notice-info is-dismissible"><p>' . esc_html__( 'Uyarı temizlendi.', 'konser-takvimi' ) . '</p></div>';
 	}
 
 	return '';
@@ -229,38 +229,38 @@ function kt_render_tools_tab( $concert_events ) {
 	$now_str  = kt_get_site_datetime_str();
 	?>
 	<div style="max-width: 1060px;">
-		<h2>Takip Tanılama</h2>
+		<h2><?php echo esc_html__( 'Takip Tanılama', 'konser-takvimi' ); ?></h2>
 		<table class="widefat striped" style="max-width: 700px;">
 			<tbody>
-				<tr><td>Saat dilimi / şu an</td><td><?php echo esc_html( $tz->getName() . ' — ' . $now_str ); ?></td></tr>
-				<tr><td>Kayıtlı ilçe sayısı</td><td><?php echo esc_html( $diag['districts'] . ' / ' . $diag['max'] ); ?></td></tr>
-				<tr><td>İşlenmeyi bekleyen olay</td><td><?php echo esc_html( (string) $diag['buffered'] ); ?></td></tr>
-				<tr><td>Son istatistik yazımı</td><td><?php echo $diag['last_update'] ? esc_html( wp_date( 'd.m.Y H:i:s', $diag['last_update'], $tz ) ) : 'Henüz kayıt yok'; ?></td></tr>
-				<tr><td>Yazma kilidi</td><td><?php echo $diag['lock_active'] ? 'Şu an aktif (normalde birkaç ms sürer)' : 'Boş'; ?></td></tr>
+				<tr><td><?php echo esc_html__( 'Saat dilimi / şu an', 'konser-takvimi' ); ?></td><td><?php echo esc_html( $tz->getName() . ' — ' . $now_str ); ?></td></tr>
+				<tr><td><?php echo esc_html__( 'Kayıtlı ilçe sayısı', 'konser-takvimi' ); ?></td><td><?php echo esc_html( $diag['districts'] . ' / ' . $diag['max'] ); ?></td></tr>
+				<tr><td><?php echo esc_html__( 'İşlenmeyi bekleyen olay', 'konser-takvimi' ); ?></td><td><?php echo esc_html( (string) $diag['buffered'] ); ?></td></tr>
+				<tr><td><?php echo esc_html__( 'Son istatistik yazımı', 'konser-takvimi' ); ?></td><td><?php echo $diag['last_update'] ? esc_html( wp_date( 'd.m.Y H:i:s', $diag['last_update'], $tz ) ) : __( 'Henüz kayıt yok', 'konser-takvimi' ); ?></td></tr>
+				<tr><td><?php echo esc_html__( 'Yazma kilidi', 'konser-takvimi' ); ?></td><td><?php echo $diag['lock_active'] ? __( 'Şu an aktif (normalde birkaç ms sürer)', 'konser-takvimi' ) : __( 'Boş', 'konser-takvimi' ); ?></td></tr>
 			</tbody>
 		</table>
-		<p class="description">Yönetici (sayfa düzenleme yetkili) ziyaretleri sayılmaz. Bunu test etmek için siteyi çıkış yapmış bir tarayıcıda veya gizli sekmede açın.</p>
+		<p class="description"><?php echo esc_html__( 'Yönetici (sayfa düzenleme yetkili) ziyaretleri sayılmaz. Bunu test etmek için siteyi çıkış yapmış bir tarayıcıda veya gizli sekmede açın.', 'konser-takvimi' ); ?></p>
 		<form method="post" action="">
 			<?php wp_nonce_field( 'kt_tools_nonce_action', 'kt_tools_nonce' ); ?>
-			<input type="submit" name="kt_flush_buffer_now" class="button" value="Bekleyen olayları şimdi işle">
+			<input type="submit" name="kt_flush_buffer_now" class="button" value="<?php echo esc_attr__( 'Bekleyen olayları şimdi işle', 'konser-takvimi' ); ?>">
 		</form>
 
 		<?php if ( ! empty( $diag['overflow'] ) ) : ?>
 			<div class="notice notice-warning inline" style="margin-top: 15px;"><p>
-				<strong>Uyarı:</strong> İstatistik tablosu <?php echo esc_html( (string) $diag['max'] ); ?> ilçe sınırına ulaştı; <?php echo esc_html( $diag['overflow'] ); ?> tarihinde yeni bir ilçe kaydedilemedi. Gereksiz kayıtları İstatistikler sekmesinden silin.
+				<strong><?php echo esc_html__( 'Uyarı:', 'konser-takvimi' ); ?></strong> <?php echo esc_html( sprintf( /* translators: 1: maximum districts, 2: date */ __( 'İstatistik tablosu %1$s ilçe sınırına ulaştı; %2$s tarihinde yeni bir ilçe kaydedilemedi. Gereksiz kayıtları İstatistikler sekmesinden silin.', 'konser-takvimi' ), (string) $diag['max'], (string) $diag['overflow'] ) ); ?>
 			</p>
 			<form method="post" action="">
 				<?php wp_nonce_field( 'kt_tools_nonce_action', 'kt_tools_nonce' ); ?>
-				<input type="submit" name="kt_clear_overflow" class="button button-small" value="Uyarıyı kapat">
+				<input type="submit" name="kt_clear_overflow" class="button button-small" value="<?php echo esc_attr__( 'Uyarıyı kapat', 'konser-takvimi' ); ?>">
 			</form></div>
 		<?php endif; ?>
 
-		<h2 style="margin-top: 30px;">Eski Kısa Kod / Öznitelik Kullanan Sayfalar</h2>
+		<h2 style="margin-top: 30px;"><?php echo esc_html__( 'Eski Kısa Kod / Öznitelik Kullanan Sayfalar', 'konser-takvimi' ); ?></h2>
 		<?php if ( empty( $scan ) ) : ?>
-			<p>Taranan yazı ve sayfalarda kullanımdan kalkmış kısa kod veya eski öznitelik bulunmadı.</p>
+			<p><?php echo esc_html__( 'Taranan yazı ve sayfalarda kullanımdan kalkmış kısa kod veya eski öznitelik bulunmadı.', 'konser-takvimi' ); ?></p>
 		<?php else : ?>
 			<table class="widefat striped">
-				<thead><tr><th>Sayfa</th><th>Bulgular</th></tr></thead>
+				<thead><tr><th><?php echo esc_html__( 'Sayfa', 'konser-takvimi' ); ?></th><th><?php echo esc_html__( 'Bulgular', 'konser-takvimi' ); ?></th></tr></thead>
 				<tbody>
 				<?php foreach ( $scan as $row ) : ?>
 					<tr>
@@ -272,8 +272,8 @@ function kt_render_tools_tab( $concert_events ) {
 			</table>
 		<?php endif; ?>
 
-		<h2 style="margin-top: 30px;">Sosyal Medya &amp; Kampanya Bağlantı Oluşturucu</h2>
-		<p class="description">Sayfa adresine kanal bazlı UTM ekler. Kampanya adı varsayılan olarak ilçe/slug olur. Bağlantıyı ilgili kanalda paylaşın; ziyaretler İstatistikler sekmesindeki "Trafik Kaynakları" tablosunda ayrışır.</p>
+		<h2 style="margin-top: 30px;"><?php echo esc_html__( 'Sosyal Medya & Kampanya Bağlantı Oluşturucu', 'konser-takvimi' ); ?></h2>
+		<p class="description"><?php echo esc_html__( 'Sayfa adresine kanal bazlı UTM ekler. Kampanya adı varsayılan olarak ilçe/slug olur. Bağlantıyı ilgili kanalda paylaşın; ziyaretler İstatistikler sekmesindeki "Trafik Kaynakları" tablosunda ayrışır.', 'konser-takvimi' ); ?></p>
 		<form method="get" action="">
 			<input type="hidden" name="page" value="konser-takvimi">
 			<input type="hidden" name="tab" value="tools">
@@ -288,14 +288,14 @@ function kt_render_tools_tab( $concert_events ) {
 					<option value="<?php echo esc_attr( $ev_url ); ?>" <?php selected( $selected, $ev_url ); ?>><?php echo esc_html( $ev['city'] . ' — ' . $ev_url ); ?></option>
 				<?php endforeach; ?>
 			</select>
-			<input type="text" name="kt_link_campaign" value="<?php echo esc_attr( $campaign ); ?>" placeholder="kampanya (boşsa slug)">
-			<input type="submit" class="button" value="Bağlantıları oluştur">
+			<input type="text" name="kt_link_campaign" value="<?php echo esc_attr( $campaign ); ?>" placeholder="<?php echo esc_attr__( 'kampanya (boşsa slug)', 'konser-takvimi' ); ?>">
+			<input type="submit" class="button" value="<?php echo esc_attr__( 'Bağlantıları oluştur', 'konser-takvimi' ); ?>">
 		</form>
 		<?php
 		if ( '' !== $selected ) {
 			$path_slug = trim( (string) wp_parse_url( $selected, PHP_URL_PATH ), '/' );
 			$links     = kt_build_utm_links( $selected, '' !== $campaign ? $campaign : $path_slug );
-			echo '<table class="widefat striped" style="margin-top: 10px;"><thead><tr><th style="width: 200px;">Kanal</th><th>Bağlantı</th></tr></thead><tbody>';
+			echo '<table class="widefat striped" style="margin-top: 10px;"><thead><tr><th style="width: 200px;">' . esc_html__( 'Kanal', 'konser-takvimi' ) . '</th><th>' . esc_html__( 'Bağlantı', 'konser-takvimi' ) . '</th></tr></thead><tbody>';
 			foreach ( $links as $link ) {
 				echo '<tr><td>' . esc_html( $link['label'] ) . '</td><td><input type="text" readonly class="large-text code" value="' . esc_attr( $link['url'] ) . '" onclick="this.select();"></td></tr>';
 			}
@@ -303,18 +303,18 @@ function kt_render_tools_tab( $concert_events ) {
 		}
 		?>
 
-		<h2 style="margin-top: 30px;">Arşiv Temizliği</h2>
+		<h2 style="margin-top: 30px;"><?php echo esc_html__( 'Arşiv Temizliği', 'konser-takvimi' ); ?></h2>
 		<form method="post" action="">
 			<?php wp_nonce_field( 'kt_tools_nonce_action', 'kt_tools_nonce' ); ?>
+			<?php echo esc_html__( 'Şu kadar aydan eski arşiv kayıtlarını sil:', 'konser-takvimi' ); ?>
 			<select name="purge_months">
 				<option value="6">6</option>
 				<option value="12" selected>12</option>
 				<option value="24">24</option>
 				<option value="36">36</option>
 			</select>
-			aydan eski arşiv kayıtlarını
-			<input type="submit" name="kt_purge_archive" class="button" value="Sil" onclick="return confirm('Seçilen süreden eski arşivlenmiş konser kayıtları kalıcı olarak silinecek. Emin misiniz?');">
-			<p class="description">Yalnızca son seansı bitmiş ve seçilen süreden eski kayıtlar silinir. İstatistikler etkilenmez.</p>
+			<input type="submit" name="kt_purge_archive" class="button" value="<?php echo esc_attr__( 'Sil', 'konser-takvimi' ); ?>" onclick="return confirm(<?php echo esc_attr( wp_json_encode( __( 'Seçilen süreden eski arşivlenmiş konser kayıtları kalıcı olarak silinecek. Emin misiniz?', 'konser-takvimi' ) ) ); ?>);">
+			<p class="description"><?php echo esc_html__( 'Yalnızca son seansı bitmiş ve seçilen süreden eski kayıtlar silinir. İstatistikler etkilenmez.', 'konser-takvimi' ); ?></p>
 		</form>
 	</div>
 	<?php

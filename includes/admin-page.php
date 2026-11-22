@@ -35,6 +35,7 @@ function kt_enqueue_admin_assets( $hook ) {
 		KT_PLUGIN_VER,
 		true
 	);
+	wp_localize_script( 'kt-admin-js', 'ktI18n', kt_get_js_dictionary() );
 }
 
 // Statistics report download handler (printable HTML report or CSV).
@@ -45,7 +46,7 @@ function kt_handle_stats_export() {
 	}
 
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_die( 'Yetkisiz erişim.' );
+		wp_die( esc_html__( 'Yetkisiz erişim.', 'konser-takvimi' ) );
 	}
 
 	kt_flush_stats_buffer();
@@ -79,8 +80,8 @@ function kt_handle_stats_export() {
 		fputcsv(
 			$output,
 			array(
-				'Dönem: ' . $bundle['period_label'],
-				'Oluşturulma: ' . $bundle['generated_at'],
+				sprintf( __( 'Dönem: %s', 'konser-takvimi' ), $bundle['period_label'] ),
+				sprintf( __( 'Oluşturulma: %s', 'konser-takvimi' ), $bundle['generated_at'] ),
 			),
 			';'
 		);
@@ -88,17 +89,17 @@ function kt_handle_stats_export() {
 		fputcsv(
 			$output,
 			array(
-				'İlçe / Anahtar',
-				'Sayfa Başlığı',
-				'Tekil Ziyaretçi',
-				'Sayfa Gösterimi',
-				'Bilet Tıklaması',
-				'Tıklama Oranı - CTR (%)',
-				'Tıklayan Tekil Kişi',
-				'Dönüşüm: Tıklayan Kişi / Tekil Ziyaretçi (%)',
-				'Ort. Kalma Süresi (sn)',
-				'Genel Toplam Ziyaretçi',
-				'Genel Toplam Tıklama',
+				__( 'İlçe / Anahtar', 'konser-takvimi' ),
+				__( 'Sayfa Başlığı', 'konser-takvimi' ),
+				__( 'Tekil Ziyaretçi', 'konser-takvimi' ),
+				__( 'Sayfa Gösterimi', 'konser-takvimi' ),
+				__( 'Bilet Tıklaması', 'konser-takvimi' ),
+				__( 'Tıklama Oranı - CTR (%)', 'konser-takvimi' ),
+				__( 'Tıklayan Tekil Kişi', 'konser-takvimi' ),
+				__( 'Dönüşüm: Tıklayan Kişi / Tekil Ziyaretçi (%)', 'konser-takvimi' ),
+				__( 'Ort. Kalma Süresi (sn)', 'konser-takvimi' ),
+				__( 'Genel Toplam Ziyaretçi', 'konser-takvimi' ),
+				__( 'Genel Toplam Tıklama', 'konser-takvimi' ),
 			),
 			';'
 		);
@@ -129,10 +130,10 @@ function kt_handle_stats_export() {
 		// Second block: UTM traffic sources (all time, not limited to the selected period).
 		if ( ! empty( $bundle['utm_rows'] ) ) {
 			fputcsv( $output, array(), ';' );
-			fputcsv( $output, array( 'UTM Trafik Kaynakları (tüm zamanlar)' ), ';' );
+			fputcsv( $output, array( __( 'UTM Trafik Kaynakları (tüm zamanlar)', 'konser-takvimi' ) ), ';' );
 			fputcsv(
 				$output,
-				array( 'Kaynak', 'Ortam', 'Kampanya', 'İlçe / Anahtar', 'Tekil Ziyaretçi', 'Sayfa Gösterimi', 'Bilet Tıklaması', 'Tıklama Oranı - CTR (%)', 'Tıklayan Tekil Kişi', 'Dönüşüm (%)' ),
+				array( __( 'Kaynak', 'konser-takvimi' ), __( 'Ortam', 'konser-takvimi' ), __( 'Kampanya', 'konser-takvimi' ), __( 'İlçe / Anahtar', 'konser-takvimi' ), __( 'Tekil Ziyaretçi', 'konser-takvimi' ), __( 'Sayfa Gösterimi', 'konser-takvimi' ), __( 'Bilet Tıklaması', 'konser-takvimi' ), __( 'Tıklama Oranı - CTR (%)', 'konser-takvimi' ), __( 'Tıklayan Tekil Kişi', 'konser-takvimi' ), __( 'Dönüşüm (%)', 'konser-takvimi' ) ),
 				';'
 			);
 			foreach ( $bundle['utm_rows'] as $u ) {
@@ -184,7 +185,7 @@ function kt_handle_stats_export() {
 </head>
 <body>
 	<div class="print-bar">
-		<button type="button" class="print-btn" onclick="window.print()">Yazdır / PDF Olarak Kaydet</button>
+		<button type="button" class="print-btn" onclick="window.print()"><?php echo esc_html__( 'Yazdır / PDF Olarak Kaydet', 'konser-takvimi' ); ?></button>
 	</div>
 	<?php kt_build_stats_report_bundle( $report_period, true ); ?>
 </body>
@@ -201,7 +202,7 @@ function kt_handle_concert_export() {
 	}
 
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_die( 'Yetkisiz erişim.' );
+		wp_die( esc_html__( 'Yetkisiz erişim.', 'konser-takvimi' ) );
 	}
 
 	check_admin_referer( 'kt_export_nonce_action', 'kt_export_nonce' );
@@ -234,7 +235,7 @@ function kt_handle_concert_export() {
 			continue;
 		}
 
-		$ev['status'] = $is_archived ? 'Arşivlendi' : 'Aktif';
+		$ev['status'] = $is_archived ? __( 'Arşivlendi', 'konser-takvimi' ) : __( 'Aktif', 'konser-takvimi' );
 		$filtered[]   = $ev;
 	}
 
@@ -249,7 +250,7 @@ function kt_handle_concert_export() {
 
 		$output = fopen( 'php://output', 'w' );
 		fwrite( $output, "\xEF\xBB\xBF" );
-		fputcsv( $output, array( 'Tarih', '1. Seans', '2. Seans', 'Şehir / İlçe', 'Slug', 'Durum', 'ISO Tarih' ), ';' );
+		fputcsv( $output, array( __( 'Tarih', 'konser-takvimi' ), __( '1. Seans', 'konser-takvimi' ), __( '2. Seans', 'konser-takvimi' ), __( 'Şehir / İlçe', 'konser-takvimi' ), __( 'Slug', 'konser-takvimi' ), __( 'Durum', 'konser-takvimi' ), __( 'ISO Tarih', 'konser-takvimi' ) ), ';' );
 
 		foreach ( $filtered as $row ) {
 			$dt_parts  = explode( 'T', $row['datetime'] );
@@ -312,212 +313,9 @@ function kt_render_admin_page() {
 		$message = $tools_message;
 	}
 
-	// Tab 1: save concerts.
-	if ( isset( $_POST['kt_save_concerts'] ) && check_admin_referer( 'kt_concerts_nonce_action', 'kt_concerts_nonce' ) ) {
-		$archived_events = array();
-
-		foreach ( $existing_events as $ev ) {
-			$end_ts = kt_get_event_end_timestamp( $ev );
-			if ( false !== $end_ts && $end_ts < $now_ts ) {
-				$archived_events[] = $ev;
-			}
-		}
-
-		$dates         = isset( $_POST['concert_date'] ) ? map_deep( (array) wp_unslash( $_POST['concert_date'] ), 'sanitize_text_field' ) : array();
-		$times         = isset( $_POST['concert_time'] ) ? map_deep( (array) wp_unslash( $_POST['concert_time'] ), 'sanitize_text_field' ) : array();
-		$times2        = isset( $_POST['concert_time2'] ) ? map_deep( (array) wp_unslash( $_POST['concert_time2'] ), 'sanitize_text_field' ) : array();
-		$cities        = isset( $_POST['concert_city'] ) ? map_deep( (array) wp_unslash( $_POST['concert_city'] ), 'sanitize_text_field' ) : array();
-		$slugs         = isset( $_POST['concert_slug'] ) ? map_deep( (array) wp_unslash( $_POST['concert_slug'] ), 'sanitize_title' ) : array();
-		$active_events = array();
-		$total         = count( $cities );
-
-		for ( $i = 0; $i < $total; $i++ ) {
-			$city  = sanitize_text_field( wp_unslash( $cities[ $i ] ) );
-			$date  = isset( $dates[ $i ] ) ? sanitize_text_field( wp_unslash( $dates[ $i ] ) ) : '';
-			$time  = isset( $times[ $i ] ) ? sanitize_text_field( wp_unslash( $times[ $i ] ) ) : '';
-			$time2 = isset( $times2[ $i ] ) ? sanitize_text_field( wp_unslash( $times2[ $i ] ) ) : '';
-			$slug  = isset( $slugs[ $i ] ) ? sanitize_title( wp_unslash( $slugs[ $i ] ) ) : '';
-
-			if ( empty( $city ) || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
-				continue;
-			}
-
-			if ( ! preg_match( '/^\d{2}:\d{2}$/', $time ) ) {
-				$time = '15:00';
-			}
-
-			if ( ! preg_match( '/^\d{2}:\d{2}$/', $time2 ) ) {
-				$time2 = '';
-			}
-
-			if ( empty( $slug ) ) {
-				$slug = sanitize_title( $city . '-konseri' );
-			}
-
-			$active_events[] = array(
-				'datetime' => kt_local_to_iso( $date, $time ),
-				'time2'    => $time2,
-				'city'     => $city,
-				'slug'     => $slug,
-			);
-		}
-
-		$all_events = array_merge( $archived_events, $active_events );
-		usort( $all_events, 'kt_sort_events_asc' );
-
-		update_option( KT_EVENTS_OPT, $all_events, false );
-		$existing_events = $all_events;
-		$message         = '<div class="notice notice-success is-dismissible"><p>Konser listesi veritabanına kaydedildi.</p></div>';
-	}
-
-	// Reset all statistics / delete a single row.
-	if ( isset( $_POST['kt_reset_stats'] ) && check_admin_referer( 'kt_stats_nonce_action', 'kt_stats_nonce' ) ) {
-		update_option( KT_STATS_OPT, array(), false );
-		$message = '<div class="notice notice-info is-dismissible"><p>Tüm ilçe ziyaret ve tıklama istatistikleri sıfırlandı.</p></div>';
-	} elseif ( isset( $_POST['kt_delete_stat_key'] ) && check_admin_referer( 'kt_stats_nonce_action', 'kt_stats_nonce' ) ) {
-		$del_key = sanitize_title( wp_unslash( $_POST['kt_delete_stat_key'] ) );
-		$stats   = get_option( KT_STATS_OPT, array() );
-		if ( is_array( $stats ) && isset( $stats[ $del_key ] ) ) {
-			unset( $stats[ $del_key ] );
-			update_option( KT_STATS_OPT, $stats, false );
-			$message = '<div class="notice notice-info is-dismissible"><p>Seçilen ilçe istatistik kaydı silindi.</p></div>';
-		}
-	}
-
-	// Send a test weekly email report.
-	if ( isset( $_POST['kt_send_test_report'] ) && check_admin_referer( 'kt_styles_nonce_action', 'kt_styles_nonce' ) ) {
-		$test_to = isset( $_POST['weekly_report_email'] ) ? sanitize_email( wp_unslash( $_POST['weekly_report_email'] ) ) : '';
-		if ( empty( $test_to ) ) {
-			$test_to = get_option( 'admin_email' );
-		}
-		$sent = kt_send_weekly_stats_email( $test_to );
-		if ( $sent ) {
-			$message = '<div class="notice notice-success is-dismissible"><p>Örnek haftalık istatistik raporu <strong>' . esc_html( $test_to ) . '</strong> adresine gönderildi.</p></div>';
-		} else {
-			$message = '<div class="notice notice-error is-dismissible"><p>E-posta gönderilemedi. Lütfen sunucunuzun WordPress e-posta (SMTP) ayarlarını kontrol edin.</p></div>';
-		}
-	}
-
-	// Save or reset the settings tab.
-	if ( isset( $_POST['kt_reset_styles'] ) && check_admin_referer( 'kt_styles_nonce_action', 'kt_styles_nonce' ) ) {
-		delete_option( KT_STYLES_OPT );
-		kt_sync_weekly_cron_schedule( true );
-		$message = '<div class="notice notice-info is-dismissible"><p>Düğme biçimleri, yönlendirme hedefi, bilet düğmesi ve renk paletleri varsayılan ayarlara döndürüldü.</p></div>';
-	} elseif ( isset( $_POST['kt_save_styles'] ) && check_admin_referer( 'kt_styles_nonce_action', 'kt_styles_nonce' ) ) {
-		$defaults = kt_get_default_style_settings();
-
-		$radius     = isset( $_POST['border_radius'] ) ? max( 0, min( 50, intval( $_POST['border_radius'] ) ) ) : 20;
-		$height     = isset( $_POST['badge_height'] ) ? max( 60, min( 160, intval( $_POST['badge_height'] ) ) ) : 90;
-		$gap        = isset( $_POST['grid_gap'] ) ? max( 4, min( 60, intval( $_POST['grid_gap'] ) ) ) : 20;
-		$min_w      = isset( $_POST['card_min_w'] ) ? max( 180, min( 450, intval( $_POST['card_min_w'] ) ) ) : 250;
-		$max_it     = isset( $_POST['max_items'] ) ? max( 1, min( 100, intval( $_POST['max_items'] ) ) ) : 16;
-		$del_uninst = isset( $_POST['delete_on_uninst'] ) ? 1 : 0;
-
-		$raw_redirect = isset( $_POST['redirect_target'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['redirect_target'] ) ) ) : '/konserler';
-		if ( empty( $raw_redirect ) ) {
-			$raw_redirect = '/konserler';
-		} elseif ( 0 !== strpos( $raw_redirect, 'http://' ) && 0 !== strpos( $raw_redirect, 'https://' ) && 0 !== strpos( $raw_redirect, '/' ) ) {
-			$raw_redirect = '/' . $raw_redirect;
-		}
-
-		$raw_ticket_url = isset( $_POST['ticket_btn_url'] ) ? trim( esc_url_raw( wp_unslash( $_POST['ticket_btn_url'] ) ) ) : '';
-
-		$raw_ticket_img = isset( $_POST['ticket_btn_img'] ) ? trim( esc_url_raw( wp_unslash( $_POST['ticket_btn_img'] ) ) ) : '';
-		if ( empty( $raw_ticket_img ) ) {
-			$raw_ticket_img = $defaults['ticket_btn_img'];
-		}
-
-		$raw_domains      = isset( $_POST['ticket_domains'] ) ? sanitize_text_field( wp_unslash( $_POST['ticket_domains'] ) ) : $defaults['ticket_domains'];
-		$schema_enabled   = isset( $_POST['schema_enabled'] ) ? 1 : 0;
-		$schema_performer = isset( $_POST['schema_performer'] ) ? sanitize_text_field( wp_unslash( $_POST['schema_performer'] ) ) : '';
-
-		$font_mode = isset( $_POST['font_mode'] ) ? sanitize_key( wp_unslash( $_POST['font_mode'] ) ) : 'google';
-		if ( ! in_array( $font_mode, array( 'google', 'system', 'theme' ), true ) ) {
-			$font_mode = 'google';
-		}
-		$timezone = isset( $_POST['timezone'] ) ? sanitize_text_field( wp_unslash( $_POST['timezone'] ) ) : 'Europe/Istanbul';
-		if ( ! in_array( $timezone, timezone_identifiers_list(), true ) ) {
-			$timezone = 'Europe/Istanbul';
-		}
-		$retention_days  = isset( $_POST['stats_retention_days'] ) ? intval( $_POST['stats_retention_days'] ) : 90;
-		$buffer_seconds  = isset( $_POST['stats_buffer_seconds'] ) ? intval( $_POST['stats_buffer_seconds'] ) : 60;
-		$alert_enabled   = isset( $_POST['alert_enabled'] ) ? 1 : 0;
-		$alert_min_conv  = isset( $_POST['alert_min_conversion'] ) ? floatval( $_POST['alert_min_conversion'] ) : 3;
-		$alert_min_vis   = isset( $_POST['alert_min_visitors'] ) ? intval( $_POST['alert_min_visitors'] ) : 50;
-		$utm_ticket_on   = isset( $_POST['utm_ticket_enabled'] ) ? 1 : 0;
-		$utm_calendar_on = isset( $_POST['utm_calendar_enabled'] ) ? 1 : 0;
-		$utm_capture_on  = isset( $_POST['utm_capture_enabled'] ) ? 1 : 0;
-		$utm_source      = isset( $_POST['utm_source'] ) ? kt_sanitize_utm_value( sanitize_text_field( wp_unslash( $_POST['utm_source'] ) ) ) : '';
-		$utm_medium      = isset( $_POST['utm_medium'] ) ? kt_sanitize_utm_value( sanitize_text_field( wp_unslash( $_POST['utm_medium'] ) ) ) : '';
-		$utm_campaign    = isset( $_POST['utm_campaign'] ) ? kt_sanitize_utm_value( sanitize_text_field( wp_unslash( $_POST['utm_campaign'] ) ) ) : '';
-		if ( '' === $utm_medium ) {
-			$utm_medium = $defaults['utm_medium'];
-		}
-
-		$weekly_on    = isset( $_POST['weekly_report_on'] ) ? 1 : 0;
-		$weekly_email = isset( $_POST['weekly_report_email'] ) ? sanitize_email( wp_unslash( $_POST['weekly_report_email'] ) ) : '';
-		$weekly_day   = isset( $_POST['weekly_report_day'] ) ? sanitize_key( wp_unslash( $_POST['weekly_report_day'] ) ) : 'monday';
-		$valid_days   = array( 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' );
-		if ( ! in_array( $weekly_day, $valid_days, true ) ) {
-			$weekly_day = 'monday';
-		}
-
-		$d_text = isset( $_POST['date_text'] ) ? sanitize_hex_color( wp_unslash( $_POST['date_text'] ) ) : '';
-		$c_text = isset( $_POST['city_text'] ) ? sanitize_hex_color( wp_unslash( $_POST['city_text'] ) ) : '';
-
-		$post_dates  = isset( $_POST['palette_date'] ) ? map_deep( (array) wp_unslash( $_POST['palette_date'] ), 'sanitize_hex_color' ) : array();
-		$post_cities = isset( $_POST['palette_city'] ) ? map_deep( (array) wp_unslash( $_POST['palette_city'] ), 'sanitize_hex_color' ) : array();
-		$palettes    = array();
-
-		for ( $i = 0; $i < 12; $i++ ) {
-			$pd = isset( $post_dates[ $i ] ) ? sanitize_hex_color( wp_unslash( $post_dates[ $i ] ) ) : '';
-			$pc = isset( $post_cities[ $i ] ) ? sanitize_hex_color( wp_unslash( $post_cities[ $i ] ) ) : '';
-
-			$palettes[ $i ] = array(
-				'date' => $pd ? $pd : $defaults['palettes'][ $i ]['date'],
-				'city' => $pc ? $pc : $defaults['palettes'][ $i ]['city'],
-			);
-		}
-
-		$new_styles = array(
-			'border_radius'       => $radius,
-			'badge_height'        => $height,
-			'grid_gap'            => $gap,
-			'card_min_w'          => $min_w,
-			'max_items'           => $max_it,
-			'date_text'           => $d_text ? $d_text : $defaults['date_text'],
-			'city_text'           => $c_text ? $c_text : $defaults['city_text'],
-			'redirect_target'     => $raw_redirect,
-			'ticket_btn_url'      => $raw_ticket_url,
-			'ticket_btn_img'      => $raw_ticket_img,
-			'ticket_domains'      => $raw_domains,
-			'schema_enabled'      => $schema_enabled,
-			'schema_performer'    => $schema_performer,
-			'load_google_font'     => ( 'google' === $font_mode ) ? 1 : 0,
-			'font_mode'            => $font_mode,
-			'timezone'             => $timezone,
-			'stats_retention_days' => $retention_days,
-			'stats_buffer_seconds' => $buffer_seconds,
-			'alert_enabled'        => $alert_enabled,
-			'alert_min_conversion' => $alert_min_conv,
-			'alert_min_visitors'   => $alert_min_vis,
-			'utm_ticket_enabled'   => $utm_ticket_on,
-			'utm_calendar_enabled' => $utm_calendar_on,
-			'utm_capture_enabled'  => $utm_capture_on,
-			'utm_source'           => $utm_source,
-			'utm_medium'           => $utm_medium,
-			'utm_campaign'         => $utm_campaign,
-			'weekly_report_on'    => $weekly_on,
-			'weekly_report_email' => $weekly_email,
-			'weekly_report_day'   => $weekly_day,
-			'delete_on_uninst'    => $del_uninst,
-			'palettes'            => $palettes,
-		);
-
-		update_option( KT_STYLES_OPT, $new_styles, false );
-		kt_sync_weekly_cron_schedule( true );
-		$message = '<div class="notice notice-success is-dismissible"><p>Düğme biçimleri ve ayarlar kaydedildi.</p></div>';
-	}
+	require KT_PLUGIN_DIR . 'includes/admin/actions-concerts.php';
+	require KT_PLUGIN_DIR . 'includes/admin/actions-stats.php';
+	require KT_PLUGIN_DIR . 'includes/admin/actions-styles.php';
 
 	$upcoming_list = array();
 	$archived_list = array();
@@ -547,29 +345,29 @@ function kt_render_admin_page() {
 	);
 	?>
 	<div class="wrap">
-		<h1>Konser Takvimi</h1>
+		<h1><?php echo esc_html__( 'Konser Takvimi', 'konser-takvimi' ); ?></h1>
 		<p>
-			Gutenberg editöründe <strong>Konser Takvimi</strong>, <strong>Konser İlçe Yönlendirici &amp; Takvime Ekle</strong> ve <strong>Konser Bilet Butonu</strong> bloklarını kullanabilirsiniz. <em>(Eski <code>[konser_takvimi]</code>, <code>[konser_ilce_yonlendir]</code> ve <code>[konser_bilet_butonu]</code> kısa kodları geriye dönük uyumluluk için çalışmaya devam eder.)</em>
+			<?php echo wp_kses( __( 'Gutenberg editöründe <strong>Konser Takvimi</strong>, <strong>Konser İlçe Yönlendirici &amp; Takvime Ekle</strong> ve <strong>Konser Bilet Butonu</strong> bloklarını kullanabilirsiniz. <em>(Eski <code>[konser_takvimi]</code>, <code>[konser_ilce_yonlendir]</code> ve <code>[konser_bilet_butonu]</code> kısa kodları geriye dönük uyumluluk için çalışmaya devam eder.)</em>', 'konser-takvimi' ), kt_i18n_allowed_html() ); ?>
 		</p>
 		<?php echo wp_kses_post( $message ); ?>
 		<?php if ( 'tools' !== $active_tab && get_option( KT_STATS_OVERFLOW_OPT, '' ) ) : ?>
 			<div class="notice notice-warning"><p>
-				<strong>Konser Takvimi:</strong> İstatistik tablosu <?php echo esc_html( (string) KT_STATS_MAX_DISTRICTS ); ?> ilçe sınırına ulaştı ve yeni ilçeler kaydedilemiyor. <a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=tools' ) ); ?>">Ayrıntılar</a>
+				<strong>Konser Takvimi:</strong> <?php echo esc_html( sprintf( /* translators: %d: maximum number of districts */ __( 'İstatistik tablosu %d ilçe sınırına ulaştı ve yeni ilçeler kaydedilemiyor.', 'konser-takvimi' ), KT_STATS_MAX_DISTRICTS ) ); ?> <a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=tools' ) ); ?>"><?php echo esc_html__( 'Ayrıntılar', 'konser-takvimi' ); ?></a>
 			</p></div>
 		<?php endif; ?>
 
 		<nav class="nav-tab-wrapper" style="margin-top: 15px; max-width: 1060px;">
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=concerts' ) ); ?>" class="nav-tab <?php echo 'concerts' === $active_tab ? 'nav-tab-active' : ''; ?>">
-				Konser Listesi & Arşiv
+				<?php echo esc_html__( 'Konser Listesi & Arşiv', 'konser-takvimi' ); ?>
 			</a>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats' ) ); ?>" class="nav-tab <?php echo 'stats' === $active_tab ? 'nav-tab-active' : ''; ?>">
-				İstatistikler & Grafik
+				<?php echo esc_html__( 'İstatistikler & Grafik', 'konser-takvimi' ); ?>
 			</a>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=styles' ) ); ?>" class="nav-tab <?php echo 'styles' === $active_tab ? 'nav-tab-active' : ''; ?>">
-				Düğme Biçimleri, Renkler & Ayarlar
+				<?php echo esc_html__( 'Düğme Biçimleri, Renkler & Ayarlar', 'konser-takvimi' ); ?>
 			</a>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=tools' ) ); ?>" class="nav-tab <?php echo 'tools' === $active_tab ? 'nav-tab-active' : ''; ?>">
-				Araçlar & Tanılama
+				<?php echo esc_html__( 'Araçlar & Tanılama', 'konser-takvimi' ); ?>
 			</a>
 		</nav>
 
@@ -578,893 +376,13 @@ function kt_render_admin_page() {
 		<?php endif; ?>
 
 		<?php if ( 'concerts' === $active_tab ) : ?>
-
-			<datalist id="kt-existing-posts-list">
-				<?php foreach ( $existing_posts as $wp_post ) : ?>
-					<?php
-					if ( ! empty( $wp_post->post_name ) ) :
-						$type_label = ( 'page' === $wp_post->post_type ) ? 'Sayfa' : 'Yazı';
-						?>
-						<option value="<?php echo esc_attr( $wp_post->post_name ); ?>">
-							<?php echo esc_html( '[' . $type_label . '] ' . $wp_post->post_title ); ?>
-						</option>
-					<?php endif; ?>
-				<?php endforeach; ?>
-			</datalist>
-
-			<h2 style="margin-top: 25px;">Yaklaşan Konserler (Düzenlenebilir)</h2>
-			<p class="description">Aynı gün iki seans varsa <strong>2. Seans</strong> alanını doldurun; düğmede <code>12.00 ve 14.00</code> olarak gösterilir. Tek seans için 2. seansı boş bırakabilirsiniz.</p>
-
-			<form method="post" action="">
-				<?php wp_nonce_field( 'kt_concerts_nonce_action', 'kt_concerts_nonce' ); ?>
-
-				<table class="widefat fixed striped" id="kt-concerts-table" style="max-width: 1060px; margin-top: 10px;">
-					<thead>
-						<tr>
-							<th style="width: 145px;">Tarih</th>
-							<th style="width: 95px;">1. Seans</th>
-							<th style="width: 110px;">2. Seans (Ops.)</th>
-							<th style="width: 185px;">Şehir / İlçe Adı</th>
-							<th>Link Uzantısı (Otomatik: ilce-konseri / Mevcut Yazı-Sayfa)</th>
-							<th style="width: 70px;">İşlem</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php
-						foreach ( $upcoming_list as $event ) :
-							$dt_parts = explode( 'T', $event['datetime'] );
-							$d_val    = isset( $dt_parts[0] ) ? $dt_parts[0] : '';
-							$t1_val   = isset( $dt_parts[1] ) ? substr( $dt_parts[1], 0, 5 ) : '15:00';
-							$t2_val   = isset( $event['time2'] ) ? $event['time2'] : '';
-							?>
-						<tr>
-							<td style="vertical-align: top;"><input type="date" name="concert_date[]" value="<?php echo esc_attr( $d_val ); ?>" required style="width: 100%;"></td>
-							<td style="vertical-align: top;"><input type="time" name="concert_time[]" value="<?php echo esc_attr( $t1_val ); ?>" required style="width: 100%;"></td>
-							<td style="vertical-align: top;"><input type="time" name="concert_time2[]" value="<?php echo esc_attr( $t2_val ); ?>" style="width: 100%;"></td>
-							<td style="vertical-align: top;"><input type="text" name="concert_city[]" value="<?php echo esc_attr( $event['city'] ); ?>" placeholder="Örn: Urla" required style="width: 100%;"></td>
-							<td style="vertical-align: top;">
-								<input type="text" class="kt-slug-input" name="concert_slug[]" list="kt-existing-posts-list" value="<?php echo esc_attr( $event['slug'] ); ?>" data-auto="0" placeholder="ilce-konseri veya ara..." autocomplete="off">
-								<span class="kt-slug-status"></span>
-							</td>
-							<td style="vertical-align: top;"><button type="button" class="button remove-row" style="color: #b32d2e;">Sil</button></td>
-						</tr>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
-
-				<p style="margin-top: 15px;">
-					<button type="button" class="button button-secondary" id="add-concert-row">+ Yeni Konser Ekle</button>
-					<input type="submit" name="kt_save_concerts" class="button button-primary" value="Değişiklikleri Kaydet" style="margin-left: 10px;">
-				</p>
-			</form>
-
-			<hr style="max-width: 1060px; margin: 35px 0 25px 0;">
-
-			<div style="max-width: 1060px; background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #2271b1; border-radius: 4px; padding: 12px 16px; margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; box-sizing: border-box;">
-				<div>
-					<strong>Yedekle / Dışa Aktar (Export):</strong>
-					<span class="description" style="margin-left: 6px;">Aktif (<?php echo intval( $active_count ); ?>), Arşiv (<?php echo intval( $archive_count ); ?>) veya Tüm kayıtları indirin.</span>
-				</div>
-				<form method="post" action="" style="display: flex; align-items: center; gap: 8px; margin: 0;">
-					<?php wp_nonce_field( 'kt_export_nonce_action', 'kt_export_nonce' ); ?>
-					<select name="export_scope" aria-label="Kapsam">
-						<option value="all">Tümü (Aktif + Arşiv)</option>
-						<option value="active">Sadece Aktif Konserler</option>
-						<option value="archived">Sadece Arşivlenenler</option>
-					</select>
-					<select name="export_format" aria-label="Format">
-						<option value="json">JSON (.json)</option>
-						<option value="csv">Excel / CSV (.csv)</option>
-					</select>
-					<input type="submit" name="kt_export_action" class="button button-secondary" value="İndir">
-				</form>
-			</div>
-
-			<details id="kt-archive-accordion" style="max-width: 1060px; background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 12px 16px; box-sizing: border-box;">
-				<summary style="cursor: pointer; font-size: 15px; font-weight: 600; color: #1d2327; user-select: none;">
-					Arşivlenen Konserler (<?php echo intval( $archive_count ); ?> adet - Görmek için tıklayın)
-				</summary>
-
-				<div style="margin-top: 15px;">
-					<p class="description" style="margin-bottom: 12px;">Tarihi ve son seans saati geçen konserler otomatik olarak buraya taşınır, düzenlemeye kapatılır ve sitedeki takvim alanında gizlenir.</p>
-
-					<table class="widefat fixed striped" id="kt-archive-table" style="opacity: 0.85;">
-						<thead>
-							<tr>
-								<th style="width: 145px;">Tarih</th>
-								<th style="width: 95px;">1. Seans</th>
-								<th style="width: 95px;">2. Seans</th>
-								<th>Şehir / İlçe Adı</th>
-								<th>Link Uzantısı (Slug)</th>
-								<th style="width: 95px;">Durum</th>
-							</tr>
-						</thead>
-						<tbody>
-							<?php if ( empty( $archived_list ) ) : ?>
-								<tr>
-									<td colspan="6" style="text-align: center; color: #666;">Henüz arşivlenmiş konser bulunmuyor.</td>
-								</tr>
-							<?php else : ?>
-								<?php
-								foreach ( $archived_list as $event ) :
-									$dt_parts = explode( 'T', $event['datetime'] );
-									$d_val    = isset( $dt_parts[0] ) ? $dt_parts[0] : '';
-									$t1_val   = isset( $dt_parts[1] ) ? substr( $dt_parts[1], 0, 5 ) : '15:00';
-									$t2_val   = isset( $event['time2'] ) ? $event['time2'] : '';
-									?>
-								<tr class="archive-row">
-									<td><input type="date" value="<?php echo esc_attr( $d_val ); ?>" disabled style="width: 100%; background: #f0f0f1; color: #50575e;"></td>
-									<td><input type="time" value="<?php echo esc_attr( $t1_val ); ?>" disabled style="width: 100%; background: #f0f0f1; color: #50575e;"></td>
-									<td><input type="text" value="<?php echo esc_attr( $t2_val ? $t2_val : '-' ); ?>" disabled style="width: 100%; background: #f0f0f1; color: #50575e; text-align: center;"></td>
-									<td><input type="text" value="<?php echo esc_attr( $event['city'] ); ?>" disabled style="width: 100%; background: #f0f0f1; color: #50575e;"></td>
-									<td><input type="text" value="<?php echo esc_attr( $event['slug'] ); ?>" disabled style="width: 100%; background: #f0f0f1; color: #50575e;"></td>
-									<td><span style="display: inline-block; padding: 3px 8px; background: #e2e8f0; color: #475569; border-radius: 4px; font-size: 12px; font-weight: 600;">Arşivlendi</span></td>
-								</tr>
-								<?php endforeach; ?>
-							<?php endif; ?>
-						</tbody>
-					</table>
-
-					<div id="kt-archive-pagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;"></div>
-				</div>
-			</details>
+			<?php require KT_PLUGIN_DIR . 'includes/admin/view-concerts.php'; ?>
 
 		<?php elseif ( 'stats' === $active_tab ) : ?>
-
-			<?php
-			$stats = get_option( KT_STATS_OPT, array() );
-			if ( ! is_array( $stats ) ) {
-				$stats = array();
-			}
-
-			$today_str = kt_get_site_date_str( 0 );
-
-			$sort_by = isset( $_GET['sort_by'] ) ? sanitize_key( $_GET['sort_by'] ) : 'visitors';
-			if ( ! in_array( $sort_by, array( 'visitors', 'views', 'clicks', 'ctr', 'conversion', 'duration' ), true ) ) {
-				$sort_by = 'visitors';
-			}
-
-			uasort(
-				$stats,
-				function ( $a, $b ) use ( $sort_by ) {
-					$va   = isset( $a['views'] ) ? intval( $a['views'] ) : 0;
-					$vb   = isset( $b['views'] ) ? intval( $b['views'] ) : 0;
-					$visa = isset( $a['visitors'] ) ? intval( $a['visitors'] ) : $va;
-					$visb = isset( $b['visitors'] ) ? intval( $b['visitors'] ) : $vb;
-					$ca   = isset( $a['clicks'] ) ? intval( $a['clicks'] ) : 0;
-					$cb   = isset( $b['clicks'] ) ? intval( $b['clicks'] ) : 0;
-
-					if ( 'ctr' === $sort_by ) {
-						$ctra = $va > 0 ? ( $ca / $va ) : 0;
-						$ctrb = $vb > 0 ? ( $cb / $vb ) : 0;
-						if ( abs( $ctra - $ctrb ) > 0.00001 ) {
-							return ( $ctrb > $ctra ) ? 1 : -1;
-						}
-						return $cb - $ca;
-					}
-					if ( 'conversion' === $sort_by ) {
-						$cva   = isset( $a['click_visitors'] ) ? intval( $a['click_visitors'] ) : 0;
-						$cvb   = isset( $b['click_visitors'] ) ? intval( $b['click_visitors'] ) : 0;
-						$conva = $visa > 0 ? ( $cva / $visa ) : 0;
-						$convb = $visb > 0 ? ( $cvb / $visb ) : 0;
-						if ( abs( $conva - $convb ) > 0.00001 ) {
-							return ( $convb > $conva ) ? 1 : -1;
-						}
-						return $cvb - $cva;
-					}
-					if ( 'clicks' === $sort_by ) {
-						return ( $cb !== $ca ) ? ( $cb - $ca ) : ( $visb - $visa );
-					}
-					if ( 'views' === $sort_by ) {
-						return ( $vb !== $va ) ? ( $vb - $va ) : ( $cb - $ca );
-					}
-					if ( 'duration' === $sort_by ) {
-						$dura = ( ! empty( $a['duration_count'] ) ) ? ( intval( $a['total_seconds'] ) / intval( $a['duration_count'] ) ) : 0;
-						$durb = ( ! empty( $b['duration_count'] ) ) ? ( intval( $b['total_seconds'] ) / intval( $b['duration_count'] ) ) : 0;
-						if ( abs( $dura - $durb ) > 0.01 ) {
-							return ( $durb > $dura ) ? 1 : -1;
-						}
-						return $visb - $visa;
-					}
-
-					if ( $visa === $visb ) {
-						return $cb - $ca;
-					}
-					return $visb - $visa;
-				}
-			);
-
-			$today_visitors = 0;
-			$total_visitors = 0;
-			$total_views    = 0;
-			$total_clicks   = 0;
-			$total_click_visitors = 0;
-			$total_seconds  = 0;
-			$duration_count = 0;
-
-			foreach ( $stats as $st ) {
-				$total_views    += isset( $st['views'] ) ? intval( $st['views'] ) : 0;
-				$total_visitors += isset( $st['visitors'] ) ? intval( $st['visitors'] ) : 0;
-				$total_clicks   += isset( $st['clicks'] ) ? intval( $st['clicks'] ) : 0;
-				$total_click_visitors += isset( $st['click_visitors'] ) ? intval( $st['click_visitors'] ) : 0;
-				$total_seconds  += isset( $st['total_seconds'] ) ? intval( $st['total_seconds'] ) : 0;
-				$duration_count += isset( $st['duration_count'] ) ? intval( $st['duration_count'] ) : 0;
-				if ( isset( $st['daily'][ $today_str ]['visitors'] ) ) {
-					$today_visitors += intval( $st['daily'][ $today_str ]['visitors'] );
-				}
-			}
-
-			$overall_ctr     = $total_views > 0 ? number_format( ( $total_clicks / $total_views ) * 100, 1, ',', '.' ) : '0,0';
-			$overall_conversion = number_format( kt_conversion_rate( $total_click_visitors, $total_visitors ), 1, ',', '.' );
-			$overall_avg_sec = $duration_count > 0 ? round( $total_seconds / $duration_count ) : 0;
-
-			$chart_days = array();
-			for ( $d = 13; $d >= 0; $d-- ) {
-				$d_str        = kt_get_site_date_str( -$d );
-				$chart_days[] = array(
-					'date'  => $d_str,
-					'label' => substr( $d_str, 8, 2 ) . '.' . substr( $d_str, 5, 2 ),
-				);
-			}
-
-			$chart_series = array(
-				'all' => array(
-					'label'    => 'Tüm İlçeler (Genel Toplam)',
-					'visitors' => array_fill( 0, 14, 0 ),
-					'views'    => array_fill( 0, 14, 0 ),
-					'clicks'   => array_fill( 0, 14, 0 ),
-				),
-			);
-
-			foreach ( $stats as $d_key => $st_item ) {
-				$series_vis = array();
-				$series_v   = array();
-				$series_c   = array();
-
-				foreach ( $chart_days as $idx => $c_day ) {
-					$dt_str = $c_day['date'];
-					$vis_v  = isset( $st_item['daily'][ $dt_str ]['visitors'] ) ? intval( $st_item['daily'][ $dt_str ]['visitors'] ) : 0;
-					$vw_v   = isset( $st_item['daily'][ $dt_str ]['views'] ) ? intval( $st_item['daily'][ $dt_str ]['views'] ) : 0;
-					$cl_v   = isset( $st_item['daily'][ $dt_str ]['clicks'] ) ? intval( $st_item['daily'][ $dt_str ]['clicks'] ) : 0;
-
-					$series_vis[] = $vis_v;
-					$series_v[]   = $vw_v;
-					$series_c[]   = $cl_v;
-
-					$chart_series['all']['visitors'][ $idx ] += $vis_v;
-					$chart_series['all']['views'][ $idx ]    += $vw_v;
-					$chart_series['all']['clicks'][ $idx ]   += $cl_v;
-				}
-
-				$chart_series[ $d_key ] = array(
-					'label'    => isset( $st_item['label'] ) ? $st_item['label'] : $d_key,
-					'visitors' => $series_vis,
-					'views'    => $series_v,
-					'clicks'   => $series_c,
-				);
-			}
-
-			$chart_payload = array(
-				'labels' => wp_list_pluck( $chart_days, 'label' ),
-				'dates'  => wp_list_pluck( $chart_days, 'date' ),
-				'series' => $chart_series,
-			);
-			?>
-
-			<div style="max-width: 1280px; margin-top: 20px;">
-				<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(195px, 1fr)); gap: 14px; margin-bottom: 20px;">
-					<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #0284c7; border-radius: 4px; padding: 14px 16px;">
-						<div style="font-size: 12px; color: #50575e; font-weight: 600;">Bugünkü Tekil Ziyaretçi</div>
-						<div style="font-size: 24px; font-weight: 700; color: #1d2327; margin-top: 4px;"><?php echo esc_html( number_format_i18n( $today_visitors ) ); ?></div>
-					</div>
-					<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #2271b1; border-radius: 4px; padding: 14px 16px;">
-						<div style="font-size: 12px; color: #50575e; font-weight: 600;">Toplam Ziyaretçi / Gösterim</div>
-						<div style="font-size: 24px; font-weight: 700; color: #1d2327; margin-top: 4px;">
-							<?php echo esc_html( number_format_i18n( $total_visitors ) ); ?> <span style="font-size: 14px; font-weight: 500; color: #64748b;">/ <?php echo esc_html( number_format_i18n( $total_views ) ); ?></span>
-						</div>
-					</div>
-					<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #16a34a; border-radius: 4px; padding: 14px 16px;">
-						<div style="font-size: 12px; color: #50575e; font-weight: 600;">Bilet Tıklaması (CTR)</div>
-						<div style="font-size: 24px; font-weight: 700; color: #1d2327; margin-top: 4px;">
-							<?php echo esc_html( number_format_i18n( $total_clicks ) ); ?> <span style="font-size: 14px; font-weight: 600; color: #16a34a;">(%<?php echo esc_html( $overall_ctr ); ?>)</span>
-						</div>
-					</div>
-					<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #0d9488; border-radius: 4px; padding: 14px 16px;">
-						<div style="font-size: 12px; color: #50575e; font-weight: 600;">Bilet Tıklayan Kişi / Tekil Ziyaretçi</div>
-						<div style="font-size: 24px; font-weight: 700; color: #1d2327; margin-top: 4px;">
-							<?php echo esc_html( number_format_i18n( $total_click_visitors ) ); ?> <span style="font-size: 14px; font-weight: 500; color: #64748b;">/ <?php echo esc_html( number_format_i18n( $total_visitors ) ); ?></span> <span style="font-size: 14px; font-weight: 600; color: #0d9488;">(%<?php echo esc_html( $overall_conversion ); ?>)</span>
-						</div>
-					</div>
-					<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #9333ea; border-radius: 4px; padding: 14px 16px;">
-						<div style="font-size: 12px; color: #50575e; font-weight: 600;">Ort. Sayfada Kalma Süresi</div>
-						<div style="font-size: 24px; font-weight: 700; color: #1d2327; margin-top: 4px;"><?php echo esc_html( kt_format_duration_human( $overall_avg_sec ) ); ?></div>
-					</div>
-				</div>
-
-				<div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 16px 20px; margin-bottom: 20px;">
-					<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px;">
-						<div>
-							<h2 style="margin: 0; font-size: 16px;">Son 14 Günlük Ziyaretçi ve Bilet Tıklama Grafiği</h2>
-							<span class="description">Günlük tekil ziyaretçi ve bilet düğmesi tıklama eğilimi (İstanbul saat dilimi).</span>
-						</div>
-						<div style="display: flex; align-items: center; gap: 14px;">
-							<div style="display: flex; align-items: center; gap: 12px; font-size: 12px;">
-								<span style="display: inline-flex; align-items: center; gap: 5px;"><span style="width: 12px; height: 12px; background: #2271b1; border-radius: 2px; display: inline-block;"></span> Günlük Ziyaretçi</span>
-								<span style="display: inline-flex; align-items: center; gap: 5px;"><span style="width: 12px; height: 12px; background: #16a34a; border-radius: 2px; display: inline-block;"></span> Bilet Tıklaması</span>
-							</div>
-							<select id="kt-chart-district-select" aria-label="İlçe Filtresi">
-								<option value="all">Tüm İlçeler (Toplam)</option>
-								<?php foreach ( $stats as $d_key => $st_item ) : ?>
-									<option value="<?php echo esc_attr( $d_key ); ?>">
-										<?php echo esc_html( isset( $st_item['label'] ) ? $st_item['label'] : $d_key ); ?>
-									</option>
-								<?php endforeach; ?>
-							</select>
-						</div>
-					</div>
-					<div id="kt-stats-chart-wrap" style="width: 100%; overflow-x: auto;">
-						<canvas id="kt-stats-canvas" width="980" height="250" style="width: 100%; max-width: 100%; height: 250px; display: block;"></canvas>
-					</div>
-					<script type="application/json" id="kt-chart-json-data"><?php echo wp_json_encode( $chart_payload ); ?></script>
-				</div>
-
-				<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #16a34a; border-radius: 4px; padding: 12px 16px; margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;">
-					<div>
-						<strong>Rapor İndir:</strong>
-						<span class="description" style="margin-left: 4px;">Dönem ve biçim seçerek yazdırılabilir görsel rapor (HTML/PDF) veya Excel tablosu (CSV) indirin.</span>
-					</div>
-					<form method="post" action="" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0;">
-						<?php wp_nonce_field( 'kt_stats_nonce_action', 'kt_stats_nonce' ); ?>
-						<select name="report_period" aria-label="Rapor Dönemi">
-							<option value="7">Son 7 Gün (Haftalık)</option>
-							<option value="14">Son 14 Gün</option>
-							<option value="30">Son 30 Gün (Aylık)</option>
-							<option value="0">Tüm Zamanlar</option>
-						</select>
-						<select name="report_format" aria-label="Rapor Biçimi">
-							<option value="html">Görsel Rapor (HTML / Yazdır & PDF)</option>
-							<option value="csv">Excel Tablosu (.csv)</option>
-						</select>
-						<input type="submit" name="kt_download_report_action" class="button button-primary" value="Raporu İndir" <?php disabled( empty( $stats ) ); ?>>
-						<input type="submit" name="kt_reset_stats" class="button" style="color: #b32d2e; margin-left: 6px;" value="Tüm İstatistikleri Sıfırla" <?php disabled( empty( $stats ) ); ?> onclick="return confirm('Tüm ilçe ziyaret ve tıklama verileri kalıcı olarak sıfırlanacak. Emin misiniz?');">
-					</form>
-				</div>
-
-				<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px;">
-					<div style="font-size: 13px; color: #50575e;">
-						<strong>Sıralama Ölçütü:</strong>
-						<?php
-						$sort_options = array(
-							'visitors' => 'Tekil Ziyaretçi',
-							'ctr'      => 'CTR % (Tıklama / Gösterim)',
-							'conversion' => 'Dönüşüm % (Tıklayan Kişi / Ziyaretçi)',
-							'clicks'   => 'Bilet Tıklaması',
-							'views'    => 'Sayfa Gösterimi',
-							'duration' => 'Ort. Kalma Süresi',
-						);
-						$sort_links   = array();
-						foreach ( $sort_options as $s_key => $s_label ) {
-							$s_url = add_query_arg(
-								array(
-									'page'    => 'konser-takvimi',
-									'tab'     => 'stats',
-									'sort_by' => $s_key,
-								),
-								admin_url( 'admin.php' )
-							);
-							if ( $sort_by === $s_key ) {
-								$sort_links[] = '<strong style="color: #1d2327; background: #e2e8f0; padding: 3px 8px; border-radius: 4px;">' . esc_html( $s_label ) . ' &darr;</strong>';
-							} else {
-								$sort_links[] = '<a href="' . esc_url( $s_url ) . '" style="text-decoration: none; padding: 3px 6px;">' . esc_html( $s_label ) . '</a>';
-							}
-						}
-						echo wp_kses_post( implode( ' &bull; ', $sort_links ) );
-						?>
-					</div>
-				</div>
-
-				<form method="post" action="">
-					<?php wp_nonce_field( 'kt_stats_nonce_action', 'kt_stats_nonce' ); ?>
-					<div class="kt-stats-table-wrap">
-						<table class="widefat striped kt-stats-table">
-							<thead>
-								<tr>
-									<th class="kt-col-key">İlçe Anahtarı</th>
-									<th class="kt-col-title">Sayfa Başlığı</th>
-									<th class="kt-col-num">Bugün (Tekil)</th>
-									<th class="kt-col-num"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=visitors' ) ); ?>">Toplam Ziyaretçi<?php echo 'visitors' === $sort_by ? ' &darr;' : ''; ?></a></th>
-									<th class="kt-col-num"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=views' ) ); ?>">Gösterim<?php echo 'views' === $sort_by ? ' &darr;' : ''; ?></a></th>
-									<th class="kt-col-num"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=clicks' ) ); ?>">Bilet Tıklaması<?php echo 'clicks' === $sort_by ? ' &darr;' : ''; ?></a></th>
-									<th class="kt-col-num"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=ctr' ) ); ?>">CTR<?php echo 'ctr' === $sort_by ? ' &darr;' : ''; ?></a></th>
-									<th class="kt-col-num">Tıklayan Kişi</th>
-									<th class="kt-col-num"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=conversion' ) ); ?>">Dönüşüm<?php echo 'conversion' === $sort_by ? ' &darr;' : ''; ?></a></th>
-									<th class="kt-col-num"><a href="<?php echo esc_url( admin_url( 'admin.php?page=konser-takvimi&tab=stats&sort_by=duration' ) ); ?>">Ort. Süre<?php echo 'duration' === $sort_by ? ' &darr;' : ''; ?></a></th>
-									<th class="kt-col-action">İşlem</th>
-								</tr>
-							</thead>
-						<tbody>
-							<?php if ( empty( $stats ) ) : ?>
-								<tr>
-									<td colspan="11" style="text-align: center; color: #666; padding: 20px;">Henüz kaydedilmiş ziyaret veya bilet tıklama verisi bulunmuyor.</td>
-								</tr>
-							<?php else : ?>
-								<?php
-								foreach ( $stats as $key => $row ) :
-									$v       = isset( $row['views'] ) ? intval( $row['views'] ) : 0;
-									$vis     = isset( $row['visitors'] ) ? intval( $row['visitors'] ) : 0;
-									$c       = isset( $row['clicks'] ) ? intval( $row['clicks'] ) : 0;
-									$tot_sec = isset( $row['total_seconds'] ) ? intval( $row['total_seconds'] ) : 0;
-									$dur_cnt = isset( $row['duration_count'] ) ? intval( $row['duration_count'] ) : 0;
-									$avg_sec = $dur_cnt > 0 ? round( $tot_sec / $dur_cnt ) : 0;
-									$t_vis   = isset( $row['daily'][ $today_str ]['visitors'] ) ? intval( $row['daily'][ $today_str ]['visitors'] ) : 0;
-									$ctr_num = $v > 0 ? ( ( $c / $v ) * 100 ) : 0.0;
-									$ctr     = number_format( $ctr_num, 1, ',', '.' );
-									$ctr_bg  = $ctr_num >= 15 ? '#dcfce7' : ( $ctr_num >= 5 ? '#fef9c3' : '#f1f5f9' );
-									$ctr_fg  = $ctr_num >= 15 ? '#166534' : ( $ctr_num >= 5 ? '#854d0e' : '#334155' );
-									$cv_count = isset( $row['click_visitors'] ) ? intval( $row['click_visitors'] ) : 0;
-									$conv_num = kt_conversion_rate( $cv_count, $vis );
-									$conv     = number_format( $conv_num, 1, ',', '.' );
-									$conv_bg  = $conv_num >= 15 ? '#dcfce7' : ( $conv_num >= 5 ? '#fef9c3' : '#f1f5f9' );
-									$conv_fg  = $conv_num >= 15 ? '#166534' : ( $conv_num >= 5 ? '#854d0e' : '#334155' );
-									?>
-									<tr>
-										<td><code><?php echo esc_html( $key ); ?></code></td>
-										<td>
-											<strong><?php echo esc_html( isset( $row['label'] ) ? $row['label'] : $key ); ?></strong>
-											<div style="font-size: 11px; color: #64748b;">Son: <?php echo esc_html( isset( $row['updated'] ) ? $row['updated'] : '-' ); ?></div>
-										</td>
-										<td><strong><?php echo esc_html( number_format_i18n( $t_vis ) ); ?></strong></td>
-										<td><?php echo esc_html( number_format_i18n( $vis ) ); ?></td>
-										<td><?php echo esc_html( number_format_i18n( $v ) ); ?></td>
-										<td style="color: #15803d; font-weight: 600;">
-											<?php echo esc_html( number_format_i18n( $c ) ); ?>
-											<?php if ( ! empty( $row['session_clicks'] ) && is_array( $row['session_clicks'] ) ) : ?>
-												<div style="font-size: 11px; font-weight: 400; color: #64748b;"><?php echo esc_html( sprintf( '1. seans: %d · 2. seans: %d', isset( $row['session_clicks']['1'] ) ? intval( $row['session_clicks']['1'] ) : 0, isset( $row['session_clicks']['2'] ) ? intval( $row['session_clicks']['2'] ) : 0 ) ); ?></div>
-											<?php endif; ?>
-										</td>
-										<td><span style="display: inline-block; padding: 3px 8px; background: <?php echo esc_attr( $ctr_bg ); ?>; color: <?php echo esc_attr( $ctr_fg ); ?>; border-radius: 4px; font-weight: 700;">%<?php echo esc_html( $ctr ); ?></span></td>
-										<td style="color: #0f766e; font-weight: 600;"><?php echo esc_html( number_format_i18n( $cv_count ) ); ?></td>
-										<td><span style="display: inline-block; padding: 3px 8px; background: <?php echo esc_attr( $conv_bg ); ?>; color: <?php echo esc_attr( $conv_fg ); ?>; border-radius: 4px; font-weight: 700;">%<?php echo esc_html( $conv ); ?></span></td>
-										<td><?php echo esc_html( kt_format_duration_human( $avg_sec ) ); ?></td>
-										<td>
-											<button type="submit" name="kt_delete_stat_key" value="<?php echo esc_attr( $key ); ?>" class="button button-small" style="color: #b32d2e;" onclick="return confirm('Bu ilçeye ait istatistik kaydını silmek istediğinize emin misiniz?');">Sil</button>
-										</td>
-									</tr>
-								<?php endforeach; ?>
-							<?php endif; ?>
-						</tbody>
-						</table>
-					</div>
-				</form>
-
-				<?php
-				$utm_rows = kt_get_utm_report_rows( $stats );
-				$utm_row_total = count( $utm_rows );
-				$utm_rows      = array_slice( $utm_rows, 0, 200 );
-				?>
-				<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #0891b2; border-radius: 4px; padding: 16px 20px; margin-top: 20px;">
-					<h2 style="margin: 0 0 4px 0; font-size: 16px;">Trafik Kaynakları (UTM)</h2>
-					<p class="description" style="margin-top: 0;">
-						Yalnızca adreste <code>utm_source</code>, <code>utm_medium</code> veya <code>utm_campaign</code> bulunan ziyaretler listelenir (tüm zamanlar). Bilet tıklaması, aynı sayfa görüntülemesi sırasında yapılan tıklamadır.
-						<?php if ( empty( $styles['utm_capture_enabled'] ) ) : ?>
-							<strong style="color: #b32d2e;">Gelen UTM kaydı Ayarlar sekmesinde kapalı; yeni veri toplanmıyor.</strong>
-						<?php endif; ?>
-					</p>
-					<div class="kt-stats-table-wrap">
-						<table class="widefat striped kt-stats-table">
-							<thead>
-								<tr>
-									<th>Kaynak</th>
-									<th>Ortam</th>
-									<th>Kampanya</th>
-									<th>İlçe / Sayfa</th>
-									<th class="kt-col-num">Ziyaretçi</th>
-									<th class="kt-col-num">Gösterim</th>
-									<th class="kt-col-num">Bilet Tıklaması</th>
-									<th class="kt-col-num">CTR</th>
-									<th class="kt-col-num">Tıklayan Kişi</th>
-									<th class="kt-col-num">Dönüşüm</th>
-								</tr>
-							</thead>
-							<tbody>
-								<?php if ( empty( $utm_rows ) ) : ?>
-									<tr>
-										<td colspan="10" style="text-align: center; color: #666; padding: 20px;">Henüz UTM parametreli ziyaret kaydedilmedi. Örnek: <code><?php echo esc_html( home_url( '/urla-konseri/?utm_source=instagram&utm_medium=social&utm_campaign=urla' ) ); ?></code></td>
-									</tr>
-								<?php else : ?>
-									<?php foreach ( $utm_rows as $utm_row ) : ?>
-										<?php $utm_ctr = $utm_row['views'] > 0 ? number_format( ( $utm_row['clicks'] / $utm_row['views'] ) * 100, 1, ',', '.' ) : '0,0'; ?>
-										<tr>
-											<td><code><?php echo esc_html( '' !== $utm_row['source'] ? $utm_row['source'] : '—' ); ?></code></td>
-											<td><code><?php echo esc_html( '' !== $utm_row['medium'] ? $utm_row['medium'] : '—' ); ?></code></td>
-											<td><code><?php echo esc_html( '' !== $utm_row['campaign'] ? $utm_row['campaign'] : '—' ); ?></code></td>
-											<td><?php echo esc_html( $utm_row['district'] ); ?></td>
-											<td><?php echo esc_html( number_format_i18n( $utm_row['visitors'] ) ); ?></td>
-											<td><?php echo esc_html( number_format_i18n( $utm_row['views'] ) ); ?></td>
-											<td style="color: #15803d; font-weight: 600;"><?php echo esc_html( number_format_i18n( $utm_row['clicks'] ) ); ?></td>
-											<td>%<?php echo esc_html( $utm_ctr ); ?></td>
-							<td><?php echo esc_html( number_format_i18n( $utm_row['click_visitors'] ) ); ?></td>
-							<td>%<?php echo esc_html( number_format( kt_conversion_rate( $utm_row['click_visitors'], $utm_row['visitors'] ), 1, ',', '.' ) ); ?></td>
-										</tr>
-									<?php endforeach; ?>
-								<?php endif; ?>
-							</tbody>
-						</table>
-					</div>
-					<?php if ( $utm_row_total > count( $utm_rows ) ) : ?>
-						<p class="description">İlk <?php echo intval( count( $utm_rows ) ); ?> satır gösteriliyor (toplam <?php echo intval( $utm_row_total ); ?>).</p>
-					<?php endif; ?>
-				</div>
-			</div>
+			<?php require KT_PLUGIN_DIR . 'includes/admin/view-stats.php'; ?>
 
 		<?php else : ?>
-
-			<form method="post" action="" style="max-width: 1060px; margin-top: 20px;">
-				<?php wp_nonce_field( 'kt_styles_nonce_action', 'kt_styles_nonce' ); ?>
-
-				<div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 16px 20px; margin-bottom: 20px;">
-					<h2 style="margin-top: 0;">Canlı Düğme Önizlemesi</h2>
-					<div id="kt-live-preview-box" style="display: flex; flex-wrap: wrap; gap: <?php echo intval( $styles['grid_gap'] ); ?>px; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
-						<?php
-						$sample_cities = array( 'İzmir', 'İstanbul', 'Ankara', 'Bursa' );
-						$sample_times  = array( '12.00 ve 14.00', '15.00', '13.00 ve 15.00', '14.00' );
-						for ( $p = 0; $p < 4; $p++ ) :
-							$d_bg = $styles['palettes'][ $p ]['date'];
-							$c_bg = $styles['palettes'][ $p ]['city'];
-							?>
-							<div class="preview-badge" data-index="<?php echo intval( $p ); ?>" style="display: flex; width: <?php echo intval( $styles['card_min_w'] ); ?>px; height: <?php echo intval( $styles['badge_height'] ); ?>px; border-radius: <?php echo intval( $styles['border_radius'] ); ?>px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.06); font-family: system-ui, sans-serif;">
-								<div class="preview-date" style="width: 44%; background-color: <?php echo esc_attr( $d_bg ); ?>; color: <?php echo esc_attr( $styles['date_text'] ); ?>; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; line-height: 1.2;">
-									<strong style="font-size: 15px;">24 Ekim</strong>
-									<span style="font-size: 13px;">Cumartesi</span>
-									<strong style="font-size: 12px;"><?php echo esc_html( $sample_times[ $p ] ); ?></strong>
-								</div>
-								<div class="preview-city" style="width: 56%; background-color: <?php echo esc_attr( $c_bg ); ?>; color: <?php echo esc_attr( $styles['city_text'] ); ?>; display: flex; justify-content: center; align-items: center; font-size: 20px; font-weight: 700;">
-									<?php echo esc_html( $sample_cities[ $p ] ); ?>
-								</div>
-							</div>
-						<?php endfor; ?>
-					</div>
-				</div>
-
-				<div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 16px 20px; margin-bottom: 20px;">
-					<h2 style="margin-top: 0;">Boyut, Köşe Yuvarlaklığı ve Izgara Ayarları</h2>
-					<table class="form-table" role="presentation">
-						<tr>
-							<th scope="row"><label for="border_radius">Köşe Yuvarlaklığı (Border Radius)</label></th>
-							<td>
-								<input type="range" id="border_radius" name="border_radius" min="0" max="45" value="<?php echo intval( $styles['border_radius'] ); ?>">
-								<span id="border_radius_val" style="font-weight: 600; margin-left: 8px;"><?php echo intval( $styles['border_radius'] ); ?> px</span>
-								<p class="description">0 px keskin dikdörtgen, 20 px yumuşak köşe, 45 px hap (pill) görünümü verir.</p>
-							</td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="badge_height">Düğme Yüksekliği</label></th>
-							<td>
-								<input type="range" id="badge_height" name="badge_height" min="65" max="140" value="<?php echo intval( $styles['badge_height'] ); ?>">
-								<span id="badge_height_val" style="font-weight: 600; margin-left: 8px;"><?php echo intval( $styles['badge_height'] ); ?> px</span>
-							</td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="card_min_w">Minimum Düğme Genişliği</label></th>
-							<td>
-								<input type="range" id="card_min_w" name="card_min_w" min="200" max="400" step="5" value="<?php echo intval( $styles['card_min_w'] ); ?>">
-								<span id="card_min_w_val" style="font-weight: 600; margin-left: 8px;"><?php echo intval( $styles['card_min_w'] ); ?> px</span>
-							</td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="grid_gap">Düğmeler Arası Boşluk (Gap)</label></th>
-							<td>
-								<input type="range" id="grid_gap" name="grid_gap" min="6" max="45" value="<?php echo intval( $styles['grid_gap'] ); ?>">
-								<span id="grid_gap_val" style="font-weight: 600; margin-left: 8px;"><?php echo intval( $styles['grid_gap'] ); ?> px</span>
-							</td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="max_items">Sayfada Gösterilecek Maksimum Konser</label></th>
-							<td>
-								<input type="number" id="max_items" name="max_items" min="1" max="100" value="<?php echo intval( $styles['max_items'] ); ?>" style="width: 80px;">
-								<span class="description" style="margin-left: 8px;">Varsayılan: 16 konser</span>
-							</td>
-						</tr>
-						<tr>
-							<th scope="row">Yazı Renkleri</th>
-							<td>
-								<label style="margin-right: 20px;">
-									Tarih Bölümü Yazı Rengi:
-									<input type="color" id="date_text" name="date_text" value="<?php echo esc_attr( $styles['date_text'] ); ?>">
-								</label>
-								<label>
-									Şehir Bölümü Yazı Rengi:
-									<input type="color" id="city_text" name="city_text" value="<?php echo esc_attr( $styles['city_text'] ); ?>">
-								</label>
-							</td>
-						</tr>
-					</table>
-				</div>
-
-				<div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 16px 20px; margin-bottom: 20px;">
-					<h2 style="margin-top: 0;">12'li Düğme Renk Paleti Döngüsü</h2>
-					<p class="description" style="margin-bottom: 15px;">Konser rozetleri sırasıyla bu 12 renk çiftini kullanır. Sol taraftaki koyu rengi seçtiğinizde sağ taraf için otomatik uyumlu pastel ton önerilir; dilerseniz sağ rengi de bağımsız seçebilirsiniz.</p>
-
-					<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px;">
-						<?php for ( $i = 0; $i < 12; $i++ ) : ?>
-							<div class="palette-item-card" data-palette-idx="<?php echo intval( $i ); ?>" style="border: 1px solid #dcdcde; border-radius: 6px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; background: #fafafa;">
-								<strong style="min-width: 65px;">Renk #<?php echo intval( $i + 1 ); ?></strong>
-								<label style="display: flex; align-items: center; gap: 4px; font-size: 12px;">
-									Tarih:
-									<input type="color" class="palette-date-input" name="palette_date[<?php echo intval( $i ); ?>]" value="<?php echo esc_attr( $styles['palettes'][ $i ]['date'] ); ?>">
-								</label>
-								<label style="display: flex; align-items: center; gap: 4px; font-size: 12px;">
-									Şehir:
-									<input type="color" class="palette-city-input" name="palette_city[<?php echo intval( $i ); ?>]" value="<?php echo esc_attr( $styles['palettes'][ $i ]['city'] ); ?>">
-								</label>
-							</div>
-						<?php endfor; ?>
-					</div>
-				</div>
-
-				<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #2271b1; border-radius: 4px; padding: 16px 20px; margin-bottom: 20px;">
-					<h2 style="margin-top: 0;">İlçe Sayfası Yönlendirme, Bilet Düğmesi & Otomatik Takip Ayarları</h2>
-					<table class="form-table" role="presentation" style="margin-top: 0;">
-						<tr>
-							<th scope="row"><label for="redirect_target">Varsayılan Yönlendirme Sayfası</label></th>
-							<td>
-								<input type="text" id="redirect_target" name="redirect_target" value="<?php echo esc_attr( $styles['redirect_target'] ); ?>" class="regular-text" placeholder="/konserler">
-								<p class="description">
-									İlçe sayfasında aktif konser bulunmadığında ziyaretçilerin yönlendirileceği sayfa yolu (örn. <code>/konserler</code>) veya tam URL.
-								</p>
-								<p class="description" style="margin-top: 6px; color: #1d2327;">
-									<strong>Önemli Not:</strong> <strong>Konser İlçe Yönlendirici</strong> bloğu (veya eski <code>[konser_ilce_yonlendir]</code> kısa kodu) parametresiz kullanıldığında kontrolü <strong>sayfanın URL uzantısına (slug)</strong> göre yapar ve aktif konser varsa otomatik olarak <strong>Takvime Ekle</strong> düğmesini gösterir. URL'de ilçe adı geçmiyorsa blok ayarlarından <strong>İlçe Slug</strong> alanını doldurabilirsiniz.
-								</p>
-							</td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="ticket_btn_url">Varsayılan Bilet Satış URL'si</label></th>
-							<td>
-								<input type="url" id="ticket_btn_url" name="ticket_btn_url" value="<?php echo esc_url( $styles['ticket_btn_url'] ); ?>" class="large-text" placeholder="https://biletinial.com/tr-tr/tiyatro/subadap-cocuk-konseri">
-								<p class="description">
-									Buraya bir varsayılan bilet bağlantısı girerseniz sayfalarda ekstra URL girmeden doğrudan <strong>Konser Bilet Butonu</strong> bloğunu ekleyebilirsiniz.
-								</p>
-							</td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="ticket_btn_img">Varsayılan Bilet Düğmesi Görseli</label></th>
-							<td>
-								<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
-									<input type="url" id="ticket_btn_img" name="ticket_btn_img" value="<?php echo esc_url( $styles['ticket_btn_img'] ); ?>" class="regular-text" style="min-width: 360px;">
-									<button type="button" class="button button-secondary" id="kt-select-ticket-img">Ortam Kütüphanesinden Seç</button>
-								</div>
-								<div id="kt-ticket-img-preview" style="margin-top: 10px;">
-									<?php if ( ! empty( $styles['ticket_btn_img'] ) ) : ?>
-										<img src="<?php echo esc_url( $styles['ticket_btn_img'] ); ?>" alt="Bilet Düğmesi Önizleme" style="max-width: 360px; height: auto; border: 1px solid #dcdcde; border-radius: 4px; padding: 4px; background: #f8fafc;">
-									<?php endif; ?>
-								</div>
-							</td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="ticket_domains">Otomatik Takip Edilecek Bilet Alan Adları</label></th>
-							<td>
-								<input type="text" id="ticket_domains" name="ticket_domains" value="<?php echo esc_attr( $styles['ticket_domains'] ); ?>" class="large-text" placeholder="biletinial.com, biletix.com, passo.com.tr, bubilet.com.tr">
-								<p class="description">
-									İlçe sayfalarında bu alan adlarına giden bağlantılara veya bilet görseli içeren linklere yapılan tıklamalar otomatik olarak ilgili ilçeye kaydedilir. Virgülle ayırarak alan adı ekleyebilirsiniz.
-								</p>
-							</td>
-						</tr>
-					</table>
-				</div>
-
-				<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #9333ea; border-radius: 4px; padding: 16px 20px; margin-bottom: 20px;">
-					<h2 style="margin-top: 0;">Google Arama Zengin Sonuçları — Schema (JSON-LD MusicEvent)</h2>
-					<table class="form-table" role="presentation" style="margin-top: 0;">
-						<tr>
-							<th scope="row">Otomatik MusicEvent Şeması</th>
-							<td>
-								<label>
-									<input type="checkbox" name="schema_enabled" value="1" <?php checked( ! empty( $styles['schema_enabled'] ) ); ?>>
-									Konser Takvimi veya İlçe Yönlendirici blok/kısa kodlarının bulunduğu sayfalara otomatik Google <code>MusicEvent</code> JSON-LD yapılandırılmış verisi ekle.
-								</label>
-								<p class="description">Etkinlik tarihi, saati, ilçe konumu, açıklama ve bilet bağlantısı Google arama sonuçlarında zengin etkinlik kartı olarak dizine eklenir.</p>
-							</td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="schema_performer">Sanatçı / Grup Adı (Performer)</label></th>
-							<td>
-								<input type="text" id="schema_performer" name="schema_performer" value="<?php echo esc_attr( $styles['schema_performer'] ); ?>" class="regular-text" placeholder="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>">
-								<p class="description">Boş bırakılırsa site başlığı (<code><?php echo esc_html( get_bloginfo( 'name' ) ); ?></code>) kullanılır.</p>
-							</td>
-						</tr>
-					</table>
-				</div>
-
-				<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #0891b2; border-radius: 4px; padding: 16px 20px; margin-bottom: 20px;">
-					<h2 style="margin-top: 0;">UTM Parametreleri</h2>
-					<table class="form-table" role="presentation" style="margin-top: 0;">
-						<tr>
-							<th scope="row">Giden Bağlantılar</th>
-							<td>
-								<label style="display: block; margin-bottom: 6px;">
-									<input type="checkbox" name="utm_ticket_enabled" value="1" <?php checked( ! empty( $styles['utm_ticket_enabled'] ) ); ?>>
-									Bilet düğmesine ve otomatik takip edilen bilet alan adlarına giden bağlantılara UTM parametreleri ekle.
-								</label>
-								<label style="display: block;">
-									<input type="checkbox" name="utm_calendar_enabled" value="1" <?php checked( ! empty( $styles['utm_calendar_enabled'] ) ); ?>>
-									Takvime Ekle (Google Takvim / .ics) etkinlik açıklamasındaki sayfa bağlantısına UTM parametreleri ekle.
-								</label>
-								<p class="description">Bağlantıda zaten bir <code>utm_*</code> parametresi varsa değiştirilmez. Bilet bağlantıları şu biçimi alır: <code>?utm_source=<em>kaynak</em>&amp;utm_medium=<em>ortam</em>&amp;utm_campaign=<em>kampanya</em>&amp;utm_content=ticket-button</code>. Takvim bağlantıları için kaynak <code>google-calendar</code> veya <code>ics-file</code>, ortam <code>calendar</code> olur.</p>
-							</td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="utm_source">Kaynak (utm_source)</label></th>
-							<td>
-								<input type="text" id="utm_source" name="utm_source" value="<?php echo esc_attr( $styles['utm_source'] ); ?>" class="regular-text" placeholder="<?php echo esc_attr( kt_get_utm_settings()['source'] ); ?>">
-								<p class="description">Boş bırakılırsa site alan adı kullanılır. Yalnızca küçük harf, rakam, <code>.</code>, <code>_</code> ve <code>-</code> kabul edilir.</p>
-							</td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="utm_medium">Ortam (utm_medium)</label></th>
-							<td>
-								<input type="text" id="utm_medium" name="utm_medium" value="<?php echo esc_attr( $styles['utm_medium'] ); ?>" class="regular-text" placeholder="referral">
-							</td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="utm_campaign">Kampanya (utm_campaign)</label></th>
-							<td>
-								<input type="text" id="utm_campaign" name="utm_campaign" value="<?php echo esc_attr( $styles['utm_campaign'] ); ?>" class="regular-text" placeholder="(ilçe anahtarı)">
-								<p class="description">Boş bırakılırsa her bağlantı için ilgili ilçe anahtarı (örn. <code>urla</code>) kullanılır. Tüm turneyi tek kampanya altında toplamak için sabit bir değer girin (örn. <code>sonbahar-turnesi-2026</code>).</p>
-							</td>
-						</tr>
-						<tr>
-							<th scope="row">Gelen Bağlantılar</th>
-							<td>
-								<label>
-									<input type="checkbox" name="utm_capture_enabled" value="1" <?php checked( ! empty( $styles['utm_capture_enabled'] ) ); ?>>
-									Sayfaya <code>utm_source</code>, <code>utm_medium</code> ve <code>utm_campaign</code> ile gelen ziyaretleri ve bilet tıklamalarını <strong>İstatistikler &amp; Grafik</strong> sekmesinde kaynak bazında göster.
-								</label>
-								<p class="description">Her ilçe için en fazla <?php echo intval( KT_UTM_MAX_COMBOS ); ?> farklı kaynak/ortam/kampanya kombinasyonu saklanır; fazlası "(other)" altında toplanır.</p>
-							</td>
-						</tr>
-					</table>
-				</div>
-
-				<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #16a34a; border-radius: 4px; padding: 16px 20px; margin-bottom: 20px;">
-					<h2 style="margin-top: 0;">Haftalık İstatistik E-Posta Raporu</h2>
-					<table class="form-table" role="presentation" style="margin-top: 0;">
-						<tr>
-							<th scope="row">Otomatik Haftalık Rapor</th>
-							<td>
-								<label>
-									<input type="checkbox" name="weekly_report_on" value="1" <?php checked( ! empty( $styles['weekly_report_on'] ) ); ?>>
-									Son 7 günün ilçe ziyaretçi, bilet tıklaması ve kalma süresi özetini her hafta e-posta ile gönder.
-								</label>
-							</td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="weekly_report_email">Alıcı E-Posta Adresi</label></th>
-							<td>
-								<input type="email" id="weekly_report_email" name="weekly_report_email" value="<?php echo esc_attr( $styles['weekly_report_email'] ); ?>" class="regular-text" placeholder="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>">
-								<p class="description">Boş bırakılırsa WordPress genel yönetici e-posta adresine (<code><?php echo esc_html( get_option( 'admin_email' ) ); ?></code>) gönderilir.</p>
-							</td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="weekly_report_day">Gönderim Günü (Saat 09:00)</label></th>
-							<td>
-								<?php
-								$days_tr = array(
-									'monday'    => 'Pazartesi',
-									'tuesday'   => 'Salı',
-									'wednesday' => 'Çarşamba',
-									'thursday'  => 'Perşembe',
-									'friday'    => 'Cuma',
-									'saturday'  => 'Cumartesi',
-									'sunday'    => 'Pazar',
-								);
-								?>
-								<select id="weekly_report_day" name="weekly_report_day">
-									<?php foreach ( $days_tr as $d_val => $d_label ) : ?>
-										<option value="<?php echo esc_attr( $d_val ); ?>" <?php selected( $styles['weekly_report_day'], $d_val ); ?>><?php echo esc_html( $d_label ); ?></option>
-									<?php endforeach; ?>
-								</select>
-								<input type="submit" name="kt_send_test_report" class="button button-secondary" value="Şimdi Örnek Rapor E-Postası Gönder" style="margin-left: 10px;">
-							</td>
-						</tr>
-					</table>
-				</div>
-
-				<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #64748b; border-radius: 4px; padding: 16px 20px; margin-bottom: 20px;">
-					<h2 style="margin-top: 0;">Gizlilik, Yazı Tipi, Saat Dilimi & Veri</h2>
-					<table class="form-table" role="presentation" style="margin-top: 0;">
-						<tr>
-							<th scope="row">Yazı tipi</th>
-							<td>
-								<?php
-								$font_options = array(
-									'google' => 'Quicksand (Google Fonts üzerinden yüklenir)',
-									'system' => 'Sistem yazı tipi (Google\'a bağlanılmaz)',
-									'theme'  => 'Temanın varsayılan yazı tipi',
-								);
-								foreach ( $font_options as $font_value => $font_label ) :
-									?>
-									<label style="display: block; margin-bottom: 4px;">
-										<input type="radio" name="font_mode" value="<?php echo esc_attr( $font_value ); ?>" <?php checked( $styles['font_mode'], $font_value ); ?>>
-										<?php echo esc_html( $font_label ); ?>
-									</label>
-								<?php endforeach; ?>
-								<p class="description">Google Fonts kapalıyken ziyaretçilerin tarayıcısı Google'a bağlanmaz. İstatistikler çerez kullanmaz; yalnızca tarayıcının <code>localStorage</code> alanına günlük bir "ziyaret edildi" işareti yazar. Sitenizin onay (KVKK/GDPR) politikasına uygunluğunu ayrıca değerlendirin.</p>
-							</td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="timezone">Saat dilimi</label></th>
-							<td>
-								<select id="timezone" name="timezone">
-									<?php foreach ( timezone_identifiers_list() as $tz_name ) : ?>
-										<option value="<?php echo esc_attr( $tz_name ); ?>" <?php selected( $styles['timezone'], $tz_name ); ?>><?php echo esc_html( $tz_name ); ?></option>
-									<?php endforeach; ?>
-								</select>
-								<p class="description">Konser saatleri, "bugün/yarın" etiketleri, günlük istatistikler ve Takvime Ekle bağlantıları bu saat dilimine göre hesaplanır. Daha önce kaydedilmiş konserler kendi saat farkını korur.</p>
-							</td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="stats_retention_days">Günlük istatistik saklama</label></th>
-							<td>
-								<select id="stats_retention_days" name="stats_retention_days">
-									<?php foreach ( array( 30, 90, 180 ) as $days_opt ) : ?>
-										<option value="<?php echo esc_attr( (string) $days_opt ); ?>" <?php selected( intval( $styles['stats_retention_days'] ), $days_opt ); ?>><?php echo esc_html( $days_opt . ' gün' ); ?></option>
-									<?php endforeach; ?>
-								</select>
-								<p class="description">Günlük kırılımlar bu süreden sonra silinir; toplam sayılar korunur. Kısa süre veritabanını küçük tutar.</p>
-							</td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="stats_buffer_seconds">Yazma tamponu</label></th>
-							<td>
-								<select id="stats_buffer_seconds" name="stats_buffer_seconds">
-									<?php
-									$buffer_labels = array(
-										0   => 'Kapalı (anında yaz)',
-										30  => '30 saniye',
-										60  => '60 saniye (önerilen)',
-										300 => '5 dakika',
-									);
-									foreach ( $buffer_labels as $buf_value => $buf_label ) :
-										?>
-										<option value="<?php echo esc_attr( (string) $buf_value ); ?>" <?php selected( intval( $styles['stats_buffer_seconds'] ), $buf_value ); ?>><?php echo esc_html( $buf_label ); ?></option>
-									<?php endforeach; ?>
-								</select>
-								<p class="description">Yoğun trafikte veritabanı yazma sayısını azaltır. İstatistikler bu süre kadar gecikmeli görünebilir; İstatistikler sekmesini açtığınızda bekleyenler hemen işlenir.</p>
-							</td>
-						</tr>
-						<tr>
-							<th scope="row">Düşük dönüşüm uyarısı</th>
-							<td>
-								<label style="display: block; margin-bottom: 6px;">
-									<input type="checkbox" name="alert_enabled" value="1" <?php checked( ! empty( $styles['alert_enabled'] ) ); ?>>
-									Haftalık rapor e-postasına, dönüşüm oranı düşük sayfalar için uyarı ekle.
-								</label>
-								Dönüşüm
-								<input type="number" name="alert_min_conversion" value="<?php echo esc_attr( (string) $styles['alert_min_conversion'] ); ?>" min="0" max="100" step="0.1" style="width: 80px;">
-								% altında ve en az
-								<input type="number" name="alert_min_visitors" value="<?php echo esc_attr( (string) $styles['alert_min_visitors'] ); ?>" min="1" step="1" style="width: 90px;">
-								tekil ziyaretçisi olan sayfalar.
-							</td>
-						</tr>
-					</table>
-				</div>
-
-				<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #d63638; border-radius: 4px; padding: 16px 20px; margin-bottom: 20px;">
-					<h2 style="margin-top: 0;">Kaldırma (Uninstall) Veritabanı Davranışı</h2>
-					<label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer;">
-						<input type="checkbox" name="delete_on_uninst" value="1" <?php checked( ! empty( $styles['delete_on_uninst'] ) ); ?> style="margin-top: 3px;">
-						<span>
-							<strong>Eklenti WordPress panelinden silindiğinde veritabanındaki tüm konser kayıtlarını, istatistikleri ve görünüm ayarlarını da sil.</strong><br>
-							<span class="description">Güvenlik amacıyla varsayılan olarak kapalıdır (işaretsizdir). İşaretsiz bırakıldığında eklentiyi silip yeniden yükleseniz bile konser arşiviniz ve istatistikleriniz korunur.</span>
-						</span>
-					</label>
-				</div>
-
-				<p>
-					<input type="submit" name="kt_save_styles" class="button button-primary" value="Ayarları Kaydet">
-					<input type="submit" name="kt_reset_styles" class="button button-secondary" value="Varsayılan Renk ve Boyutlara Sıfırla" style="margin-left: 10px;" onclick="return confirm('Tüm düğme biçimi ve renk ayarları varsayılana sıfırlanacak. Emin misiniz?');">
-				</p>
-			</form>
+			<?php require KT_PLUGIN_DIR . 'includes/admin/view-styles.php'; ?>
 
 		<?php endif; ?>
 	</div>

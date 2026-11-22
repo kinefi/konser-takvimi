@@ -1,4 +1,9 @@
 (function (wp) {
+	// Translation lookup: ktI18n maps Turkish source strings to the current locale (provided by PHP).
+	function __t(text) {
+		return (typeof ktI18n !== 'undefined' && ktI18n[text]) || text;
+	}
+
 	var registerBlockType = wp.blocks.registerBlockType;
 	var el = wp.element.createElement;
 	var Fragment = wp.element.Fragment;
@@ -12,8 +17,8 @@
 
 	// Block 1: Concert Calendar
 	registerBlockType('konser-takvimi/takvim', {
-		title: 'Konser Takvimi',
-		description: 'Aktif ve yaklaşan tüm konserleri Bugün/Yarın rozetleriyle renkli kart ızgarası halinde listeler.',
+		title: __t('Konser Takvimi'),
+		description: __t('Aktif ve yaklaşan tüm konserleri Bugün/Yarın rozetleriyle renkli kart ızgarası halinde listeler.'),
 		icon: 'calendar-alt',
 		category: 'widgets',
 		keywords: ['konser', 'takvim', 'etkinlik', 'şubadap'],
@@ -34,8 +39,8 @@
 
 	// Block 2: District concert check, Add to Calendar & redirect
 	registerBlockType('konser-takvimi/ilce-yonlendir', {
-		title: 'Konser İlçe Yönlendirici & Takvime Ekle',
-		description: 'İlçede aktif konser varsa Takvime Ekle düğmesini ve analitiği çalıştırır; yoksa ziyaretçiyi hedef sayfaya yönlendirir.',
+		title: __t('Konser İlçe Yönlendirici & Takvime Ekle'),
+		description: __t('İlçede aktif konser varsa Takvime Ekle düğmesini ve analitiği çalıştırır; yoksa ziyaretçiyi hedef sayfaya yönlendirir.'),
 		icon: 'randomize',
 		category: 'widgets',
 		keywords: ['ilçe', 'yönlendir', 'takvime ekle', 'konser', 'analitik'],
@@ -66,17 +71,17 @@
 					null,
 					el(
 						PanelBody,
-						{ title: 'İlçe Sayfası & Takvime Ekle Ayarları', initialOpen: true },
+						{ title: __t('İlçe Sayfası & Takvime Ekle Ayarları'), initialOpen: true },
 						el(TextControl, {
-							label: 'İlçe Slug (Boş bırakılırsa sayfa slug kullanılır)',
+							label: __t('İlçe Slug (Boş bırakılırsa sayfa slug kullanılır)'),
 							value: attributes.district,
-							placeholder: 'orn: kadikoy',
+							placeholder: __t('orn: kadikoy'),
 							onChange: function (val) {
 								setAttributes({ district: val });
 							}
 						}),
 						el(TextControl, {
-							label: 'Yönlendirme Hedefi (Boş bırakılırsa genel ayar kullanılır)',
+							label: __t('Yönlendirme Hedefi (Boş bırakılırsa genel ayar kullanılır)'),
 							value: attributes.redirect_target,
 							placeholder: '/konserler',
 							onChange: function (val) {
@@ -84,7 +89,7 @@
 							}
 						}),
 						el(ToggleControl, {
-							label: 'Takvime Ekle düğmesini göster (Google & .ics)',
+							label: __t('Takvime Ekle düğmesini göster (Google & .ics)'),
 							checked: attributes.show_calendar_button !== false,
 							onChange: function (checked) {
 								setAttributes({ show_calendar_button: checked });
@@ -109,8 +114,8 @@
 
 	// Block 3: Concert Ticket Button
 	registerBlockType('konser-takvimi/bilet-butonu', {
-		title: 'Konser Bilet Butonu',
-		description: 'CTR tıklama analitiği ile entegre bilet satın alma görsel butonu.',
+		title: __t('Konser Bilet Butonu'),
+		description: __t('CTR tıklama analitiği ile entegre bilet satın alma görsel butonu.'),
 		icon: 'tickets-alt',
 		category: 'widgets',
 		keywords: ['bilet', 'buton', 'konser', 'satın al'],
@@ -154,9 +159,9 @@
 					null,
 					el(
 						PanelBody,
-						{ title: 'Bilet Butonu Ayarları', initialOpen: true },
+						{ title: __t('Bilet Butonu Ayarları'), initialOpen: true },
 						el(TextControl, {
-							label: 'Bilet Satış URL (Boş bırakılırsa genel ayar kullanılır)',
+							label: __t('Bilet Satış URL (Boş bırakılırsa genel ayar kullanılır)'),
 							value: attributes.url,
 							placeholder: 'https://...',
 							onChange: function (val) {
@@ -164,7 +169,7 @@
 							}
 						}),
 						el(TextControl, {
-							label: 'Buton Görsel URL (Boş bırakılırsa varsayılan görsel)',
+							label: __t('Buton Görsel URL (Boş bırakılırsa varsayılan görsel)'),
 							value: attributes.image,
 							placeholder: 'https://...',
 							onChange: function (val) {
@@ -172,34 +177,34 @@
 							}
 						}),
 						el(TextControl, {
-							label: 'İlçe Analitik Anahtarı (Boş bırakılırsa sayfa slug)',
+							label: __t('İlçe Analitik Anahtarı (Boş bırakılırsa sayfa slug)'),
 							value: attributes.district,
-							placeholder: 'orn: bornova',
+							placeholder: __t('orn: bornova'),
 							onChange: function (val) {
 								setAttributes({ district: val });
 							}
 						}),
 						el(TextControl, {
-							label: 'Görsel Alt Metni',
+							label: __t('Görsel Alt Metni'),
 							value: attributes.alt,
 							onChange: function (val) {
 								setAttributes({ alt: val });
 							}
 						}),
 						el(SelectControl, {
-							label: 'Seans (isteğe bağlı: hangi seansın butonu?)',
+							label: __t('Seans (isteğe bağlı: hangi seansın butonu?)'),
 							value: attributes.session,
 							options: [
-								{ label: 'Belirtilmedi', value: '' },
-								{ label: '1. Seans', value: '1' },
-								{ label: '2. Seans', value: '2' }
+								{ label: __t('Belirtilmedi'), value: '' },
+								{ label: __t('1. Seans'), value: '1' },
+								{ label: __t('2. Seans'), value: '2' }
 							],
 							onChange: function (val) {
 								setAttributes({ session: val });
 							}
 						}),
 						el(ToggleControl, {
-							label: 'Bağlantıyı yeni sekmede aç (_blank)',
+							label: __t('Bağlantıyı yeni sekmede aç (_blank)'),
 							checked: openInNewTab,
 							onChange: function (checked) {
 								setAttributes({ link_target: checked ? '_blank' : '' });

@@ -164,3 +164,11 @@ konser-takvimi/
 ## Lisans
 
 Bu proje [GNU General Public License v3.0](LICENSE) altında lisanslanmıştır.
+
+## Çeviriler
+Tüm metinler çevrilebilir (text domain `konser-takvimi`, kaynak dil Türkçe). Dil, **Ayarlar → Genel → Site Dili**'nden otomatik alınır (yöneticiler profillerinden değiştirebilir). İngilizce katalog dahildir ve kendi kataloğu olmayan tüm diller için kullanılır; Türkçe sitelerde özgün metinler görünür.
+
+Yeni dil eklemek için `languages/konser-takvimi.pot` dosyasını `languages/konser-takvimi-<yerel>.po` olarak kopyalayın (örn. `de_DE`), çevirin (Poedit kullanılabilir) ve `.mo` dosyasını derleyin: `python3 tools/build-catalog.py --mo-only languages/konser-takvimi-de_DE.po`. Metin ekleyip değiştirdikten sonra şablonu `php tools/extract-strings.php` ile yenileyin.
+
+## Kod yapısı
+`konser-takvimi.php` yalnızca eklentiyi başlatır. Özellikler `includes/` altındadır: `events-time.php` (saat dilimi ve konser saatleri), `settings.php`, `utm.php`, `stats-recording.php` (tamponlu, kilitli yazma ve takip uç noktası), `reports.php`, `cron.php`, `assets.php`, `schema.php`, `redirect.php`, `calendar.php`, `shortcodes.php`, `blocks.php`, `i18n.php`; yönetim arayüzü `admin-page.php`, `admin-tools.php` ve `includes/admin/` altındaki sekme dosyalarıdır.

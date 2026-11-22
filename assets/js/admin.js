@@ -1,3 +1,12 @@
+// Translation lookup: ktI18n maps Turkish source strings to the current locale (provided by PHP).
+function __t(text) {
+	return (typeof ktI18n !== 'undefined' && ktI18n[text]) || text;
+}
+
+function escAttr(text) {
+	return String(text).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
 document.addEventListener('DOMContentLoaded', function () {
 	var tableBody = document.querySelector('#kt-concerts-table tbody');
 	var addBtn = document.getElementById('add-concert-row');
@@ -31,11 +40,11 @@ document.addEventListener('DOMContentLoaded', function () {
 		if (Object.prototype.hasOwnProperty.call(existingSlugsMap, val)) {
 			slugInput.classList.add('is-valid-page');
 			statusSpan.classList.add('is-valid-page');
-			statusSpan.textContent = '✓ Mevcut: ' + existingSlugsMap[val];
+			statusSpan.textContent = __t('✓ Mevcut: ') + existingSlugsMap[val];
 		} else {
 			slugInput.classList.add('is-missing-page');
 			statusSpan.classList.add('is-missing-page');
-			statusSpan.textContent = '✕ Bu uzantıda sayfa/yazı bulunamadı';
+			statusSpan.textContent = __t('✕ Bu uzantıda sayfa/yazı bulunamadı');
 		}
 	}
 
@@ -107,12 +116,12 @@ document.addEventListener('DOMContentLoaded', function () {
 				'<td style="vertical-align: top;"><input type="date" name="concert_date[]" required style="width: 100%;"></td>' +
 				'<td style="vertical-align: top;"><input type="time" name="concert_time[]" value="15:00" required style="width: 100%;"></td>' +
 				'<td style="vertical-align: top;"><input type="time" name="concert_time2[]" value="" style="width: 100%;"></td>' +
-				'<td style="vertical-align: top;"><input type="text" name="concert_city[]" placeholder="Örn: Urla" required style="width: 100%;"></td>' +
+				'<td style="vertical-align: top;"><input type="text" name="concert_city[]" placeholder="' + escAttr(__t('Örn: Urla')) + '" required style="width: 100%;"></td>' +
 				'<td style="vertical-align: top;">' +
-					'<input type="text" class="kt-slug-input" name="concert_slug[]" list="kt-existing-posts-list" data-auto="1" placeholder="ilce-konseri veya ara..." autocomplete="off">' +
+					'<input type="text" class="kt-slug-input" name="concert_slug[]" list="kt-existing-posts-list" data-auto="1" placeholder="' + escAttr(__t('ilce-konseri veya ara...')) + '" autocomplete="off">' +
 					'<span class="kt-slug-status"></span>' +
 				'</td>' +
-				'<td style="vertical-align: top;"><button type="button" class="button remove-row" style="color: #b32d2e;">Sil</button></td>';
+				'<td style="vertical-align: top;"><button type="button" class="button remove-row" style="color: #b32d2e;">' + escAttr(__t('Sil')) + '</button></td>';
 			tableBody.appendChild(row);
 		});
 
@@ -147,14 +156,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
 			var info = document.createElement('span');
 			info.style.color = '#50575e';
-			info.textContent = 'Sayfa ' + currentPage + ' / ' + totalPages + ' (Toplam ' + archiveRows.length + ' arşiv kaydı)';
+			info.textContent = __t('Sayfa %1$d / %2$d (Toplam %3$d arşiv kaydı)').replace('%1$d', currentPage).replace('%2$d', totalPages).replace('%3$d', archiveRows.length);
 
 			var controls = document.createElement('div');
 
 			var prevBtn = document.createElement('button');
 			prevBtn.type = 'button';
 			prevBtn.className = 'button';
-			prevBtn.textContent = '« Önceki';
+			prevBtn.textContent = __t('« Önceki');
 			prevBtn.disabled = currentPage === 1;
 			prevBtn.style.marginRight = '6px';
 			prevBtn.addEventListener('click', function () {
@@ -164,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			var nextBtn = document.createElement('button');
 			nextBtn.type = 'button';
 			nextBtn.className = 'button';
-			nextBtn.textContent = 'Sonraki »';
+			nextBtn.textContent = __t('Sonraki »');
 			nextBtn.disabled = currentPage === totalPages;
 			nextBtn.addEventListener('click', function () {
 				if (currentPage < totalPages) renderArchivePage(currentPage + 1);
@@ -379,8 +388,8 @@ document.addEventListener('DOMContentLoaded', function () {
 				return;
 			}
 			mediaFrame = wp.media({
-				title: 'Varsayılan Bilet Düğmesi Görselini Seçin',
-				button: { text: 'Bu Görseli Kullan' },
+				title: __t('Varsayılan Bilet Düğmesi Görselini Seçin'),
+				button: { text: __t('Bu Görseli Kullan') },
 				multiple: false
 			});
 			mediaFrame.on('select', function () {
@@ -390,7 +399,7 @@ document.addEventListener('DOMContentLoaded', function () {
 				if (ticketImgPreview) {
 					var previewImg = document.createElement('img');
 					previewImg.src = chosenUrl;
-					previewImg.alt = 'Bilet Düğmesi Önizleme';
+					previewImg.alt = __t('Bilet Düğmesi Önizleme');
 					previewImg.style.cssText = 'max-width: 360px; height: auto; border: 1px solid #dcdcde; border-radius: 4px; padding: 4px; background: #f8fafc;';
 					ticketImgPreview.textContent = '';
 					ticketImgPreview.appendChild(previewImg);

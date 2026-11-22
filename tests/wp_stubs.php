@@ -62,3 +62,32 @@ function trailingslashit( $s ) { return rtrim( $s, '/' ) . '/'; }
 
 if ( ! defined( 'DAY_IN_SECONDS' ) ) { define( 'DAY_IN_SECONDS', 86400 ); }
 function wp_date( $f, $ts = null, $tz = null ) { $d = new DateTime( '@' . ( null === $ts ? time() : $ts ) ); if ( $tz ) { $d->setTimezone( $tz ); } return $d->format( $f ); }
+
+// ---- i18n stubs: a tiny .mo reader so tests exercise the shipped English catalogue ----
+require_once __DIR__ . '/mo_reader.php';
+$GLOBALS['__locale'] = 'tr_TR';
+function kt_test_translate( $text ) {
+	if ( 'en_US' !== $GLOBALS['__locale'] ) { return $text; }
+	if ( ! isset( $GLOBALS['__mo'] ) ) { $GLOBALS['__mo'] = kt_test_read_mo( dirname( __DIR__ ) . '/languages/konser-takvimi-en_US.mo' ); }
+	return isset( $GLOBALS['__mo'][ $text ] ) && '' !== $GLOBALS['__mo'][ $text ] ? $GLOBALS['__mo'][ $text ] : $text;
+}
+if ( ! function_exists( '__' ) ) {
+	function __( $t, $d = 'default' ) { return kt_test_translate( $t ); }
+	function _e( $t, $d = 'default' ) { echo kt_test_translate( $t ); }
+	function esc_html__( $t, $d = 'default' ) { return htmlspecialchars( kt_test_translate( $t ), ENT_QUOTES, 'UTF-8' ); }
+	function esc_html_e( $t, $d = 'default' ) { echo htmlspecialchars( kt_test_translate( $t ), ENT_QUOTES, 'UTF-8' ); }
+	function esc_attr__( $t, $d = 'default' ) { return htmlspecialchars( kt_test_translate( $t ), ENT_QUOTES, 'UTF-8' ); }
+	function _n( $s, $p, $n, $d = 'default' ) {
+		if ( 'en_US' === $GLOBALS['__locale'] ) {
+			if ( ! isset( $GLOBALS['__mo'] ) ) { kt_test_translate( $s ); }
+			$k = $s . "\0" . $p;
+			if ( isset( $GLOBALS['__mo'][ $k ] ) ) { $f = explode( "\0", $GLOBALS['__mo'][ $k ] ); return 1 === (int) $n ? $f[0] : $f[1]; }
+		}
+		return 1 === (int) $n ? $s : $p;
+	}
+}
+if ( ! function_exists( 'wp_kses' ) ) {
+	function wp_kses( $s, $allowed ) { $tags = ''; foreach ( array_keys( $allowed ) as $t ) { $tags .= '<' . $t . '>'; } return strip_tags( $s, $tags ); }
+}
+if ( ! function_exists( 'plugin_basename' ) ) { function plugin_basename( $f ) { return basename( dirname( $f ) ) . '/' . basename( $f ); } }
+if ( ! function_exists( 'load_plugin_textdomain' ) ) { function load_plugin_textdomain() { return true; } }

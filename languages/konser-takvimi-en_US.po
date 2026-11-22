@@ -1,0 +1,1356 @@
+# Konser Takvimi — English (United States) translation. Source language: Turkish.
+msgid ""
+msgstr ""
+"Project-Id-Version: Konser Takvimi\n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: includes/reports.php:27
+#, php-format
+msgid " (Son %d Gün)"
+msgstr " (Last %d days)"
+
+#: includes/reports.php:197
+#, php-format
+msgid " (ilk %d satır)"
+msgstr " (first %d rows)"
+
+#: includes/cron.php:78
+msgid " — Düşük dönüşüm uyarısı"
+msgstr " — Low conversion alert"
+
+#: includes/admin-tools.php:204
+#, php-format
+msgid "%1$d aydan eski %2$d arşiv kaydı silindi."
+msgstr "%2$d archived records older than %1$d months were deleted."
+
+#: includes/schema.php:84
+#, php-format
+msgid "%1$s %2$s konseri etkinlik ve bilet bilgileri."
+msgstr "%1$s %2$s concert event and ticket information."
+
+#: includes/calendar.php:37
+#, php-format
+msgid "%1$s %2$s konseri. Detaylar ve bilet: "
+msgstr "%1$s %2$s concert. Details and tickets: "
+
+#: includes/admin/view-styles.php:18
+#, php-format
+msgid "%1$s ve %2$s"
+msgstr "%1$s and %2$s"
+
+#: includes/cron.php:106
+#, php-format
+msgid "%1$s — %2$d tekil ziyaretçi, %3$d tıklayan, dönüşüm %%%4$s"
+msgstr "%1$s — %2$d unique visitors, %3$d clickers, conversion %%%4$s"
+
+#: includes/calendar.php:33 includes/schema.php:83
+#, php-format
+msgid "%1$s — %2$s Konseri"
+msgstr "%1$s — %2$s Concert"
+
+#: includes/calendar.php:69
+#, php-format
+msgid "%1$s — Saat %2$s"
+msgstr "%1$s — at %2$s"
+
+#: includes/calendar.php:102
+#, php-format
+msgid "%1$s — Saat %2$s (2. Seans)"
+msgstr "%1$s — at %2$s (2nd session)"
+
+#: includes/admin/view-styles.php:318
+#, php-format
+msgid "%d gün"
+msgid_plural "%d gün"
+msgstr[0] "%d day"
+msgstr[1] "%d days"
+
+#: includes/calendar.php:93 includes/calendar.php:103
+#, php-format
+msgid "%s (2. Seans)"
+msgstr "%s (2nd session)"
+
+#: includes/reports.php:128
+#, php-format
+msgid "%s — Konser Sayfası Performans Raporu"
+msgstr "%s — Concert Page Performance Report"
+
+#: includes/admin-tools.php:90
+msgid "(başlıksız)"
+msgstr "(untitled)"
+
+#: includes/admin/view-styles.php:219
+msgid "(ilçe anahtarı)"
+msgstr "(district key)"
+
+#: includes/admin/view-concerts.php:64
+msgid "+ Yeni Konser Ekle"
+msgstr "+ Add new concert"
+
+#: includes/admin/view-styles.php:45
+msgid "0 px keskin dikdörtgen, 20 px yumuşak köşe, 45 px hap (pill) görünümü verir."
+msgstr "0 px gives sharp corners, 20 px soft corners and 45 px a pill shape."
+
+#: includes/admin-page.php:253 includes/admin/view-concerts.php:33 includes/admin/view-concerts.php:103
+msgid "1. Seans"
+msgstr "1st session"
+
+#: includes/admin/view-styles.php:93
+msgid "12'li Düğme Renk Paleti Döngüsü"
+msgstr "12-colour button palette cycle"
+
+#: includes/admin-page.php:253 includes/admin/view-concerts.php:104 includes/i18n.php:124
+msgid "2. Seans"
+msgstr "2nd session"
+
+#: includes/admin/view-concerts.php:34
+msgid "2. Seans (Ops.)"
+msgstr "2nd session (opt.)"
+
+#: includes/admin/view-styles.php:25
+msgid "24 Ekim"
+msgstr "Oct 24"
+
+#: includes/admin/view-styles.php:331
+msgid "30 saniye"
+msgstr "30 seconds"
+
+#: includes/admin/view-styles.php:333
+msgid "5 dakika"
+msgstr "5 minutes"
+
+#: includes/admin/view-styles.php:332
+msgid "60 saniye (önerilen)"
+msgstr "60 seconds (recommended)"
+
+#: includes/admin/view-styles.php:124
+msgid "<strong>Önemli Not:</strong> <strong>Konser İlçe Yönlendirici</strong> bloğu (veya eski <code>[konser_ilce_yonlendir]</code> kısa kodu) parametresiz kullanıldığında kontrolü <strong>sayfanın URL uzantısına (slug)</strong> göre yapar ve aktif konser varsa otomatik olarak <strong>Takvime Ekle</strong> düğmesini gösterir. URL'de ilçe adı geçmiyorsa blok ayarlarından <strong>İlçe Slug</strong> alanını doldurabilirsiniz."
+msgstr "<strong>Important:</strong> when the <strong>Concert District Redirector</strong> block (or the legacy <code>[konser_ilce_yonlendir]</code> shortcode) is used without parameters, it checks the <strong>page URL slug</strong> and automatically shows the <strong>Add to Calendar</strong> button if there is an active concert. If the district name is not part of the URL, fill in the <strong>District Slug</strong> field in the block settings."
+
+#: includes/admin-page.php:238
+msgid "Aktif"
+msgstr "Active"
+
+#: includes/admin/view-concerts.php:74
+#, php-format
+msgid "Aktif (%1$d), Arşiv (%2$d) veya Tüm kayıtları indirin."
+msgstr "Download active (%1$d), archived (%2$d) or all records."
+
+#: includes/i18n.php:105
+msgid "Aktif ve yaklaşan tüm konserleri Bugün/Yarın rozetleriyle renkli kart ızgarası halinde listeler."
+msgstr "Lists all active and upcoming concerts as a colourful card grid with Today/Tomorrow badges."
+
+#: includes/admin/view-styles.php:249
+msgid "Alıcı E-Posta Adresi"
+msgstr "Recipient e-mail address"
+
+#: includes/admin/view-styles.php:17
+msgid "Ankara"
+msgstr "Ankara"
+
+#: includes/calendar.php:152
+msgid "Apple / Outlook Takvimi (.ics)"
+msgstr "Apple / Outlook Calendar (.ics)"
+
+#: includes/i18n.php:65
+msgid "Aralık"
+msgstr "December"
+
+#: includes/admin-page.php:370
+msgid "Araçlar & Tanılama"
+msgstr "Tools & Diagnostics"
+
+#: includes/admin-tools.php:306
+msgid "Arşiv Temizliği"
+msgstr "Archive cleanup"
+
+#: includes/admin-page.php:238 includes/admin/view-concerts.php:129
+msgid "Arşivlendi"
+msgstr "Archived"
+
+#: includes/admin/view-concerts.php:93
+#, php-format
+msgid "Arşivlenen Konserler (%d adet - Görmek için tıklayın)"
+msgstr "Archived concerts (%d - click to view)"
+
+#: includes/admin/view-styles.php:381
+msgid "Ayarları Kaydet"
+msgstr "Save settings"
+
+#: includes/admin/view-concerts.php:24
+msgid "Aynı gün iki seans varsa <strong>2. Seans</strong> alanını doldurun; düğmede <code>12.00 ve 14.00</code> olarak gösterilir. Tek seans için 2. seansı boş bırakabilirsiniz."
+msgstr "If there are two sessions on the same day, fill in the <strong>2nd session</strong> field; the button shows <code>12.00 and 14.00</code>. Leave the 2nd session empty for a single session."
+
+#: includes/admin-page.php:355
+msgid "Ayrıntılar"
+msgstr "Details"
+
+#: includes/i18n.php:61
+msgid "Ağustos"
+msgstr "August"
+
+#: includes/blocks.php:179 includes/i18n.php:91
+msgid "BUGÜN"
+msgstr "TODAY"
+
+#: includes/admin-tools.php:298
+msgid "Bağlantı"
+msgstr "Link"
+
+#: includes/admin/view-styles.php:200
+msgid "Bağlantıda zaten bir <code>utm_*</code> parametresi varsa değiştirilmez. Bilet bağlantıları şu biçimi alır: <code>?utm_source=<em>kaynak</em>&amp;utm_medium=<em>ortam</em>&amp;utm_campaign=<em>kampanya</em>&amp;utm_content=ticket-button</code>. Takvim bağlantıları için kaynak <code>google-calendar</code> veya <code>ics-file</code>, ortam <code>calendar</code> olur."
+msgstr "A link that already has a <code>utm_*</code> parameter is left unchanged. Ticket links take this form: <code>?utm_source=<em>source</em>&amp;utm_medium=<em>medium</em>&amp;utm_campaign=<em>campaign</em>&amp;utm_content=ticket-button</code>. For calendar links the source is <code>google-calendar</code> or <code>ics-file</code> and the medium is <code>calendar</code>."
+
+#: includes/admin-tools.php:292
+msgid "Bağlantıları oluştur"
+msgstr "Generate links"
+
+#: includes/i18n.php:125
+msgid "Bağlantıyı yeni sekmede aç (_blank)"
+msgstr "Open link in a new tab (_blank)"
+
+#: includes/admin-tools.php:209
+msgid "Bekleyen istatistik olayları işlendi."
+msgstr "Pending statistics events were processed."
+
+#: includes/admin-tools.php:245
+msgid "Bekleyen olayları şimdi işle"
+msgstr "Process pending events now"
+
+#: includes/i18n.php:122
+msgid "Belirtilmedi"
+msgstr "Not specified"
+
+#: includes/i18n.php:115
+msgid "Bilet Butonu Ayarları"
+msgstr "Ticket button settings"
+
+#: includes/admin/view-styles.php:146 includes/i18n.php:103
+msgid "Bilet Düğmesi Önizleme"
+msgstr "Ticket button preview"
+
+#: includes/i18n.php:116
+msgid "Bilet Satış URL (Boş bırakılırsa genel ayar kullanılır)"
+msgstr "Ticket sales URL (leave empty to use the global setting)"
+
+#: includes/reports.php:165
+msgid "Bilet Tık"
+msgstr "Ticket clicks"
+
+#: includes/admin-page.php:96 includes/admin-page.php:136 includes/admin/view-stats.php:189
+msgid "Bilet Tıklaması"
+msgstr "Ticket clicks"
+
+#: includes/admin/view-stats.php:163 includes/reports.php:144
+msgid "Bilet Tıklaması (CTR)"
+msgstr "Ticket clicks (CTR)"
+
+#: includes/admin/view-stats.php:169
+msgid "Bilet Tıklayan Kişi / Tekil Ziyaretçi"
+msgstr "Ticket clickers / unique visitors"
+
+#: includes/admin/view-styles.php:194
+msgid "Bilet düğmesine ve otomatik takip edilen bilet alan adlarına giden bağlantılara UTM parametreleri ekle."
+msgstr "Add UTM parameters to the ticket button and to links pointing to the automatically tracked ticket domains."
+
+#: includes/admin/view-styles.php:38
+msgid "Boyut, Köşe Yuvarlaklığı ve Izgara Ayarları"
+msgstr "Size, corner radius and grid settings"
+
+#: includes/admin-tools.php:239
+msgid "Boş"
+msgstr "Free"
+
+#: includes/admin/view-styles.php:252
+#, php-format
+msgid "Boş bırakılırsa WordPress genel yönetici e-posta adresine (%s) gönderilir."
+msgstr "If empty, it is sent to the WordPress administration e-mail address (%s)."
+
+#: includes/admin/view-styles.php:220
+msgid "Boş bırakılırsa her bağlantı için ilgili ilçe anahtarı (örn. <code>urla</code>) kullanılır. Tüm turneyi tek kampanya altında toplamak için sabit bir değer girin (örn. <code>sonbahar-turnesi-2026</code>)."
+msgstr "If empty, the relevant district key (e.g. <code>urla</code>) is used for every link. Enter a fixed value (e.g. <code>autumn-tour-2026</code>) to group the whole tour under one campaign."
+
+#: includes/admin/view-styles.php:207
+msgid "Boş bırakılırsa site alan adı kullanılır. Yalnızca küçük harf, rakam, <code>.</code>, <code>_</code> ve <code>-</code> kabul edilir."
+msgstr "If empty, the site domain is used. Only lowercase letters, digits, <code>.</code>, <code>_</code> and <code>-</code> are accepted."
+
+#: includes/admin/view-styles.php:180
+#, php-format
+msgid "Boş bırakılırsa site başlığı (%s) kullanılır."
+msgstr "If empty, the site title (%s) is used."
+
+#: includes/i18n.php:102
+msgid "Bu Görseli Kullan"
+msgstr "Use this image"
+
+#: includes/reports.php:157
+msgid "Bu dönemde henüz kayıtlı ziyaret verisi oluşmamıştır."
+msgstr "No visit data has been recorded for this period yet."
+
+#: includes/redirect.php:157
+#, php-format
+msgid "Bu ilçe (%1$s) için yaklaşan konser bulunmadığından normal ziyaretçiler otomatik olarak %2$s adresine yönlendirilecektir (yönetici olduğunuz için yönlendirilmediniz)."
+msgstr "Because there is no upcoming concert for this district (%1$s), regular visitors will be redirected to %2$s automatically (you were not redirected because you are an administrator)."
+
+#: includes/redirect.php:155
+#, php-format
+msgid "Bu ilçe (%s) için yaklaşan konser aktif olduğundan ziyaretçiler bu sayfada kalacaktır (yönetici girişi yapıldığı için ziyaret ve tıklamalar sayaca eklenmez)."
+msgstr "Because an upcoming concert is active for this district (%s), visitors will stay on this page (visits and clicks are not counted while you are logged in as an administrator)."
+
+#: includes/admin/view-stats.php:326
+msgid "Bu ilçeye ait istatistik kaydını silmek istediğinize emin misiniz?"
+msgstr "Are you sure you want to delete the statistics record of this district?"
+
+#: includes/admin/view-stats.php:270
+msgid "Bugün (Tekil)"
+msgstr "Today (unique)"
+
+#: includes/admin/view-stats.php:153
+msgid "Bugünkü Tekil Ziyaretçi"
+msgstr "Unique visitors today"
+
+#: includes/admin-tools.php:263
+msgid "Bulgular"
+msgstr "Findings"
+
+#: includes/admin/view-styles.php:133
+msgid "Buraya bir varsayılan bilet bağlantısı girerseniz sayfalarda ekstra URL girmeden doğrudan <strong>Konser Bilet Butonu</strong> bloğunu ekleyebilirsiniz."
+msgstr "If you enter a default ticket link here, you can add the <strong>Concert Ticket Button</strong> block to pages without entering an extra URL."
+
+#: includes/admin/view-styles.php:17
+msgid "Bursa"
+msgstr "Bursa"
+
+#: includes/i18n.php:117
+msgid "Buton Görsel URL (Boş bırakılırsa varsayılan görsel)"
+msgstr "Button image URL (leave empty for the default image)"
+
+#: includes/admin/view-stats.php:360 includes/reports.php:166
+msgid "CTR"
+msgstr "CTR"
+
+#: includes/admin/view-stats.php:235
+msgid "CTR % (Tıklama / Gösterim)"
+msgstr "CTR % (clicks / views)"
+
+#: includes/i18n.php:114
+msgid "CTR tıklama analitiği ile entegre bilet satın alma görsel butonu."
+msgstr "Image button for buying tickets, integrated with CTR click analytics."
+
+#: includes/admin/view-styles.php:14
+msgid "Canlı Düğme Önizlemesi"
+msgstr "Live button preview"
+
+#: includes/admin/view-styles.php:264 includes/i18n.php:79
+msgid "Cuma"
+msgstr "Friday"
+
+#: includes/admin/view-styles.php:26 includes/admin/view-styles.php:265 includes/i18n.php:80
+msgid "Cumartesi"
+msgstr "Saturday"
+
+#: includes/reports.php:223
+msgid "Detaylı günlük grafikler için WordPress yönetim panelindeki"
+msgstr "For detailed daily charts, visit"
+
+#: includes/admin/view-concerts.php:65
+msgid "Değişiklikleri Kaydet"
+msgstr "Save changes"
+
+#: includes/admin-tools.php:112
+msgid "Doğrudan (etiketsiz)"
+msgstr "Direct (untagged)"
+
+#: includes/admin-page.php:253 includes/admin/view-concerts.php:107
+msgid "Durum"
+msgstr "Status"
+
+#: includes/admin/view-stats.php:210
+msgid "Dönem ve biçim seçerek yazdırılabilir görsel rapor (HTML/PDF) veya Excel tablosu (CSV) indirin."
+msgstr "Choose a period and format to download a printable visual report (HTML/PDF) or an Excel table (CSV)."
+
+#: includes/reports.php:129
+#, php-format
+msgid "Dönem: %1$s • Oluşturulma: %2$s"
+msgstr "Period: %1$s • Generated: %2$s"
+
+#: includes/admin-page.php:83
+#, php-format
+msgid "Dönem: %s"
+msgstr "Period: %s"
+
+#: includes/admin/view-stats.php:276 includes/admin/view-stats.php:362 includes/reports.php:168
+msgid "Dönüşüm"
+msgstr "Conversion"
+
+#: includes/admin/view-stats.php:236
+msgid "Dönüşüm % (Tıklayan Kişi / Ziyaretçi)"
+msgstr "Conversion % (clickers / visitors)"
+
+#: includes/admin-page.php:136
+msgid "Dönüşüm (%)"
+msgstr "Conversion (%)"
+
+#: includes/cron.php:104
+#, php-format
+msgid "Dönüşüm oranı %%%1$s altında kalan sayfalar (en az %2$d tekil ziyaretçi):"
+msgstr "Pages with a conversion rate below %%%1$s (at least %2$d unique visitors):"
+
+#: includes/admin/view-styles.php:357
+#, php-format
+msgid "Dönüşüm oranı %1$s %% altında ve en az %2$s tekil ziyaretçisi olan sayfalar için uyar."
+msgstr "Warn for pages with a conversion rate below %1$s %% and at least %2$s unique visitors."
+
+#: includes/admin-page.php:99
+msgid "Dönüşüm: Tıklayan Kişi / Tekil Ziyaretçi (%)"
+msgstr "Conversion: unique clickers / unique visitors (%)"
+
+#: includes/admin-page.php:367
+msgid "Düğme Biçimleri, Renkler & Ayarlar"
+msgstr "Button styles, colours & settings"
+
+#: includes/admin/view-styles.php:49
+msgid "Düğme Yüksekliği"
+msgstr "Button height"
+
+#: includes/admin/actions-styles.php:128
+msgid "Düğme biçimleri ve ayarlar kaydedildi."
+msgstr "Button styles and settings were saved."
+
+#: includes/admin/actions-styles.php:14
+msgid "Düğme biçimleri, yönlendirme hedefi, bilet düğmesi ve renk paletleri varsayılan ayarlara döndürüldü."
+msgstr "Button styles, redirect target, ticket button and colour palettes were reset to defaults."
+
+#: includes/admin/view-styles.php:63
+msgid "Düğmeler Arası Boşluk (Gap)"
+msgstr "Gap between buttons"
+
+#: includes/admin/view-styles.php:344
+msgid "Düşük dönüşüm uyarısı"
+msgstr "Low conversion alert"
+
+#: includes/admin-tools.php:108
+msgid "E-posta bülteni"
+msgstr "E-mail newsletter"
+
+#: includes/admin/actions-stats.php:34
+msgid "E-posta gönderilemedi. Lütfen sunucunuzun WordPress e-posta (SMTP) ayarlarını kontrol edin."
+msgstr "The e-mail could not be sent. Please check your server's WordPress e-mail (SMTP) settings."
+
+#: includes/i18n.php:63
+msgid "Ekim"
+msgstr "October"
+
+#: includes/admin/view-styles.php:374
+msgid "Eklenti WordPress panelinden silindiğinde veritabanındaki tüm konser kayıtlarını, istatistikleri ve görünüm ayarlarını da sil."
+msgstr "When the plugin is deleted from the WordPress dashboard, also delete all concert records, statistics and appearance settings from the database."
+
+#: includes/admin-tools.php:258
+msgid "Eski Kısa Kod / Öznitelik Kullanan Sayfalar"
+msgstr "Pages using legacy shortcodes / attributes"
+
+#: includes/admin/view-styles.php:173
+msgid "Etkinlik tarihi, saati, ilçe konumu, açıklama ve bilet bağlantısı Google arama sonuçlarında zengin etkinlik kartı olarak dizine eklenir."
+msgstr "The event date, time, district location, description and ticket link are indexed as a rich event card in Google search results."
+
+#: includes/admin/view-concerts.php:85
+msgid "Excel / CSV (.csv)"
+msgstr "Excel / CSV (.csv)"
+
+#: includes/admin/view-stats.php:222
+msgid "Excel Tablosu (.csv)"
+msgstr "Excel table (.csv)"
+
+#: includes/i18n.php:62
+msgid "Eylül"
+msgstr "September"
+
+#: includes/admin-tools.php:110
+msgid "Facebook (organik)"
+msgstr "Facebook (organic)"
+
+#: includes/admin/view-concerts.php:83
+msgid "Format"
+msgstr "Format"
+
+#: includes/admin/view-styles.php:224
+msgid "Gelen Bağlantılar"
+msgstr "Incoming links"
+
+#: includes/admin/view-stats.php:346
+msgid "Gelen UTM kaydı Ayarlar sekmesinde kapalı; yeni veri toplanmıyor."
+msgstr "Incoming UTM capture is turned off in the Settings tab; no new data is being collected."
+
+#: includes/admin-page.php:102
+msgid "Genel Toplam Tıklama"
+msgstr "Overall total clicks"
+
+#: includes/admin-page.php:101
+msgid "Genel Toplam Ziyaretçi"
+msgstr "Overall total visitors"
+
+#: includes/reports.php:171
+msgid "Genel Tık"
+msgstr "Total clicks"
+
+#: includes/admin/view-styles.php:190
+msgid "Giden Bağlantılar"
+msgstr "Outgoing links"
+
+#: includes/admin/view-styles.php:281
+msgid "Gizlilik, Yazı Tipi, Saat Dilimi & Veri"
+msgstr "Privacy, font, timezone & data"
+
+#: includes/admin/view-styles.php:164
+msgid "Google Arama Zengin Sonuçları — Schema (JSON-LD MusicEvent)"
+msgstr "Google rich search results — Schema (JSON-LD MusicEvent)"
+
+#: includes/admin/view-styles.php:299
+msgid "Google Fonts kapalıyken ziyaretçilerin tarayıcısı Google'a bağlanmaz. İstatistikler çerez kullanmaz; yalnızca tarayıcının <code>localStorage</code> alanına günlük bir \"ziyaret edildi\" işareti yazar. Sitenizin onay (KVKK/GDPR) politikasına uygunluğunu ayrıca değerlendirin."
+msgstr "When Google Fonts is off, visitors' browsers do not connect to Google. Statistics do not use cookies; they only write a daily \"visited\" marker to the browser's <code>localStorage</code>. Please assess separately whether this fits your site's consent (GDPR) policy."
+
+#: includes/calendar.php:140
+msgid "Google Takvim'e Ekle"
+msgstr "Add to Google Calendar"
+
+#: includes/admin-page.php:350
+msgid "Gutenberg editöründe <strong>Konser Takvimi</strong>, <strong>Konser İlçe Yönlendirici &amp; Takvime Ekle</strong> ve <strong>Konser Bilet Butonu</strong> bloklarını kullanabilirsiniz. <em>(Eski <code>[konser_takvimi]</code>, <code>[konser_ilce_yonlendir]</code> ve <code>[konser_bilet_butonu]</code> kısa kodları geriye dönük uyumluluk için çalışmaya devam eder.)</em>"
+msgstr "In the Gutenberg editor you can use the <strong>Concert Calendar</strong>, <strong>Concert District Redirector &amp; Add to Calendar</strong> and <strong>Concert Ticket Button</strong> blocks. <em>(The older <code>[konser_takvimi]</code>, <code>[konser_ilce_yonlendir]</code> and <code>[konser_bilet_butonu]</code> shortcodes keep working for backward compatibility.)</em>"
+
+#: includes/admin/view-styles.php:256
+msgid "Gönderim Günü (Saat 09:00)"
+msgstr "Delivery day (at 09:00)"
+
+#: includes/i18n.php:120
+msgid "Görsel Alt Metni"
+msgstr "Image alt text"
+
+#: includes/admin/view-stats.php:221
+msgid "Görsel Rapor (HTML / Yazdır & PDF)"
+msgstr "Visual report (HTML / Print & PDF)"
+
+#: includes/admin/view-stats.php:272 includes/admin/view-stats.php:358 includes/reports.php:164
+msgid "Gösterim"
+msgstr "Views"
+
+#: includes/admin/view-stats.php:188
+msgid "Günlük Ziyaretçi"
+msgstr "Daily visitors"
+
+#: includes/admin/view-styles.php:314
+msgid "Günlük istatistik saklama"
+msgstr "Daily statistics retention"
+
+#: includes/admin/view-styles.php:321
+msgid "Günlük kırılımlar bu süreden sonra silinir; toplam sayılar korunur. Kısa süre veritabanını küçük tutar."
+msgstr "Daily breakdowns are deleted after this period; totals are kept. A shorter period keeps the database small."
+
+#: includes/admin/view-stats.php:184
+msgid "Günlük tekil ziyaretçi ve bilet düğmesi tıklama eğilimi (seçili saat dilimi)."
+msgstr "Daily trend of unique visitors and ticket button clicks (selected timezone)."
+
+#: includes/admin/view-styles.php:375
+msgid "Güvenlik amacıyla varsayılan olarak kapalıdır (işaretsizdir). İşaretsiz bırakıldığında eklentiyi silip yeniden yükleseniz bile konser arşiviniz ve istatistikleriniz korunur."
+msgstr "For safety this is off by default (unchecked). When unchecked, your concert archive and statistics are kept even if you delete and reinstall the plugin."
+
+#: includes/cron.php:17
+msgid "Haftada Bir (Konser Takvimi Raporu)"
+msgstr "Once a week (Concert Calendar report)"
+
+#: includes/admin/view-styles.php:348
+msgid "Haftalık rapor e-postasına, dönüşüm oranı düşük sayfalar için uyarı ekle."
+msgstr "Add a warning for pages with a low conversion rate to the weekly report e-mail."
+
+#: includes/admin/view-styles.php:237
+msgid "Haftalık İstatistik E-Posta Raporu"
+msgstr "Weekly statistics e-mail report"
+
+#: includes/i18n.php:59
+msgid "Haziran"
+msgstr "June"
+
+#: includes/admin/view-stats.php:368
+msgid "Henüz UTM parametreli ziyaret kaydedilmedi. Örnek:"
+msgstr "No UTM-tagged visits have been recorded yet. Example:"
+
+#: includes/admin/view-concerts.php:113
+msgid "Henüz arşivlenmiş konser bulunmuyor."
+msgstr "There are no archived concerts yet."
+
+#: includes/admin/view-stats.php:284
+msgid "Henüz kaydedilmiş ziyaret veya bilet tıklama verisi bulunmuyor."
+msgstr "There is no recorded visit or ticket click data yet."
+
+#: includes/admin-tools.php:238
+msgid "Henüz kayıt yok"
+msgstr "No records yet"
+
+#: includes/admin/view-styles.php:230
+#, php-format
+msgid "Her ilçe için en fazla %d farklı kaynak/ortam/kampanya kombinasyonu saklanır; fazlası \"(other)\" altında toplanır."
+msgstr "At most %d different source/medium/campaign combinations are stored per district; any beyond that are grouped under \"(other)\"."
+
+#: includes/admin-page.php:253
+msgid "ISO Tarih"
+msgstr "ISO date"
+
+#: includes/admin-tools.php:109
+msgid "Instagram (organik)"
+msgstr "Instagram (organic)"
+
+#: includes/admin/view-concerts.php:84
+msgid "JSON (.json)"
+msgstr "JSON (.json)"
+
+#: includes/admin/view-styles.php:171
+msgid "JSON-LD yapılandırılmış verisi ekle."
+msgstr "JSON-LD structured data added automatically."
+
+#: includes/admin/view-styles.php:370
+msgid "Kaldırma (Uninstall) Veritabanı Davranışı"
+msgstr "Uninstall database behaviour"
+
+#: includes/admin-page.php:136 includes/admin/view-stats.php:355
+msgid "Kampanya"
+msgstr "Campaign"
+
+#: includes/admin/view-styles.php:217
+msgid "Kampanya (utm_campaign)"
+msgstr "Campaign (utm_campaign)"
+
+#: includes/admin-tools.php:298
+msgid "Kanal"
+msgstr "Channel"
+
+#: includes/admin/view-styles.php:330
+msgid "Kapalı (anında yaz)"
+msgstr "Off (write immediately)"
+
+#: includes/admin/view-concerts.php:78
+msgid "Kapsam"
+msgstr "Scope"
+
+#: includes/i18n.php:64
+msgid "Kasım"
+msgstr "November"
+
+#: includes/admin-page.php:136 includes/admin/view-stats.php:353
+msgid "Kaynak"
+msgstr "Source"
+
+#: includes/admin/view-styles.php:204
+msgid "Kaynak (utm_source)"
+msgstr "Source (utm_source)"
+
+#: includes/reports.php:201
+msgid "Kaynak / Ortam / Kampanya"
+msgstr "Source / Medium / Campaign"
+
+#: includes/admin-tools.php:236
+msgid "Kayıtlı ilçe sayısı"
+msgstr "Stored districts"
+
+#: includes/i18n.php:113
+msgid "Konser Bilet Butonu"
+msgstr "Concert Ticket Button"
+
+#: includes/admin-page.php:361
+msgid "Konser Listesi & Arşiv"
+msgstr "Concert list & archive"
+
+#: includes/admin-page.php:348 includes/i18n.php:104
+msgid "Konser Takvimi"
+msgstr "Concert Calendar"
+
+#: includes/reports.php:223
+msgid "Konser Takvimi &rarr; İstatistikler &amp; Grafik"
+msgstr "Concert Calendar &rarr; Statistics &amp; Charts"
+
+#: includes/admin/view-styles.php:171
+msgid "Konser Takvimi veya İlçe Yönlendirici blok/kısa kodlarının bulunduğu sayfalara otomatik Google"
+msgstr "Pages containing the Concert Calendar or District Redirector blocks/shortcodes automatically get Google"
+
+#: includes/admin/actions-concerts.php:65
+msgid "Konser listesi veritabanına kaydedildi."
+msgstr "The concert list was saved to the database."
+
+#: includes/admin/view-styles.php:94
+msgid "Konser rozetleri sırasıyla bu 12 renk çiftini kullanır. Sol taraftaki koyu rengi seçtiğinizde sağ taraf için otomatik uyumlu pastel ton önerilir; dilerseniz sağ rengi de bağımsız seçebilirsiniz."
+msgstr "Concert badges use these 12 colour pairs in order. When you pick the dark colour on the left, a matching pastel tone is suggested automatically for the right side; you can also choose the right colour independently."
+
+#: includes/admin/view-styles.php:310
+msgid "Konser saatleri, \"bugün/yarın\" etiketleri, günlük istatistikler ve Takvime Ekle bağlantıları bu saat dilimine göre hesaplanır. Daha önce kaydedilmiş konserler kendi saat farkını korur."
+msgstr "Concert times, \"today/tomorrow\" labels, daily statistics and Add to Calendar links are calculated in this timezone. Concerts saved earlier keep their own UTC offset."
+
+#: includes/i18n.php:106
+msgid "Konser İlçe Yönlendirici & Takvime Ekle"
+msgstr "Concert District Redirector & Add to Calendar"
+
+#: includes/admin/view-styles.php:41
+msgid "Köşe Yuvarlaklığı (Border Radius)"
+msgstr "Corner radius (border radius)"
+
+#: includes/admin/view-concerts.php:36
+msgid "Link Uzantısı (Otomatik: ilce-konseri / Mevcut Yazı-Sayfa)"
+msgstr "Link slug (automatic: district-concert / existing post-page)"
+
+#: includes/admin/view-concerts.php:106
+msgid "Link Uzantısı (Slug)"
+msgstr "Link slug"
+
+#: includes/i18n.php:56
+msgid "Mart"
+msgstr "March"
+
+#: includes/i18n.php:58
+msgid "Mayıs"
+msgstr "May"
+
+#: includes/admin-tools.php:106
+msgid "Meta Reklam"
+msgstr "Meta ads"
+
+#: includes/admin/view-styles.php:56
+msgid "Minimum Düğme Genişliği"
+msgstr "Minimum button width"
+
+#: includes/admin/view-styles.php:171
+msgid "MusicEvent"
+msgstr "MusicEvent"
+
+#: includes/i18n.php:57
+msgid "Nisan"
+msgstr "April"
+
+#: includes/i18n.php:54
+msgid "Ocak"
+msgstr "January"
+
+#: includes/admin-page.php:84
+#, php-format
+msgid "Oluşturulma: %s"
+msgstr "Generated: %s"
+
+#: includes/admin/view-stats.php:239 includes/reports.php:149
+msgid "Ort. Kalma Süresi"
+msgstr "Avg. time on page"
+
+#: includes/admin-page.php:100
+msgid "Ort. Kalma Süresi (sn)"
+msgstr "Avg. time on page (s)"
+
+#: includes/admin/view-stats.php:175
+msgid "Ort. Sayfada Kalma Süresi"
+msgstr "Avg. time spent on page"
+
+#: includes/admin/view-stats.php:277 includes/reports.php:169
+msgid "Ort. Süre"
+msgstr "Avg. time"
+
+#: includes/admin-page.php:136 includes/admin/view-stats.php:354
+msgid "Ortam"
+msgstr "Medium"
+
+#: includes/admin/view-styles.php:211
+msgid "Ortam (utm_medium)"
+msgstr "Medium (utm_medium)"
+
+#: includes/admin/view-styles.php:142
+msgid "Ortam Kütüphanesinden Seç"
+msgstr "Choose from media library"
+
+#: includes/admin/view-styles.php:240
+msgid "Otomatik Haftalık Rapor"
+msgstr "Automatic weekly report"
+
+#: includes/admin/view-styles.php:167
+msgid "Otomatik MusicEvent Şeması"
+msgstr "Automatic MusicEvent schema"
+
+#: includes/admin/view-styles.php:152
+msgid "Otomatik Takip Edilecek Bilet Alan Adları"
+msgstr "Ticket domains to track automatically"
+
+#: includes/admin/view-styles.php:266 includes/i18n.php:74
+msgid "Pazar"
+msgstr "Sunday"
+
+#: includes/admin/view-styles.php:260 includes/i18n.php:75
+msgid "Pazartesi"
+msgstr "Monday"
+
+#: includes/admin/view-styles.php:263 includes/i18n.php:78
+msgid "Perşembe"
+msgstr "Thursday"
+
+#: includes/admin/view-styles.php:288
+msgid "Quicksand (Google Fonts üzerinden yüklenir)"
+msgstr "Quicksand (loaded from Google Fonts)"
+
+#: includes/admin/view-stats.php:220
+msgid "Rapor Biçimi"
+msgstr "Report format"
+
+#: includes/admin/view-stats.php:214
+msgid "Rapor Dönemi"
+msgstr "Report period"
+
+#: includes/admin/view-stats.php:209
+msgid "Rapor İndir:"
+msgstr "Download report:"
+
+#: includes/admin/view-stats.php:224
+msgid "Raporu İndir"
+msgstr "Download report"
+
+#: includes/admin/view-styles.php:303
+msgid "Saat dilimi"
+msgstr "Timezone"
+
+#: includes/admin-tools.php:235
+msgid "Saat dilimi / şu an"
+msgstr "Timezone / now"
+
+#: includes/admin/view-concerts.php:80
+msgid "Sadece Aktif Konserler"
+msgstr "Active concerts only"
+
+#: includes/admin/view-concerts.php:81
+msgid "Sadece Arşivlenenler"
+msgstr "Archived only"
+
+#: includes/admin/view-styles.php:261 includes/i18n.php:76
+msgid "Salı"
+msgstr "Tuesday"
+
+#: includes/admin/view-styles.php:177
+msgid "Sanatçı / Grup Adı (Performer)"
+msgstr "Artist / band name (performer)"
+
+#: includes/admin-tools.php:263 includes/admin/view-concerts.php:14
+msgid "Sayfa"
+msgstr "Page"
+
+#: includes/i18n.php:98
+#, php-format
+msgid "Sayfa %1$d / %2$d (Toplam %3$d arşiv kaydı)"
+msgstr "Page %1$d / %2$d (%3$d archived records in total)"
+
+#: includes/admin-page.php:93 includes/admin/view-stats.php:269
+msgid "Sayfa Başlığı"
+msgstr "Page title"
+
+#: includes/admin-page.php:95 includes/admin-page.php:136 includes/admin/view-stats.php:238
+msgid "Sayfa Gösterimi"
+msgstr "Page views"
+
+#: includes/admin-tools.php:276
+msgid "Sayfa adresine kanal bazlı UTM ekler. Kampanya adı varsayılan olarak ilçe/slug olur. Bağlantıyı ilgili kanalda paylaşın; ziyaretler İstatistikler sekmesindeki \"Trafik Kaynakları\" tablosunda ayrışır."
+msgstr "Adds channel-specific UTM parameters to a page address. The campaign name defaults to the district/slug. Share each link on its channel; visits are separated in the \"Traffic sources\" table of the Statistics tab."
+
+#: includes/admin/view-styles.php:70
+msgid "Sayfada Gösterilecek Maksimum Konser"
+msgstr "Maximum concerts shown on the page"
+
+#: includes/admin/view-styles.php:228
+msgid "Sayfaya <code>utm_source</code>, <code>utm_medium</code> ve <code>utm_campaign</code> ile gelen ziyaretleri ve bilet tıklamalarını <strong>İstatistikler & Grafik</strong> sekmesinde kaynak bazında göster."
+msgstr "Show visits arriving with <code>utm_source</code>, <code>utm_medium</code> and <code>utm_campaign</code> and their ticket clicks per source in the <strong>Statistics & Charts</strong> tab."
+
+#: includes/i18n.php:121
+msgid "Seans (isteğe bağlı: hangi seansın butonu?)"
+msgstr "Session (optional: which session's button?)"
+
+#: includes/admin/actions-stats.php:20
+msgid "Seçilen ilçe istatistik kaydı silindi."
+msgstr "The statistics record of the selected district was deleted."
+
+#: includes/admin-tools.php:316
+msgid "Seçilen süreden eski arşivlenmiş konser kayıtları kalıcı olarak silinecek. Emin misiniz?"
+msgstr "Archived concert records older than the selected period will be permanently deleted. Are you sure?"
+
+#: includes/admin-tools.php:316 includes/admin/view-concerts.php:57 includes/admin/view-stats.php:326
+msgid "Sil"
+msgstr "Delete"
+
+#: includes/admin/view-styles.php:289
+msgid "Sistem yazı tipi (Google'a bağlanılmaz)"
+msgstr "System font (no connection to Google)"
+
+#: includes/admin-page.php:253
+msgid "Slug"
+msgstr "Slug"
+
+#: includes/admin/view-stats.php:216
+msgid "Son 14 Gün"
+msgstr "Last 14 days"
+
+#: includes/admin/view-stats.php:183
+msgid "Son 14 Günlük Ziyaretçi ve Bilet Tıklama Grafiği"
+msgstr "Visitors and ticket clicks, last 14 days"
+
+#: includes/admin/view-stats.php:217
+msgid "Son 30 Gün (Aylık)"
+msgstr "Last 30 days (monthly)"
+
+#: includes/admin/view-stats.php:215
+msgid "Son 7 Gün (Haftalık)"
+msgstr "Last 7 days (weekly)"
+
+#: includes/admin/view-styles.php:244
+msgid "Son 7 günün ilçe ziyaretçi, bilet tıklaması ve kalma süresi özetini her hafta e-posta ile gönder."
+msgstr "Send a weekly e-mail summary of district visitors, ticket clicks and time on page for the last 7 days."
+
+#: includes/admin-tools.php:238
+msgid "Son istatistik yazımı"
+msgstr "Last statistics write"
+
+#: includes/i18n.php:100
+msgid "Sonraki »"
+msgstr "Next »"
+
+#: includes/admin-tools.php:275
+msgid "Sosyal Medya & Kampanya Bağlantı Oluşturucu"
+msgstr "Social media & campaign link builder"
+
+#: includes/admin/view-stats.php:231
+msgid "Sıralama Ölçütü:"
+msgstr "Sort by:"
+
+#: includes/admin-tools.php:232
+msgid "Takip Tanılama"
+msgstr "Tracking diagnostics"
+
+#: includes/calendar.php:130
+msgid "Takvime Ekle"
+msgstr "Add to Calendar"
+
+#: includes/admin/view-styles.php:198
+msgid "Takvime Ekle (Google Takvim / .ics) etkinlik açıklamasındaki sayfa bağlantısına UTM parametreleri ekle."
+msgstr "Add UTM parameters to the page link in the Add to Calendar (Google Calendar / .ics) event description."
+
+#: includes/i18n.php:112
+msgid "Takvime Ekle düğmesini göster (Google & .ics)"
+msgstr "Show the Add to Calendar button (Google & .ics)"
+
+#: includes/admin-tools.php:260
+msgid "Taranan yazı ve sayfalarda kullanımdan kalkmış kısa kod veya eski öznitelik bulunmadı."
+msgstr "No deprecated shortcode or legacy attribute was found in the scanned posts and pages."
+
+#: includes/admin-page.php:253 includes/admin/view-concerts.php:32 includes/admin/view-concerts.php:102
+msgid "Tarih"
+msgstr "Date"
+
+#: includes/admin/view-styles.php:80
+msgid "Tarih Bölümü Yazı Rengi:"
+msgstr "Date section text colour:"
+
+#: includes/admin/view-styles.php:101
+msgid "Tarih:"
+msgstr "Date:"
+
+#: includes/admin/view-concerts.php:97
+msgid "Tarihi ve son seans saati geçen konserler otomatik olarak buraya taşınır, düzenlemeye kapatılır ve sitedeki takvim alanında gizlenir."
+msgstr "Concerts whose date and last session time have passed are moved here automatically, locked for editing and hidden from the calendar area of the site."
+
+#: includes/admin-page.php:94 includes/admin-page.php:136 includes/admin/view-stats.php:234
+msgid "Tekil Ziyaretçi"
+msgstr "Unique visitors"
+
+#: includes/admin/view-styles.php:290
+msgid "Temanın varsayılan yazı tipi"
+msgstr "The theme's default font"
+
+#: includes/i18n.php:60
+msgid "Temmuz"
+msgstr "July"
+
+#: includes/admin/view-stats.php:271
+msgid "Toplam Ziyaretçi"
+msgstr "Total visitors"
+
+#: includes/admin/view-stats.php:157
+msgid "Toplam Ziyaretçi / Gösterim"
+msgstr "Total visitors / views"
+
+#: includes/admin/view-stats.php:342 includes/reports.php:196
+msgid "Trafik Kaynakları (UTM)"
+msgstr "Traffic sources (UTM)"
+
+#: includes/admin/view-stats.php:218
+msgid "Tüm Zamanlar"
+msgstr "All time"
+
+#: includes/reports.php:29
+msgid "Tüm Zamanlar (Kümülatif)"
+msgstr "All time (cumulative)"
+
+#: includes/admin/view-styles.php:382
+msgid "Tüm düğme biçimi ve renk ayarları varsayılana sıfırlanacak. Emin misiniz?"
+msgstr "All button style and colour settings will be reset to defaults. Are you sure?"
+
+#: includes/admin/actions-stats.php:13
+msgid "Tüm ilçe ziyaret ve tıklama istatistikleri sıfırlandı."
+msgstr "All district visit and click statistics were reset."
+
+#: includes/admin/view-stats.php:225
+msgid "Tüm ilçe ziyaret ve tıklama verileri kalıcı olarak sıfırlanacak. Emin misiniz?"
+msgstr "All district visit and click data will be permanently reset. Are you sure?"
+
+#: includes/reports.php:197
+msgid "Tüm zamanlar; yalnızca UTM parametreli ziyaretler"
+msgstr "All time; only visits with UTM parameters"
+
+#: includes/admin/view-stats.php:108
+msgid "Tüm İlçeler (Genel Toplam)"
+msgstr "All districts (overall total)"
+
+#: includes/admin/view-stats.php:192
+msgid "Tüm İlçeler (Toplam)"
+msgstr "All districts (total)"
+
+#: includes/admin/view-stats.php:225
+msgid "Tüm İstatistikleri Sıfırla"
+msgstr "Reset all statistics"
+
+#: includes/admin/view-concerts.php:79
+msgid "Tümü (Aktif + Arşiv)"
+msgstr "All (active + archived)"
+
+#: includes/admin-page.php:97 includes/admin-page.php:136
+msgid "Tıklama Oranı - CTR (%)"
+msgstr "Click-through rate - CTR (%)"
+
+#: includes/reports.php:204
+msgid "Tıklayan"
+msgstr "Clickers"
+
+#: includes/admin/view-stats.php:275 includes/admin/view-stats.php:361 includes/reports.php:167
+msgid "Tıklayan Kişi"
+msgstr "Unique clickers"
+
+#: includes/admin-page.php:98 includes/admin-page.php:136
+msgid "Tıklayan Tekil Kişi"
+msgstr "Unique clickers"
+
+#: includes/reports.php:146
+msgid "Tıklayan kişi / ziyaretçi:"
+msgstr "Clickers / visitors:"
+
+#: includes/admin/view-styles.php:187
+msgid "UTM Parametreleri"
+msgstr "UTM parameters"
+
+#: includes/admin-page.php:133
+msgid "UTM Trafik Kaynakları (tüm zamanlar)"
+msgstr "UTM traffic sources (all time)"
+
+#: includes/admin-tools.php:214
+msgid "Uyarı temizlendi."
+msgstr "The warning was cleared."
+
+#: includes/admin-tools.php:250
+msgid "Uyarı:"
+msgstr "Warning:"
+
+#: includes/admin-tools.php:254
+msgid "Uyarıyı kapat"
+msgstr "Dismiss warning"
+
+#: includes/admin/view-styles.php:138
+msgid "Varsayılan Bilet Düğmesi Görseli"
+msgstr "Default ticket button image"
+
+#: includes/i18n.php:101
+msgid "Varsayılan Bilet Düğmesi Görselini Seçin"
+msgstr "Choose the default ticket button image"
+
+#: includes/admin/view-styles.php:129
+msgid "Varsayılan Bilet Satış URL'si"
+msgstr "Default ticket sales URL"
+
+#: includes/admin/view-styles.php:382
+msgid "Varsayılan Renk ve Boyutlara Sıfırla"
+msgstr "Reset to default colours and sizes"
+
+#: includes/admin/view-styles.php:117
+msgid "Varsayılan Yönlendirme Sayfası"
+msgstr "Default redirect page"
+
+#: includes/admin/view-styles.php:73
+msgid "Varsayılan: 16 konser"
+msgstr "Default: 16 concerts"
+
+#: includes/admin-tools.php:111
+msgid "X / Twitter (organik)"
+msgstr "X / Twitter (organic)"
+
+#: includes/blocks.php:181 includes/i18n.php:92
+msgid "YARIN"
+msgstr "TOMORROW"
+
+#: includes/admin/view-concerts.php:23
+msgid "Yaklaşan Konserler (Düzenlenebilir)"
+msgstr "Upcoming concerts (editable)"
+
+#: includes/i18n.php:89
+msgid "Yakın tarihte planlanmış konser bulunmamaktadır."
+msgstr "There are no concerts scheduled in the near future."
+
+#: includes/admin/view-stats.php:344
+msgid "Yalnızca adreste <code>utm_source</code>, <code>utm_medium</code> veya <code>utm_campaign</code> bulunan ziyaretler listelenir (tüm zamanlar). Bilet tıklaması, aynı sayfa görüntülemesi sırasında yapılan tıklamadır."
+msgstr "Only visits whose address contains <code>utm_source</code>, <code>utm_medium</code> or <code>utm_campaign</code> are listed (all time). A ticket click is a click made during the same page view."
+
+#: includes/admin-tools.php:317
+msgid "Yalnızca son seansı bitmiş ve seçilen süreden eski kayıtlar silinir. İstatistikler etkilenmez."
+msgstr "Only records whose last session has ended and that are older than the selected period are deleted. Statistics are not affected."
+
+#: includes/admin-page.php:188
+msgid "Yazdır / PDF Olarak Kaydet"
+msgstr "Print / save as PDF"
+
+#: includes/admin-tools.php:239
+msgid "Yazma kilidi"
+msgstr "Write lock"
+
+#: includes/admin/view-styles.php:325
+msgid "Yazma tamponu"
+msgstr "Write buffer"
+
+#: includes/admin/view-concerts.php:14
+msgid "Yazı"
+msgstr "Post"
+
+#: includes/admin/view-styles.php:77
+msgid "Yazı Renkleri"
+msgstr "Text colours"
+
+#: includes/admin/view-styles.php:284
+msgid "Yazı tipi"
+msgstr "Font"
+
+#: includes/admin/view-concerts.php:73
+msgid "Yedekle / Dışa Aktar (Export):"
+msgstr "Back up / export:"
+
+#: includes/admin-page.php:49 includes/admin-page.php:205
+msgid "Yetkisiz erişim."
+msgstr "Unauthorized access."
+
+#: includes/admin-tools.php:107
+msgid "YouTube Reklam"
+msgstr "YouTube ads"
+
+#: includes/admin/view-styles.php:340
+msgid "Yoğun trafikte veritabanı yazma sayısını azaltır. İstatistikler bu süre kadar gecikmeli görünebilir; İstatistikler sekmesini açtığınızda bekleyenler hemen işlenir."
+msgstr "Reduces the number of database writes under heavy traffic. Statistics may appear delayed by this amount of time; pending events are processed immediately when you open the Statistics tab."
+
+#: includes/admin-tools.php:242
+msgid "Yönetici (sayfa düzenleme yetkili) ziyaretleri sayılmaz. Bunu test etmek için siteyi çıkış yapmış bir tarayıcıda veya gizli sekmede açın."
+msgstr "Visits by administrators (users who can edit pages) are not counted. To test, open the site in a logged-out browser or a private window."
+
+#: includes/i18n.php:111
+msgid "Yönlendirme Hedefi (Boş bırakılırsa genel ayar kullanılır)"
+msgstr "Redirect target (leave empty to use the global setting)"
+
+#: includes/admin/view-stats.php:357 includes/reports.php:163 includes/reports.php:203
+msgid "Ziyaretçi"
+msgstr "Visitors"
+
+#: includes/cron.php:70
+#, php-format
+msgid "[%1$s] Haftalık Konser Sayfası İstatistik Raporu (%2$s)"
+msgstr "[%1$s] Weekly Concert Page Statistics Report (%2$s)"
+
+#: includes/admin-tools.php:39
+#, php-format
+msgid "[%s] kısa kodu kullanımdan kalktı"
+msgstr "the [%s] shortcode is deprecated"
+
+#: includes/admin-tools.php:57
+#, php-format
+msgid "eski öznitelik \"%1$s\" → \"%2$s\""
+msgstr "legacy attribute \"%1$s\" → \"%2$s\""
+
+#: includes/i18n.php:96
+msgid "ilce-konseri veya ara..."
+msgstr "district-concert or search..."
+
+#: includes/admin-tools.php:291
+msgid "kampanya (boşsa slug)"
+msgstr "campaign (slug if empty)"
+
+#: includes/i18n.php:119
+msgid "orn: bornova"
+msgstr "e.g. bornova"
+
+#: includes/i18n.php:110
+msgid "orn: kadikoy"
+msgstr "e.g. kadikoy"
+
+#: includes/reports.php:223
+msgid "sayfasını ziyaret edebilirsiniz."
+msgstr "in the WordPress admin."
+
+#: includes/blocks.php:174 includes/i18n.php:90
+msgid "ve"
+msgstr "and"
+
+#: includes/i18n.php:99
+msgid "« Önceki"
+msgstr "« Previous"
+
+#: includes/admin/view-styles.php:262 includes/i18n.php:77
+msgid "Çarşamba"
+msgstr "Wednesday"
+
+#: includes/blocks.php:127
+msgid "Önizleme için sağ panelden veya eklenti genel ayarlarından bir Bilet Satış URL'si girin."
+msgstr "Enter a ticket sales URL in the right panel or in the plugin settings to see a preview."
+
+#: includes/admin/view-concerts.php:52 includes/i18n.php:95
+msgid "Örn: Urla"
+msgstr "e.g. Urla"
+
+#: includes/admin/actions-stats.php:32
+#, php-format
+msgid "Örnek haftalık istatistik raporu %s adresine gönderildi."
+msgstr "A sample weekly statistics report was sent to %s."
+
+#: includes/admin/view-stats.php:391
+#, php-format
+msgid "İlk %1$d satır gösteriliyor (toplam %2$d)."
+msgstr "Showing the first %1$d rows (%2$d in total)."
+
+#: includes/reports.php:202
+msgid "İlçe"
+msgstr "District"
+
+#: includes/admin-page.php:92 includes/admin-page.php:136
+msgid "İlçe / Anahtar"
+msgstr "District / key"
+
+#: includes/admin/view-stats.php:356 includes/reports.php:162
+msgid "İlçe / Sayfa"
+msgstr "District / page"
+
+#: includes/admin/view-stats.php:268
+msgid "İlçe Anahtarı"
+msgstr "District key"
+
+#: includes/i18n.php:118
+msgid "İlçe Analitik Anahtarı (Boş bırakılırsa sayfa slug)"
+msgstr "District analytics key (page slug if empty)"
+
+#: includes/reports.php:155
+msgid "İlçe Bazlı Performans Dağılımı"
+msgstr "Performance by district"
+
+#: includes/admin/view-stats.php:191
+msgid "İlçe Filtresi"
+msgstr "District filter"
+
+#: includes/i18n.php:108
+msgid "İlçe Sayfası & Takvime Ekle Ayarları"
+msgstr "District page & Add to Calendar settings"
+
+#: includes/admin/view-styles.php:114
+msgid "İlçe Sayfası Yönlendirme, Bilet Düğmesi & Otomatik Takip Ayarları"
+msgstr "District page redirect, ticket button & automatic tracking settings"
+
+#: includes/i18n.php:109
+msgid "İlçe Slug (Boş bırakılırsa sayfa slug kullanılır)"
+msgstr "District slug (page slug is used if empty)"
+
+#: includes/admin/view-styles.php:156
+msgid "İlçe sayfalarında bu alan adlarına giden bağlantılara veya bilet görseli içeren linklere yapılan tıklamalar otomatik olarak ilgili ilçeye kaydedilir. Virgülle ayırarak alan adı ekleyebilirsiniz."
+msgstr "On district pages, clicks on links pointing to these domains, or on links containing a ticket image, are recorded automatically for the relevant district. Add domains separated by commas."
+
+#: includes/admin/view-styles.php:121
+msgid "İlçe sayfasında aktif konser bulunmadığında ziyaretçilerin yönlendirileceği sayfa yolu (örn. <code>/konserler</code>) veya tam URL."
+msgstr "Page path (e.g. <code>/konserler</code>) or full URL that visitors are redirected to when a district page has no active concert."
+
+#: includes/i18n.php:107
+msgid "İlçede aktif konser varsa Takvime Ekle düğmesini ve analitiği çalıştırır; yoksa ziyaretçiyi hedef sayfaya yönlendirir."
+msgstr "Shows the Add to Calendar button and runs analytics when the district has an active concert; otherwise redirects the visitor to the target page."
+
+#: includes/admin/view-concerts.php:87
+msgid "İndir"
+msgstr "Download"
+
+#: includes/admin/view-styles.php:17
+msgid "İstanbul"
+msgstr "Istanbul"
+
+#: includes/admin-tools.php:250
+#, php-format
+msgid "İstatistik tablosu %1$s ilçe sınırına ulaştı; %2$s tarihinde yeni bir ilçe kaydedilemedi. Gereksiz kayıtları İstatistikler sekmesinden silin."
+msgstr "The statistics table reached the limit of %1$s districts; a new district could not be recorded on %2$s. Delete unneeded records in the Statistics tab."
+
+#: includes/admin-page.php:355
+#, php-format
+msgid "İstatistik tablosu %d ilçe sınırına ulaştı ve yeni ilçeler kaydedilemiyor."
+msgstr "The statistics table reached the limit of %d districts and new districts cannot be recorded."
+
+#: includes/admin-page.php:364
+msgid "İstatistikler & Grafik"
+msgstr "Statistics & Charts"
+
+#: includes/admin/view-styles.php:17
+msgid "İzmir"
+msgstr "Izmir"
+
+#: includes/admin/view-concerts.php:37 includes/admin/view-stats.php:278
+msgid "İşlem"
+msgstr "Action"
+
+#: includes/admin-tools.php:237
+msgid "İşlenmeyi bekleyen olay"
+msgstr "Events waiting to be processed"
+
+#: includes/admin-page.php:253
+msgid "Şehir / İlçe"
+msgstr "City / district"
+
+#: includes/admin/view-concerts.php:35 includes/admin/view-concerts.php:105
+msgid "Şehir / İlçe Adı"
+msgstr "City / district name"
+
+#: includes/admin/view-styles.php:84
+msgid "Şehir Bölümü Yazı Rengi:"
+msgstr "City section text colour:"
+
+#: includes/admin/view-styles.php:105
+msgid "Şehir:"
+msgstr "City:"
+
+#: includes/admin/view-styles.php:274
+msgid "Şimdi Örnek Rapor E-Postası Gönder"
+msgstr "Send a sample report e-mail now"
+
+#: includes/admin-tools.php:239
+msgid "Şu an aktif (normalde birkaç ms sürer)"
+msgstr "Currently active (normally lasts a few ms)"
+
+#: includes/blocks.php:153
+msgid "Şu anda yaklaşan aktif konser kaydı bulunmuyor."
+msgstr "There is currently no upcoming active concert record."
+
+#: includes/admin-tools.php:309
+msgid "Şu kadar aydan eski arşiv kayıtlarını sil:"
+msgstr "Delete archived records older than this many months:"
+
+#: includes/i18n.php:55
+msgid "Şubat"
+msgstr "February"
+
+#: includes/i18n.php:93
+msgid "✓ Mevcut: "
+msgstr "✓ Exists: "
+
+#: includes/i18n.php:94
+msgid "✕ Bu uzantıda sayfa/yazı bulunamadı"
+msgstr "✕ No page/post found with this slug"

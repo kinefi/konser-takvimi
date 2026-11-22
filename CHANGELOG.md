@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.4.0] - 2026-11-22
+### Added
+- **Internationalisation:** all admin screens, reports, e-mails, notices, month/day names and JavaScript texts are translatable (text domain `konser-takvimi`). Turkish is the source language; an English catalogue ships in `languages/`. The plugin follows the WordPress locale automatically (site language, or the user's own language in the admin); every locale without its own catalogue falls back to English, Turkish sites keep the original texts.
+- `languages/konser-takvimi.pot`, `konser-takvimi-en_US.po` and `.mo`, plus dependency-free tools: `tools/extract-strings.php` (regenerates the template) and `tools/build-catalog.py` (builds `.po`/`.mo`).
+- Tests that verify the shipped catalogue (every string translated, placeholders and HTML tags identical to the source), English rendering of all admin tabs without leftover Turkish text, locale fallback, and the JavaScript dictionary.
+- CI checks that `languages/konser-takvimi.pot` is up to date.
+
+### Changed
+- **Refactoring (no behaviour change):** the 1,988-line `konser-takvimi.php` is now a ~100-line bootstrap plus single-responsibility modules in `includes/` (`events-time`, `settings`, `utm`, `stats-recording`, `reports`, `cron`, `assets`, `schema`, `redirect`, `calendar`, `shortcodes`, `i18n`). The 1,472-line admin page is split into tab action/view files in `includes/admin/`. The Turkish-locale admin output was compared before and after the split: only HTML-escaping of `&` and `'` differs.
+- The daily chart caption no longer says "Istanbul time zone"; it follows the selected timezone.
+- Archive cleanup and the conversion-alert threshold are now sentences that translate naturally.
+
 ## [4.3.0] - 2026-11-22
 ### Added
 - **Tools & Diagnostics tab:** tracking health panel (districts stored, buffered events, last write, lock), a scanner that lists posts/pages using the deprecated `[subadap_konserler]` shortcode or pre-4.1.0 Turkish attribute names (`ilce`, `hedef`, `resim`, `takvime_ekle`) in shortcodes or block JSON, an archive cleanup ("delete archived events older than 6/12/24/36 months") and a warning when the 300-district cap is reached.

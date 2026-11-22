@@ -1,4 +1,9 @@
 (function () {
+	// Translation lookup: ktI18n maps Turkish source strings to the current locale (provided by PHP).
+	function __t(text) {
+		return (typeof ktI18n !== 'undefined' && ktI18n[text]) || text;
+	}
+
 	// Timezone selected in the plugin settings (passed from PHP); defaults to Europe/Istanbul.
 	var siteTimeZone = 'Europe/Istanbul';
 
@@ -106,13 +111,8 @@
 		}
 		var maxItems = parseInt(ktConcertData.maxItems, 10) || 16;
 
-		var monthNames = [
-			'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-			'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
-		];
-		var dayNames = [
-			'Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'
-		];
+		var monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'].map(__t);
+		var dayNames = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'].map(__t);
 
 		var now = new Date();
 		var todayYMD = getSiteYMD(now);
@@ -131,7 +131,7 @@
 		if (upcomingEvents.length === 0) {
 			var emptyBox = document.createElement('div');
 			emptyBox.className = 'empty-concerts';
-			emptyBox.textContent = 'Yakın tarihte planlanmış konser bulunmamaktadır.';
+			emptyBox.textContent = __t('Yakın tarihte planlanmış konser bulunmamaktadır.');
 			gridContainer.appendChild(emptyBox);
 			return;
 		}
@@ -155,7 +155,7 @@
 
 			if (event.time2 && /^\d{2}:\d{2}$/.test(event.time2)) {
 				var formattedTime2 = event.time2.replace(':', '.');
-				timeText = formattedTime1 + ' ve ' + formattedTime2;
+				timeText = formattedTime1 + ' ' + __t('ve') + ' ' + formattedTime2;
 				hasTwoSessions = true;
 			}
 
@@ -163,10 +163,10 @@
 			var dayBadgeText = '';
 			if (eventYMD === todayYMD) {
 				dayBadgeType = 'is-today has-day-ribbon';
-				dayBadgeText = 'BUGÜN';
+				dayBadgeText = __t('BUGÜN');
 			} else if (eventYMD === tomorrowYMD) {
 				dayBadgeType = 'is-tomorrow has-day-ribbon';
-				dayBadgeText = 'YARIN';
+				dayBadgeText = __t('YARIN');
 			}
 
 			var colorClass = 'style-' + ((index % 12) + 1);

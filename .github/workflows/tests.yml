@@ -54,3 +54,24 @@ jobs:
 
       - name: Run tracker tests
         run: node tests/tracker.test.js
+
+  i18n:
+    name: Translation template is up to date
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      - name: Regenerate the .pot and fail if it changed
+        run: |
+          php tools/extract-strings.php
+          git diff --exit-code languages/konser-takvimi.pot || { echo "::error::Run 'php tools/extract-strings.php' and commit languages/konser-takvimi.pot"; exit 1; }
+
+      - name: Rebuild the English catalogue and fail on missing translations
+        run: |
+          python3 tools/build-catalog.py
+          git diff --exit-code languages/ || { echo "::error::Run 'python3 tools/build-catalog.py' and commit languages/"; exit 1; }

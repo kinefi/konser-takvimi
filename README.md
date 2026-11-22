@@ -175,3 +175,11 @@ konser-takvimi/
 ## License
 
 This project is licensed under the [GNU General Public License v3.0](LICENSE).
+
+## Translations
+All texts are translatable (text domain `konser-takvimi`, source language Turkish). WordPress picks the language from **Settings → General → Site Language** (administrators can override it in their profile). An English catalogue is included and used for every locale that has no catalogue of its own; Turkish sites show the original texts.
+
+To add a language: copy `languages/konser-takvimi.pot` to `languages/konser-takvimi-<locale>.po` (e.g. `de_DE`), translate it (Poedit works), then compile it: `python3 tools/build-catalog.py --mo-only languages/konser-takvimi-de_DE.po` (or use any gettext tool). After adding or changing strings run `php tools/extract-strings.php` to refresh the template.
+
+## Code layout
+`konser-takvimi.php` only bootstraps the plugin. Features live in `includes/`: `events-time.php` (timezone and event times), `settings.php`, `utm.php`, `stats-recording.php` (buffered, locked writes and the tracking endpoint), `reports.php`, `cron.php`, `assets.php`, `schema.php`, `redirect.php`, `calendar.php`, `shortcodes.php`, `blocks.php`, `i18n.php`; the admin UI is `admin-page.php`, `admin-tools.php` and the tab files in `includes/admin/`.
