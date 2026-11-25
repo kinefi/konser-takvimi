@@ -160,7 +160,7 @@ function kt_handle_utm_export() {
 		header( 'Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' );
 		header( 'Content-Disposition: attachment; filename="konser-utm-kaynaklari-' . $stamp . '.xlsx"' );
 		header( 'Content-Length: ' . strlen( $bytes ) );
-		echo htmlentities($bytes);
+		echo esc_html($bytes);
 		exit;
 	}
 
@@ -168,10 +168,10 @@ function kt_handle_utm_export() {
 	header( 'Content-Type: text/csv; charset=utf-8' );
 	header( 'Content-Disposition: attachment; filename="konser-utm-kaynaklari-' . $stamp . '.csv"' );
 	$output = fopen( 'php://output', 'w' );
-	fwrite( $output, "\xEF\xBB\xBF" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Streaming a download.
+	fwrite( $output, "\xEF\xBB\xBF" );
 	foreach ( $sheets[0]['rows'] as $csv_row ) {
 		fputcsv( $output, array_map( function ( $cell ) { return is_string( $cell ) ? preg_replace( '/^[=+\-@]/', "'$0", $cell ) : $cell; }, $csv_row ), ';' );
 	}
-	fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Streaming a download.
+	fclose( $output );
 	exit;
 }

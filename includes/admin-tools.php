@@ -77,7 +77,6 @@ function kt_scan_legacy_usage( $limit = 300 ) {
 	}
 	$args[] = intval( $limit );
 
-	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- The WHERE fragment only contains fixed "post_content LIKE %s" placeholders; values are passed to prepare().
 	$sql  = "SELECT ID, post_title, post_content FROM {$wpdb->posts} WHERE post_status IN ('publish','draft','private','pending') AND post_type NOT IN ('revision','nav_menu_item') AND (" . implode( ' OR ', $where ) . ') LIMIT %d';
 	$rows = $wpdb->get_results( $wpdb->prepare( $sql, $args ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 

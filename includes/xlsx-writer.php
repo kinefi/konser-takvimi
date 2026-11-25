@@ -149,7 +149,7 @@ function kt_build_xlsx( $sheets ) {
 	$zip->addFromString( 'xl/styles.xml', $styles );
 	$zip->close();
 
-	$bytes = file_get_contents( $tmp ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local temp file, not a remote URL.
+	$bytes = file_get_contents( $tmp );
 	wp_delete_file( $tmp );
 	return $bytes;
 }
