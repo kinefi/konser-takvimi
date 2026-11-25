@@ -3,6 +3,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once KT_PLUGIN_DIR . 'includes/xlsx-writer.php';
+require_once KT_PLUGIN_DIR . 'includes/admin-utm-export.php';
+
 add_action( 'admin_menu', 'kt_register_concert_menu' );
 function kt_register_concert_menu() {
 	add_menu_page(

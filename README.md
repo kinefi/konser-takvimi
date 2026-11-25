@@ -52,6 +52,10 @@ The page link inside the event description of each calendar entry is tagged per 
 
 When a visitor lands on a page with `utm_source`, `utm_medium` or `utm_campaign` in the URL, the visit (and any ticket click made during that visit) is recorded and shown in **İstatistikler & Grafik → Trafik Kaynakları (UTM)**: visitors, page views, ticket clicks and CTR per source / medium / campaign / district.
 
+### Sorting, grouping and Excel export
+
+In **İstatistikler & Grafik → Trafik Kaynakları (UTM)** click a column header to sort (click again to flip the direction), use **Group by** to add the rows up per district, source, medium or campaign, and filter by district and/or source. **Download as Excel (.xlsx)** exports the data with five sheets (detail plus district, source, medium and campaign summaries); the current filter and sort order apply. Grouped totals are sums of daily unique counts, so one person who arrives through several sources is counted in each of them. Without PHP's zip extension the detail sheet is delivered as CSV.
+
 ### Rules and limits
 
 - Existing `utm_*` parameters on a link are **never overwritten**, so manually tagged links keep their values.

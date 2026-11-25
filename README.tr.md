@@ -52,6 +52,10 @@ Her takvim kaydının açıklamasındaki sayfa bağlantısı, kanala ve seansa g
 
 Ziyaretçi adreste `utm_source`, `utm_medium` veya `utm_campaign` bulunan bir sayfaya geldiğinde ziyaret (ve o ziyaret sırasındaki bilet tıklaması) kaydedilir ve **İstatistikler & Grafik → Trafik Kaynakları (UTM)** tablosunda kaynak / ortam / kampanya / ilçe bazında ziyaretçi, gösterim, bilet tıklaması ve CTR olarak gösterilir.
 
+### Sıralama, gruplama ve Excel dışa aktarma
+
+**İstatistikler & Grafik → Trafik Kaynakları (UTM)** bölümünde sütun başlığına tıklayarak sıralayabilir (tekrar tıklayınca yön değişir), **Grupla** ile satırları ilçeye, kaynağa, ortama veya kampanyaya göre toplayabilir ve ilçe ve/veya kaynağa göre süzebilirsiniz. **Excel (.xlsx) olarak indir** verileri beş sayfa halinde verir (ayrıntı ile ilçe, kaynak, ortam ve kampanya özetleri); seçili filtre ve sıralama uygulanır. Gruplanmış toplamlar günlük tekil sayıların toplamıdır; birden fazla kaynaktan gelen aynı kişi her birinde sayılır. PHP zip eklentisi yoksa ayrıntı sayfası CSV olarak indirilir.
+
 ### Kurallar ve sınırlar
 
 - Bağlantıda zaten bulunan `utm_*` parametreleri **asla ezilmez**; elle etiketlenmiş bağlantılar kendi değerlerini korur.

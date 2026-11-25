@@ -238,3 +238,103 @@ function kt_get_utm_report_rows( $stats ) {
 
 	return $utm_rows;
 }
+
+/**
+ * Columns of the UTM table: key => numeric?
+ */
+function kt_utm_columns() {
+	return array(
+		'source'         => false,
+		'medium'         => false,
+		'campaign'       => false,
+		'district'       => false,
+		'visitors'       => true,
+		'views'          => true,
+		'clicks'         => true,
+		'ctr'            => true,
+		'click_visitors' => true,
+		'conversion'     => true,
+	);
+}
+
+/**
+ * Keeps only the rows that match the given district key and/or source (empty filter = everything).
+ */
+function kt_filter_utm_rows( $rows, $district_key = '', $source = '' ) {
+	$out = array();
+	foreach ( $rows as $row ) {
+		if ( '' !== $district_key && (string) $row['district_key'] !== (string) $district_key ) {
+			continue;
+		}
+		if ( '' !== $source && (string) $row['source'] !== (string) $source ) {
+			continue;
+		}
+		$out[] = $row;
+	}
+	return $out;
+}
+
+/**
+ * Sorts rows by a column. Text columns default to A-Z, numeric ones to highest first; ties fall back to visitors.
+ */
+function kt_sort_utm_rows( $rows, $sort = 'visitors', $dir = '' ) {
+	$columns = kt_utm_columns();
+	if ( ! isset( $columns[ $sort ] ) ) {
+		$sort = 'visitors';
+	}
+	if ( 'asc' !== $dir && 'desc' !== $dir ) {
+		$dir = $columns[ $sort ] ? 'desc' : 'asc';
+	}
+	$factor = ( 'asc' === $dir ) ? 1 : -1;
+
+	usort(
+		$rows,
+		function ( $a, $b ) use ( $sort, $columns, $factor ) {
+			if ( $columns[ $sort ] ) {
+				$cmp = $a[ $sort ] <=> $b[ $sort ];
+			} else {
+				$cmp = strcmp( function_exists( 'mb_strtolower' ) ? mb_strtolower( (string) $a[ $sort ], 'UTF-8' ) : strtolower( (string) $a[ $sort ] ), function_exists( 'mb_strtolower' ) ? mb_strtolower( (string) $b[ $sort ], 'UTF-8' ) : strtolower( (string) $b[ $sort ] ) );
+			}
+			if ( 0 !== $cmp ) {
+				return $cmp * $factor;
+			}
+			return $b['visitors'] <=> $a['visitors'];
+		}
+	);
+	return $rows;
+}
+
+/**
+ * Adds up the rows by one dimension ('district', 'source', 'medium' or 'campaign'). Totals are sums of the rows'
+ * daily unique counts, so one person who arrives through several sources or districts is counted in each of them.
+ * Returns rows with the same numeric keys plus 'group' (display value), 'group_key' and 'rows' (rows merged).
+ */
+function kt_group_utm_rows( $rows, $by ) {
+	if ( ! in_array( $by, array( 'district', 'source', 'medium', 'campaign' ), true ) ) {
+		return $rows;
+	}
+	$groups = array();
+	foreach ( $rows as $row ) {
+		$value = ( 'district' === $by ) ? (string) $row['district_key'] : (string) $row[ $by ];
+		if ( ! isset( $groups[ $value ] ) ) {
+			$groups[ $value ] = array(
+				'group'          => ( 'district' === $by ) ? $row['district'] : $value,
+				'group_key'      => $value,
+				'rows'           => 0,
+				'visitors'       => 0,
+				'views'          => 0,
+				'clicks'         => 0,
+				'click_visitors' => 0,
+			);
+		}
+		$groups[ $value ]['rows']++;
+		foreach ( array( 'visitors', 'views', 'clicks', 'click_visitors' ) as $field ) {
+			$groups[ $value ][ $field ] += $row[ $field ];
+		}
+	}
+	foreach ( $groups as $value => $group ) {
+		$groups[ $value ]['ctr']        = $group['views'] > 0 ? round( ( $group['clicks'] / $group['views'] ) * 100, 1 ) : 0.0;
+		$groups[ $value ]['conversion'] = kt_conversion_rate( $group['click_visitors'], $group['visitors'] );
+	}
+	return array_values( $groups );
+}

@@ -334,11 +334,52 @@ if ( ! defined( 'ABSPATH' ) ) {
 				</form>
 
 				<?php
-				$utm_rows = kt_get_utm_report_rows( $stats );
+				$utm_all_rows = kt_get_utm_report_rows( $stats );
+				$utm_view     = kt_normalize_utm_view( // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only table view; every value is sanitized and whitelisted.
+					array(
+						'group'    => isset( $_GET['utm_group'] ) ? sanitize_text_field( wp_unslash( $_GET['utm_group'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only table view; sanitized and whitelisted in kt_normalize_utm_view().
+						'sort'     => isset( $_GET['utm_sort'] ) ? sanitize_text_field( wp_unslash( $_GET['utm_sort'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only table view; sanitized and whitelisted in kt_normalize_utm_view().
+						'dir'      => isset( $_GET['utm_dir'] ) ? sanitize_text_field( wp_unslash( $_GET['utm_dir'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only table view; sanitized and whitelisted in kt_normalize_utm_view().
+						'district' => isset( $_GET['utm_district'] ) ? sanitize_text_field( wp_unslash( $_GET['utm_district'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only table view; sanitized and whitelisted in kt_normalize_utm_view().
+						'source'   => isset( $_GET['utm_source_f'] ) ? sanitize_text_field( wp_unslash( $_GET['utm_source_f'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only table view; sanitized and whitelisted in kt_normalize_utm_view().
+					)
+				);
+				$utm_rows      = kt_get_utm_view_rows( $stats, $utm_view );
 				$utm_row_total = count( $utm_rows );
 				$utm_rows      = array_slice( $utm_rows, 0, 200 );
+				$utm_grouped   = '' !== $utm_view['group'];
+
+				// Choices for the filters come from the unfiltered data.
+				$utm_district_choices = array();
+				$utm_source_choices   = array();
+				foreach ( $utm_all_rows as $utm_choice_row ) {
+					$utm_district_choices[ $utm_choice_row['district_key'] ] = $utm_choice_row['district'];
+					$utm_source_choices[ $utm_choice_row['source'] ]         = $utm_choice_row['source'];
+				}
+				asort( $utm_district_choices );
+				ksort( $utm_source_choices );
+
+				$utm_base_args = array(
+					'page'         => 'konser-takvimi',
+					'tab'          => 'stats',
+					'sort_by'      => $sort_by,
+					'utm_group'    => $utm_view['group'],
+					'utm_district' => $utm_view['district'],
+					'utm_source_f' => $utm_view['source'],
+				);
+				$utm_base_args = array_filter( $utm_base_args, function ( $v ) { return '' !== $v; } );
+
+				// Column header link: toggles the direction when the column is already the sort column.
+				$utm_header = function ( $key, $label, $is_numeric ) use ( $utm_view, $utm_base_args ) {
+					$active = $utm_view['sort'] === $key;
+					$cur    = $active && '' !== $utm_view['dir'] ? $utm_view['dir'] : ( $is_numeric ? 'desc' : 'asc' );
+					$next   = $active ? ( 'asc' === $cur ? 'desc' : 'asc' ) : ( $is_numeric ? 'desc' : 'asc' );
+					$url    = add_query_arg( array_merge( $utm_base_args, array( 'utm_sort' => $key, 'utm_dir' => $next ) ), admin_url( 'admin.php' ) ) . '#kt-utm';
+					$arrow  = $active ? ( 'asc' === $cur ? ' ▲' : ' ▼' ) : '';
+					return '<a href="' . esc_url( $url ) . '" style="text-decoration: none; color: inherit;">' . esc_html( $label ) . esc_html( $arrow ) . '</a>';
+				};
 				?>
-				<div style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #0891b2; border-radius: 4px; padding: 16px 20px; margin-top: 20px;">
+				<div id="kt-utm" style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #0891b2; border-radius: 4px; padding: 16px 20px; margin-top: 20px;">
 					<h2 style="margin: 0 0 4px 0; font-size: 16px;"><?php echo esc_html__( 'Trafik Kaynakları (UTM)', 'konser-takvimi' ); ?></h2>
 					<p class="description" style="margin-top: 0;">
 						<?php echo wp_kses( __( 'Yalnızca adreste <code>utm_source</code>, <code>utm_medium</code> veya <code>utm_campaign</code> bulunan ziyaretler listelenir (tüm zamanlar). Bilet tıklaması, aynı sayfa görüntülemesi sırasında yapılan tıklamadır.', 'konser-takvimi' ), kt_i18n_allowed_html() ); ?>
@@ -346,20 +387,78 @@ if ( ! defined( 'ABSPATH' ) ) {
 							<strong style="color: #b32d2e;"><?php echo esc_html__( 'Gelen UTM kaydı Ayarlar sekmesinde kapalı; yeni veri toplanmıyor.', 'konser-takvimi' ); ?></strong>
 						<?php endif; ?>
 					</p>
+
+					<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" style="margin: 10px 0; display: flex; flex-wrap: wrap; gap: 10px; align-items: end;">
+						<input type="hidden" name="page" value="konser-takvimi">
+						<input type="hidden" name="tab" value="stats">
+						<input type="hidden" name="sort_by" value="<?php echo esc_attr( $sort_by ); ?>">
+						<label><?php echo esc_html__( 'Grupla', 'konser-takvimi' ); ?><br>
+							<select name="utm_group">
+								<option value=""><?php echo esc_html__( 'Ayrıntılı (kaynak / ortam / kampanya / ilçe)', 'konser-takvimi' ); ?></option>
+								<option value="district" <?php selected( $utm_view['group'], 'district' ); ?>><?php echo esc_html__( 'İlçeye göre toplam', 'konser-takvimi' ); ?></option>
+								<option value="source" <?php selected( $utm_view['group'], 'source' ); ?>><?php echo esc_html__( 'Kaynağa göre toplam', 'konser-takvimi' ); ?></option>
+								<option value="medium" <?php selected( $utm_view['group'], 'medium' ); ?>><?php echo esc_html__( 'Ortama göre toplam', 'konser-takvimi' ); ?></option>
+								<option value="campaign" <?php selected( $utm_view['group'], 'campaign' ); ?>><?php echo esc_html__( 'Kampanyaya göre toplam', 'konser-takvimi' ); ?></option>
+							</select>
+						</label>
+						<label><?php echo esc_html__( 'İlçe', 'konser-takvimi' ); ?><br>
+							<select name="utm_district">
+								<option value=""><?php echo esc_html__( 'Tümü', 'konser-takvimi' ); ?></option>
+								<?php foreach ( $utm_district_choices as $choice_key => $choice_label ) : ?>
+									<option value="<?php echo esc_attr( $choice_key ); ?>" <?php selected( $utm_view['district'], $choice_key ); ?>><?php echo esc_html( $choice_label ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</label>
+						<label><?php echo esc_html__( 'Kaynak', 'konser-takvimi' ); ?><br>
+							<select name="utm_source_f">
+								<option value=""><?php echo esc_html__( 'Tümü', 'konser-takvimi' ); ?></option>
+								<?php foreach ( $utm_source_choices as $choice_source ) : ?>
+									<?php if ( '' !== $choice_source ) : ?>
+										<option value="<?php echo esc_attr( $choice_source ); ?>" <?php selected( $utm_view['source'], $choice_source ); ?>><?php echo esc_html( $choice_source ); ?></option>
+									<?php endif; ?>
+								<?php endforeach; ?>
+							</select>
+						</label>
+						<button type="submit" class="button"><?php echo esc_html__( 'Uygula', 'konser-takvimi' ); ?></button>
+					</form>
+
+					<form method="post" action="" style="margin: 0 0 10px 0;">
+						<?php wp_nonce_field( 'kt_stats_nonce_action', 'kt_stats_nonce' ); ?>
+						<input type="hidden" name="utm_group" value="<?php echo esc_attr( $utm_view['group'] ); ?>">
+						<input type="hidden" name="utm_sort" value="<?php echo esc_attr( $utm_view['sort'] ); ?>">
+						<input type="hidden" name="utm_dir" value="<?php echo esc_attr( $utm_view['dir'] ); ?>">
+						<input type="hidden" name="utm_district" value="<?php echo esc_attr( $utm_view['district'] ); ?>">
+						<input type="hidden" name="utm_source_f" value="<?php echo esc_attr( $utm_view['source'] ); ?>">
+						<button type="submit" name="kt_export_utm_action" value="1" class="button button-secondary"><?php echo esc_html__( 'Excel (.xlsx) olarak indir', 'konser-takvimi' ); ?></button>
+						<span class="description"><?php echo esc_html__( 'Ayrıntı ile ilçe, kaynak, ortam ve kampanya özetlerini ayrı sayfalarda verir; seçili ilçe/kaynak filtresi uygulanır.', 'konser-takvimi' ); ?></span>
+					</form>
+
 					<div class="kt-stats-table-wrap">
 						<table class="widefat striped kt-stats-table">
 							<thead>
 								<tr>
-									<th><?php echo esc_html__( 'Kaynak', 'konser-takvimi' ); ?></th>
-									<th><?php echo esc_html__( 'Ortam', 'konser-takvimi' ); ?></th>
-									<th><?php echo esc_html__( 'Kampanya', 'konser-takvimi' ); ?></th>
-									<th><?php echo esc_html__( 'İlçe / Sayfa', 'konser-takvimi' ); ?></th>
-									<th class="kt-col-num"><?php echo esc_html__( 'Ziyaretçi', 'konser-takvimi' ); ?></th>
-									<th class="kt-col-num"><?php echo esc_html__( 'Gösterim', 'konser-takvimi' ); ?></th>
-									<th class="kt-col-num"><?php echo esc_html__( __( 'Bilet Tıklaması', 'konser-takvimi' ), 'konser-takvimi' ); ?></th>
-									<th class="kt-col-num"><?php echo esc_html__( 'CTR', 'konser-takvimi' ); ?></th>
-									<th class="kt-col-num"><?php echo esc_html__( 'Tıklayan Kişi', 'konser-takvimi' ); ?></th>
-									<th class="kt-col-num"><?php echo esc_html__( 'Dönüşüm', 'konser-takvimi' ); ?></th>
+									<?php if ( $utm_grouped ) : ?>
+										<?php
+										$utm_group_labels = array(
+											'district' => __( 'İlçe', 'konser-takvimi' ),
+											'source'   => __( 'Kaynak', 'konser-takvimi' ),
+											'medium'   => __( 'Ortam', 'konser-takvimi' ),
+											'campaign' => __( 'Kampanya', 'konser-takvimi' ),
+										);
+										?>
+										<th><?php echo wp_kses( $utm_header( 'group', $utm_group_labels[ $utm_view['group'] ], false ), array( 'a' => array( 'href' => array(), 'style' => array() ) ) ); ?></th>
+									<?php else : ?>
+										<th><?php echo wp_kses( $utm_header( 'source', __( 'Kaynak', 'konser-takvimi' ), false ), array( 'a' => array( 'href' => array(), 'style' => array() ) ) ); ?></th>
+										<th><?php echo wp_kses( $utm_header( 'medium', __( 'Ortam', 'konser-takvimi' ), false ), array( 'a' => array( 'href' => array(), 'style' => array() ) ) ); ?></th>
+										<th><?php echo wp_kses( $utm_header( 'campaign', __( 'Kampanya', 'konser-takvimi' ), false ), array( 'a' => array( 'href' => array(), 'style' => array() ) ) ); ?></th>
+										<th><?php echo wp_kses( $utm_header( 'district', __( 'İlçe / Sayfa', 'konser-takvimi' ), false ), array( 'a' => array( 'href' => array(), 'style' => array() ) ) ); ?></th>
+									<?php endif; ?>
+									<th class="kt-col-num"><?php echo wp_kses( $utm_header( 'visitors', __( 'Ziyaretçi', 'konser-takvimi' ), true ), array( 'a' => array( 'href' => array(), 'style' => array() ) ) ); ?></th>
+									<th class="kt-col-num"><?php echo wp_kses( $utm_header( 'views', __( 'Gösterim', 'konser-takvimi' ), true ), array( 'a' => array( 'href' => array(), 'style' => array() ) ) ); ?></th>
+									<th class="kt-col-num"><?php echo wp_kses( $utm_header( 'clicks', __( 'Bilet Tıklaması', 'konser-takvimi' ), true ), array( 'a' => array( 'href' => array(), 'style' => array() ) ) ); ?></th>
+									<th class="kt-col-num"><?php echo wp_kses( $utm_header( 'ctr', __( 'CTR', 'konser-takvimi' ), true ), array( 'a' => array( 'href' => array(), 'style' => array() ) ) ); ?></th>
+									<th class="kt-col-num"><?php echo wp_kses( $utm_header( 'click_visitors', __( 'Tıklayan Kişi', 'konser-takvimi' ), true ), array( 'a' => array( 'href' => array(), 'style' => array() ) ) ); ?></th>
+									<th class="kt-col-num"><?php echo wp_kses( $utm_header( 'conversion', __( 'Dönüşüm', 'konser-takvimi' ), true ), array( 'a' => array( 'href' => array(), 'style' => array() ) ) ); ?></th>
 								</tr>
 							</thead>
 							<tbody>
@@ -369,24 +468,30 @@ if ( ! defined( 'ABSPATH' ) ) {
 									</tr>
 								<?php else : ?>
 									<?php foreach ( $utm_rows as $utm_row ) : ?>
-										<?php $utm_ctr = $utm_row['views'] > 0 ? number_format( ( $utm_row['clicks'] / $utm_row['views'] ) * 100, 1, ',', '.' ) : '0,0'; ?>
 										<tr>
-											<td><code><?php echo esc_html( '' !== $utm_row['source'] ? $utm_row['source'] : '—' ); ?></code></td>
-											<td><code><?php echo esc_html( '' !== $utm_row['medium'] ? $utm_row['medium'] : '—' ); ?></code></td>
-											<td><code><?php echo esc_html( '' !== $utm_row['campaign'] ? $utm_row['campaign'] : '—' ); ?></code></td>
-											<td><?php echo esc_html( $utm_row['district'] ); ?></td>
+											<?php if ( $utm_grouped ) : ?>
+												<td><strong><?php echo esc_html( '' !== (string) $utm_row['group'] ? $utm_row['group'] : '—' ); ?></strong> <span style="color: #64748b; font-size: 11px;">(<?php echo esc_html( number_format_i18n( $utm_row['rows'] ) ); ?>)</span></td>
+											<?php else : ?>
+												<td><code><?php echo esc_html( '' !== $utm_row['source'] ? $utm_row['source'] : '—' ); ?></code></td>
+												<td><code><?php echo esc_html( '' !== $utm_row['medium'] ? $utm_row['medium'] : '—' ); ?></code></td>
+												<td><code><?php echo esc_html( '' !== $utm_row['campaign'] ? $utm_row['campaign'] : '—' ); ?></code></td>
+												<td><?php echo esc_html( $utm_row['district'] ); ?></td>
+											<?php endif; ?>
 											<td><?php echo esc_html( number_format_i18n( $utm_row['visitors'] ) ); ?></td>
 											<td><?php echo esc_html( number_format_i18n( $utm_row['views'] ) ); ?></td>
 											<td style="color: #15803d; font-weight: 600;"><?php echo esc_html( number_format_i18n( $utm_row['clicks'] ) ); ?></td>
-											<td>%<?php echo esc_html( $utm_ctr ); ?></td>
-							<td><?php echo esc_html( number_format_i18n( $utm_row['click_visitors'] ) ); ?></td>
-							<td>%<?php echo esc_html( number_format( kt_conversion_rate( $utm_row['click_visitors'], $utm_row['visitors'] ), 1, ',', '.' ) ); ?></td>
+											<td>%<?php echo esc_html( number_format( $utm_row['ctr'], 1, ',', '.' ) ); ?></td>
+											<td><?php echo esc_html( number_format_i18n( $utm_row['click_visitors'] ) ); ?></td>
+											<td>%<?php echo esc_html( number_format( $utm_row['conversion'], 1, ',', '.' ) ); ?></td>
 										</tr>
 									<?php endforeach; ?>
 								<?php endif; ?>
 							</tbody>
 						</table>
 					</div>
+					<?php if ( $utm_grouped ) : ?>
+						<p class="description"><?php echo esc_html__( 'Parantez içindeki sayı, toplanan kaynak/ortam/kampanya/ilçe satırı sayısıdır. Toplamlar günlük tekil sayıların toplamıdır; farklı kaynaklardan gelen aynı kişi her birinde ayrı sayılabilir.', 'konser-takvimi' ); ?></p>
+					<?php endif; ?>
 					<?php if ( $utm_row_total > count( $utm_rows ) ) : ?>
 						<p class="description"><?php echo esc_html( sprintf( /* translators: 1: shown rows, 2: total rows */ __( 'İlk %1$d satır gösteriliyor (toplam %2$d).', 'konser-takvimi' ), count( $utm_rows ), $utm_row_total ) ); ?></p>
 					<?php endif; ?>

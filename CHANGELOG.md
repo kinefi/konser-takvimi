@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.6.0] - 2026-11-26
+### Added
+- **UTM traffic table:** every column header is now a sort link (click again to flip the direction), and a **Group by** selector adds up the rows per district, source, medium or campaign. Filters for a single district and/or source are available too.
+- **Excel export:** **Download as Excel (.xlsx)** exports the UTM data with sheets *Detail*, *District summary*, *Source summary*, *Medium summary* and *Campaign summary* (bold header, frozen first row, auto filter; numbers are real numbers). The chosen district/source filter and sort order are applied. If the server has no PHP zip extension, the detail sheet is downloaded as CSV instead.
+
+### Fixed
+- Removed a stray double translation call in the UTM table header.
+
 ## [4.5.0] - 2026-11-22
 ### Added
 - **Statistics archive:** a new **İstatistik Arşivi / Statistics Archive** tab keeps snapshots of a district's counters (totals, daily data, UTM rows). Each snapshot covers the period from the district's previous archive (or first record) to the day it was archived, with its reason (manual, concert ended, reset all).
