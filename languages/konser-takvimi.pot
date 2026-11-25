@@ -22,7 +22,7 @@ msgstr ""
 msgid " — Düşük dönüşüm uyarısı"
 msgstr ""
 
-#: includes/admin-tools.php:204
+#: includes/admin-tools.php:203
 #, php-format
 msgid "%1$d aydan eski %2$d arşiv kaydı silindi."
 msgstr ""
@@ -84,7 +84,7 @@ msgstr ""
 msgid "%s — Konser Sayfası Performans Raporu"
 msgstr ""
 
-#: includes/admin-tools.php:90
+#: includes/admin-tools.php:89
 msgid "(başlıksız)"
 msgstr ""
 
@@ -169,7 +169,7 @@ msgstr ""
 msgid "Araçlar & Tanılama"
 msgstr ""
 
-#: includes/admin-tools.php:306
+#: includes/admin-tools.php:305
 msgid "Arşiv Temizliği"
 msgstr ""
 
@@ -238,7 +238,7 @@ msgstr ""
 msgid "BUGÜN"
 msgstr ""
 
-#: includes/admin-tools.php:298
+#: includes/admin-tools.php:297
 msgid "Bağlantı"
 msgstr ""
 
@@ -246,7 +246,7 @@ msgstr ""
 msgid "Bağlantıda zaten bir <code>utm_*</code> parametresi varsa değiştirilmez. Bilet bağlantıları şu biçimi alır: <code>?utm_source=<em>kaynak</em>&amp;utm_medium=<em>ortam</em>&amp;utm_campaign=<em>kampanya</em>&amp;utm_content=ticket-button</code>. Takvim bağlantıları için kaynak <code>google-calendar</code> veya <code>ics-file</code>, ortam <code>calendar</code> olur."
 msgstr ""
 
-#: includes/admin-tools.php:292
+#: includes/admin-tools.php:291
 msgid "Bağlantıları oluştur"
 msgstr ""
 
@@ -254,11 +254,11 @@ msgstr ""
 msgid "Bağlantıyı yeni sekmede aç (_blank)"
 msgstr ""
 
-#: includes/admin-tools.php:209
+#: includes/admin-tools.php:208
 msgid "Bekleyen istatistik olayları işlendi."
 msgstr ""
 
-#: includes/admin-tools.php:245
+#: includes/admin-tools.php:244
 msgid "Bekleyen olayları şimdi işle"
 msgstr ""
 
@@ -306,7 +306,7 @@ msgstr ""
 msgid "Boyut, Köşe Yuvarlaklığı ve Izgara Ayarları"
 msgstr ""
 
-#: includes/admin-tools.php:239
+#: includes/admin-tools.php:238
 msgid "Boş"
 msgstr ""
 
@@ -370,7 +370,7 @@ msgstr ""
 msgid "Bugünkü Tekil Ziyaretçi"
 msgstr ""
 
-#: includes/admin-tools.php:263
+#: includes/admin-tools.php:262
 msgid "Bulgular"
 msgstr ""
 
@@ -418,7 +418,7 @@ msgstr ""
 msgid "Değişiklikleri Kaydet"
 msgstr ""
 
-#: includes/admin-tools.php:112
+#: includes/admin-tools.php:111
 msgid "Doğrudan (etiketsiz)"
 msgstr ""
 
@@ -494,7 +494,7 @@ msgstr ""
 msgid "Düşük dönüşüm uyarısı"
 msgstr ""
 
-#: includes/admin-tools.php:108
+#: includes/admin-tools.php:107
 msgid "E-posta bülteni"
 msgstr ""
 
@@ -519,7 +519,7 @@ msgstr ""
 msgid "En fazla %d kayıt saklanır; sınır aşılırsa en eski kayıtlar silinir."
 msgstr ""
 
-#: includes/admin-tools.php:258
+#: includes/admin-tools.php:257
 msgid "Eski Kısa Kod / Öznitelik Kullanan Sayfalar"
 msgstr ""
 
@@ -543,7 +543,7 @@ msgstr ""
 msgid "Eylül"
 msgstr ""
 
-#: includes/admin-tools.php:110
+#: includes/admin-tools.php:109
 msgid "Facebook (organik)"
 msgstr ""
 
@@ -671,7 +671,7 @@ msgstr ""
 msgid "Henüz kaydedilmiş ziyaret veya bilet tıklama verisi bulunmuyor."
 msgstr ""
 
-#: includes/admin-tools.php:238
+#: includes/admin-tools.php:237
 msgid "Henüz kayıt yok"
 msgstr ""
 
@@ -684,7 +684,7 @@ msgstr ""
 msgid "ISO Tarih"
 msgstr ""
 
-#: includes/admin-tools.php:109
+#: includes/admin-tools.php:108
 msgid "Instagram (organik)"
 msgstr ""
 
@@ -716,7 +716,7 @@ msgstr ""
 msgid "Kampanyaya göre toplam"
 msgstr ""
 
-#: includes/admin-tools.php:298
+#: includes/admin-tools.php:297
 msgid "Kanal"
 msgstr ""
 
@@ -752,7 +752,7 @@ msgstr ""
 msgid "Kaynağa göre toplam"
 msgstr ""
 
-#: includes/admin-tools.php:236
+#: includes/admin-tools.php:235
 msgid "Kayıtlı ilçe sayısı"
 msgstr ""
 
@@ -816,7 +816,7 @@ msgstr ""
 msgid "Mayıs"
 msgstr ""
 
-#: includes/admin-tools.php:106
+#: includes/admin-tools.php:105
 msgid "Meta Reklam"
 msgstr ""
 
@@ -933,7 +933,7 @@ msgstr ""
 msgid "Saat dilimi"
 msgstr ""
 
-#: includes/admin-tools.php:235
+#: includes/admin-tools.php:234
 msgid "Saat dilimi / şu an"
 msgstr ""
 
@@ -953,7 +953,7 @@ msgstr ""
 msgid "Sanatçı / Grup Adı (Performer)"
 msgstr ""
 
-#: includes/admin-tools.php:263 includes/admin/view-concerts.php:14
+#: includes/admin-tools.php:262 includes/admin/view-concerts.php:14
 msgid "Sayfa"
 msgstr ""
 
@@ -970,7 +970,7 @@ msgstr ""
 msgid "Sayfa Gösterimi"
 msgstr ""
 
-#: includes/admin-tools.php:276
+#: includes/admin-tools.php:275
 msgid "Sayfa adresine kanal bazlı UTM ekler. Kampanya adı varsayılan olarak ilçe/slug olur. Bağlantıyı ilgili kanalda paylaşın; ziyaretler İstatistikler sekmesindeki \"Trafik Kaynakları\" tablosunda ayrışır."
 msgstr ""
 
@@ -986,11 +986,11 @@ msgstr ""
 msgid "Seans (isteğe bağlı: hangi seansın butonu?)"
 msgstr ""
 
-#: includes/admin-tools.php:316
+#: includes/admin-tools.php:315
 msgid "Seçilen süreden eski arşivlenmiş konser kayıtları kalıcı olarak silinecek. Emin misiniz?"
 msgstr ""
 
-#: includes/admin-tools.php:316 includes/admin/view-archive.php:73 includes/admin/view-concerts.php:57
+#: includes/admin-tools.php:315 includes/admin/view-archive.php:73 includes/admin/view-concerts.php:57
 msgid "Sil"
 msgstr ""
 
@@ -1022,7 +1022,7 @@ msgstr ""
 msgid "Son 7 günün ilçe ziyaretçi, bilet tıklaması ve kalma süresi özetini her hafta e-posta ile gönder."
 msgstr ""
 
-#: includes/admin-tools.php:238
+#: includes/admin-tools.php:237
 msgid "Son istatistik yazımı"
 msgstr ""
 
@@ -1030,7 +1030,7 @@ msgstr ""
 msgid "Sonraki »"
 msgstr ""
 
-#: includes/admin-tools.php:275
+#: includes/admin-tools.php:274
 msgid "Sosyal Medya & Kampanya Bağlantı Oluşturucu"
 msgstr ""
 
@@ -1038,7 +1038,7 @@ msgstr ""
 msgid "Sıralama Ölçütü:"
 msgstr ""
 
-#: includes/admin-tools.php:232
+#: includes/admin-tools.php:231
 msgid "Takip Tanılama"
 msgstr ""
 
@@ -1054,7 +1054,7 @@ msgstr ""
 msgid "Takvime Ekle düğmesini göster (Google & .ics)"
 msgstr ""
 
-#: includes/admin-tools.php:260
+#: includes/admin-tools.php:259
 msgid "Taranan yazı ve sayfalarda kullanımdan kalkmış kısa kod veya eski öznitelik bulunmadı."
 msgstr ""
 
@@ -1175,15 +1175,15 @@ msgstr ""
 msgid "UTM Trafik Kaynakları (tüm zamanlar)"
 msgstr ""
 
-#: includes/admin-tools.php:214
+#: includes/admin-tools.php:213
 msgid "Uyarı temizlendi."
 msgstr ""
 
-#: includes/admin-tools.php:250
+#: includes/admin-tools.php:249
 msgid "Uyarı:"
 msgstr ""
 
-#: includes/admin-tools.php:254
+#: includes/admin-tools.php:253
 msgid "Uyarıyı kapat"
 msgstr ""
 
@@ -1215,7 +1215,7 @@ msgstr ""
 msgid "Varsayılan: 16 konser"
 msgstr ""
 
-#: includes/admin-tools.php:111
+#: includes/admin-tools.php:110
 msgid "X / Twitter (organik)"
 msgstr ""
 
@@ -1235,7 +1235,7 @@ msgstr ""
 msgid "Yalnızca adreste <code>utm_source</code>, <code>utm_medium</code> veya <code>utm_campaign</code> bulunan ziyaretler listelenir (tüm zamanlar). Bilet tıklaması, aynı sayfa görüntülemesi sırasında yapılan tıklamadır."
 msgstr ""
 
-#: includes/admin-tools.php:317
+#: includes/admin-tools.php:316
 msgid "Yalnızca son seansı bitmiş ve seçilen süreden eski kayıtlar silinir. İstatistikler etkilenmez."
 msgstr ""
 
@@ -1243,7 +1243,7 @@ msgstr ""
 msgid "Yazdır / PDF Olarak Kaydet"
 msgstr ""
 
-#: includes/admin-tools.php:239
+#: includes/admin-tools.php:238
 msgid "Yazma kilidi"
 msgstr ""
 
@@ -1271,7 +1271,7 @@ msgstr ""
 msgid "Yetkisiz erişim."
 msgstr ""
 
-#: includes/admin-tools.php:107
+#: includes/admin-tools.php:106
 msgid "YouTube Reklam"
 msgstr ""
 
@@ -1279,7 +1279,7 @@ msgstr ""
 msgid "Yoğun trafikte veritabanı yazma sayısını azaltır. İstatistikler bu süre kadar gecikmeli görünebilir; İstatistikler sekmesini açtığınızda bekleyenler hemen işlenir."
 msgstr ""
 
-#: includes/admin-tools.php:242
+#: includes/admin-tools.php:241
 msgid "Yönetici (sayfa düzenleme yetkili) ziyaretleri sayılmaz. Bunu test etmek için siteyi çıkış yapmış bir tarayıcıda veya gizli sekmede açın."
 msgstr ""
 
@@ -1310,7 +1310,7 @@ msgstr ""
 msgid "ilce-konseri veya ara..."
 msgstr ""
 
-#: includes/admin-tools.php:291
+#: includes/admin-tools.php:290
 msgid "kampanya (boşsa slug)"
 msgstr ""
 
@@ -1440,7 +1440,7 @@ msgstr ""
 msgid "İstatistik arşivlenemedi (kayıt bulunamadı veya veritabanı meşgul). Lütfen tekrar deneyin."
 msgstr ""
 
-#: includes/admin-tools.php:250
+#: includes/admin-tools.php:249
 #, php-format
 msgid "İstatistik tablosu %1$s ilçe sınırına ulaştı; %2$s tarihinde yeni bir ilçe kaydedilemedi. Gereksiz kayıtları İstatistikler sekmesinden silin."
 msgstr ""
@@ -1462,7 +1462,7 @@ msgstr ""
 msgid "İşlem"
 msgstr ""
 
-#: includes/admin-tools.php:237
+#: includes/admin-tools.php:236
 msgid "İşlenmeyi bekleyen olay"
 msgstr ""
 
@@ -1486,7 +1486,7 @@ msgstr ""
 msgid "Şimdi Örnek Rapor E-Postası Gönder"
 msgstr ""
 
-#: includes/admin-tools.php:239
+#: includes/admin-tools.php:238
 msgid "Şu an aktif (normalde birkaç ms sürer)"
 msgstr ""
 
@@ -1494,7 +1494,7 @@ msgstr ""
 msgid "Şu anda yaklaşan aktif konser kaydı bulunmuyor."
 msgstr ""
 
-#: includes/admin-tools.php:309
+#: includes/admin-tools.php:308
 msgid "Şu kadar aydan eski arşiv kayıtlarını sil:"
 msgstr ""
 
