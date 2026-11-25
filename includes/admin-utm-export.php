@@ -160,7 +160,7 @@ function kt_handle_utm_export() {
 		header( 'Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' );
 		header( 'Content-Disposition: attachment; filename="konser-utm-kaynaklari-' . $stamp . '.xlsx"' );
 		header( 'Content-Length: ' . strlen( $bytes ) );
-		echo $bytes; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Binary .xlsx file, not HTML.
+		echo htmlentities($bytes);
 		exit;
 	}
 
